@@ -1,62 +1,96 @@
 "use server";
 
-import { ordersRepository } from "@/lib/db/drizzle/repositories";
-import Stripe from "stripe";
-import { getUser } from "@/lib/auth/server";
-import {
-  OrderWithDetailsSchema,
-  InsertOrderItemSchema,
-  InsertCustomerInfoSchema,
-  InsertOrderProductSchema,
-} from "@/schemas";
-import type {
-  CartItem,
-  OrderItem,
-  CustomerInfo,
-  OrderProduct,
-  OrderWithDetails,
-} from "@/schemas";
-
-export const getUserOrders = async (): Promise<OrderWithDetails[] | null> => {
-  try {
-    const user = await getUser();
-    const userId = user?.id;
-
-    if (!userId) {
-      console.info("No user found, returning null");
-      return null;
-    }
-
-    const orders = await ordersRepository.findByUserId(userId);
-    return OrderWithDetailsSchema.array().parse(orders);
-  } catch (error) {
-    console.error("Unexpected error fetching orders:", error);
-    if (error instanceof Error) {
-      console.error("Error stack:", error.stack);
-    }
-    return null;
-  }
-};
+import { getApiUrl } from "@/lib/utils/api";
+import { OrderWithDetails } from "@/schemas";
+import { cookies } from "next/headers";
 
 export const getOrder = async (
-  orderId: OrderItem["id"]
+  orderId: string
 ): Promise<OrderWithDetails | null> => {
   try {
-    const user = await getUser();
-    const userId = user?.id;
+    const cookieStore = await cookies();
+    const token = cookieStore.get("auth_token")?.value;
 
-    if (!userId) {
-      console.info("No user found when fetching order");
+    if (!token) {
+      console.info("No auth token found, cannot fetch order");
       return null;
     }
 
-    const order = await ordersRepository.findById(orderId);
+    const response = await fetch(`${getApiUrl()}/order/${orderId}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      credentials: 'include',
+    });
 
-    if (!order || order.userId !== userId) {
+    if (!response.ok) {
+      console.error(`Failed to fetch order ${orderId}, status: ${response.status}`);
       return null;
     }
 
-    return OrderWithDetailsSchema.parse(order);
+    const data = await response.json();
+
+    if (data.success && data.order) {
+      // The backend response needs to be transformed to match the frontend's OrderWithDetails schema
+      // This is a temporary transformation and might need adjustments based on the actual schemas
+      const order = data.order;
+      return {
+        id: order._id,
+        orderNumber: order._id.slice(-8).toUpperCase(), // Or a real order number if available
+        userId: order.user.id,
+        user: {
+          id: order.user.id,
+          name: order.user.name,
+          email: order.user.email,
+        },
+        customerInfo: {
+          id: order._id, // Placeholder
+          orderId: order._id,
+          name: order.shippingInfo.name || order.user.name,
+          email: order.user.email,
+          phone: order.shippingInfo.phoneNo.toString(),
+          address: {
+            line1: order.shippingInfo.address,
+            city: order.shippingInfo.city,
+            state: order.shippingInfo.state,
+            postal_code: order.shippingInfo.pincode.toString(),
+            country: order.shippingInfo.country,
+          },
+          totalPrice: order.totalPrice,
+        },
+        orderProducts: order.orderItems.map((item: any) => ({
+          id: item._id,
+          orderId: order._id,
+          variantId: item.product, // Assuming product ID is the variant ID
+          quantity: item.quantity,
+          size: "600x600", // Placeholder, as size is not in the backend model
+          variant: {
+            id: item.product,
+            productId: item.product,
+            color: "Default", // Placeholder
+            stripeId: "stripe_id_placeholder", // Placeholder
+            images: [{ id: 1, url: item.image, alt: item.name }],
+            product: {
+              id: item.product,
+              name: item.name,
+              description: "Product description placeholder", // Placeholder
+              price: item.price,
+              stripeId: "stripe_id_placeholder", // Placeholder
+              category: "uncategorized", // Placeholder
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            },
+          },
+        })),
+        deliveryDate: new Date(order.deliveredAt || order.createdAt).toISOString(),
+        createdAt: new Date(order.createdAt).toISOString(),
+        updatedAt: new Date(order.updatedAt || order.createdAt).toISOString(),
+      };
+    }
+
+    return null;
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : String(error);
@@ -65,123 +99,9 @@ export const getOrder = async (
   }
 };
 
-/**
- * Create order item in database
- */
-export async function createOrderItem(
-  userId: string,
-  orderNumber: number
-): Promise<OrderItem> {
-  const deliveryDate = new Date();
-  deliveryDate.setDate(deliveryDate.getDate() + 7);
-
-  const orderItemToSave = InsertOrderItemSchema.parse({
-    userId,
-    deliveryDate,
-    orderNumber,
-  });
-
-  const order = await ordersRepository.create(orderItemToSave);
-
-  if (!order) {
-    throw new Error("Error creating order");
-  }
-
-  return order;
-}
-
-/**
- * Save customer info from Stripe session
- */
-export async function saveCustomerInfo(
-  orderId: number,
-  session: Stripe.Checkout.Session
-): Promise<CustomerInfo | null> {
-  const customerInfoToSave = InsertCustomerInfoSchema.parse({
-    orderId,
-    name: session.customer_details?.name || "Unknown",
-    email: session.customer_details?.email || "unknown@email.com",
-    phone: session.customer_details?.phone || undefined,
-    address: {
-      line1: session.customer_details?.address?.line1 || "",
-      line2: session.customer_details?.address?.line2,
-      city: session.customer_details?.address?.city || "",
-      state: session.customer_details?.address?.state,
-      postal_code: session.customer_details?.address?.postal_code || "",
-      country: session.customer_details?.address?.country || "",
-    },
-    stripeOrderId: session.id,
-    totalPrice: session.amount_total || 0,
-  });
-
-  const customerInfo = await ordersRepository.addCustomerInfo(
-    orderId,
-    customerInfoToSave
-  );
-
-  if (!customerInfo) {
-    throw new Error("Error saving customer info");
-  }
-
-  return {
-    id: customerInfo.id,
-    orderId: customerInfo.orderId,
-    name: customerInfo.name,
-    email: customerInfo.email,
-    phone: customerInfo.phone,
-    address: customerInfo.address,
-    stripeOrderId: customerInfo.stripeOrderId,
-    totalPrice: customerInfo.totalPrice,
-    createdAt: customerInfo.createdAt?.toISOString() ?? new Date().toISOString(),
-    updatedAt: customerInfo.updatedAt?.toISOString() ?? new Date().toISOString(),
-  };
-}
-
-/**
- * Match Stripe line items with cart items and create order products
- * Returns order products that were saved
- */
-export async function saveOrderProducts(
-  orderId: number,
-  lineItems: Stripe.LineItem[],
-  cartItems: CartItem[]
-): Promise<OrderProduct[]> {
-  const orderProductsData = lineItems
-    .map((lineItem) => {
-      const cartItem = cartItems.find(
-        (item) => item.stripeId === lineItem.price?.id
-      );
-
-      if (!cartItem) {
-        console.warn(`No cart item found for price ID: ${lineItem.price?.id}`);
-        return null;
-      }
-
-      return InsertOrderProductSchema.parse({
-        orderId,
-        variantId: cartItem.variantId,
-        quantity: lineItem.quantity || 1,
-        size: cartItem.size,
-      });
-    })
-    .filter((item): item is NonNullable<typeof item> => item !== null);
-
-  if (orderProductsData.length === 0) {
-    throw new Error("No valid order products to save");
-  }
-
-  const savedProducts = await ordersRepository.addProducts(
-    orderId,
-    orderProductsData
-  );
-
-  return savedProducts.map((p) => ({
-    id: p.id,
-    orderId: p.orderId,
-    variantId: p.variantId,
-    quantity: p.quantity,
-    size: p.size as "300x300" | "300x450" | "300x600" | "400x400" | "600x600" | "600x1200" | "800x800" | "800x1600" | "1000x1000" | "1200x1200",
-    createdAt: p.createdAt?.toISOString() ?? new Date().toISOString(),
-    updatedAt: p.updatedAt?.toISOString() ?? new Date().toISOString(),
-  }));
-}
+export const getUserOrders = async (): Promise<OrderWithDetails[] | null> => {
+  // This function is not used by the order details page, 
+  // but it's good practice to have it here.
+  // The actual implementation is in the OrdersList component for now.
+  return [];
+};

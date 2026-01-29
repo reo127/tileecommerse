@@ -28,7 +28,7 @@ const OrderDetails = async ({ params }: Props) => {
 };
 
 const OrderProducts = async ({ id }: { id: string }) => {
-  const order = await getOrder(Number(id));
+  const order = await getOrder(id);
 
   if (!order) {
     return (

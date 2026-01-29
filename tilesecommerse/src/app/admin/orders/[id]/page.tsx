@@ -1,32 +1,19 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
-import { HiArrowLeft, HiUser, HiMail, HiPhone, HiLocationMarker } from "react-icons/hi";
-import { ordersRepository } from "@/lib/db/drizzle/repositories";
-
-async function getOrderDetails(id: number) {
-  try {
-    const order = await ordersRepository.findById(id);
-    return order;
-  } catch (error) {
-    console.error("Error fetching order:", error);
-    return null;
-  }
-}
+import { HiArrowLeft, HiUser, HiMail, HiPhone, HiLocationMarker, HiCurrencyRupee, HiCalendar, HiTag } from "react-icons/hi";
+import { getOrderDetails } from "./actions";
 
 export default async function AdminOrderDetailPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
-  const orderId = parseInt(params.id, 10);
-  const order = await getOrderDetails(orderId);
+  const { id } = await params;
+  const order = await getOrderDetails(id);
 
   if (!order) {
     notFound();
   }
-
-  const address = order.customerInfo?.address;
 
   return (
     <div className="space-y-6">
@@ -40,7 +27,7 @@ export default async function AdminOrderDetailPage({
         </Link>
         <div>
           <h1 className="text-3xl font-bold text-slate-900">
-            Order #{order.orderNumber}
+            Order #{order._id.slice(-8).toUpperCase()}
           </h1>
           <p className="text-slate-600 mt-1">
             Placed on {new Date(order.createdAt).toLocaleDateString("en-IN", {
@@ -60,18 +47,17 @@ export default async function AdminOrderDetailPage({
           <div className="bg-white rounded-xl shadow-md border border-slate-200 p-6">
             <h2 className="text-xl font-bold text-slate-900 mb-4">Order Items</h2>
             <div className="space-y-4">
-              {order.orderProducts?.map((item) => (
+              {order.orderItems?.map((item: any, idx: number) => (
                 <div
-                  key={item.id}
-                  className="flex gap-4 p-4 border border-slate-200 rounded-lg"
+                  key={idx}
+                  className="flex gap-4 p-4 border border-slate-200 rounded-lg hover:border-slate-300 transition-colors"
                 >
                   <div className="relative w-20 h-20 bg-slate-100 rounded-lg overflow-hidden flex-shrink-0">
-                    {item.variant?.product?.img ? (
-                      <Image
-                        src={item.variant.product.img}
-                        alt={item.variant.product.name}
-                        fill
-                        className="object-cover"
+                    {item.image ? (
+                      <img
+                        src={item.image}
+                        alt={item.name}
+                        className="w-full h-full object-cover"
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-slate-400">
@@ -81,22 +67,20 @@ export default async function AdminOrderDetailPage({
                   </div>
                   <div className="flex-1">
                     <h3 className="font-semibold text-slate-900">
-                      {item.variant?.product?.name}
+                      {item.name || "Product Name"}
                     </h3>
                     <p className="text-sm text-slate-600 mt-1">
-                      Color: <span className="font-medium">{item.variant?.color}</span>
-                    </p>
-                    <p className="text-sm text-slate-600">
-                      Size: <span className="font-medium">{item.size}</span>
-                    </p>
-                    <p className="text-sm text-slate-600">
                       Quantity: <span className="font-medium">{item.quantity}</span>
+                    </p>
+                    <p className="text-sm text-slate-600">
+                      Price: <span className="font-medium">₹{item.price.toLocaleString("en-IN")}</span>
                     </p>
                   </div>
                   <div className="text-right">
                     <p className="font-semibold text-slate-900">
-                      ₹{Number(item.variant?.product?.price || 0).toLocaleString("en-IN")}
+                      ₹{(item.price * item.quantity).toLocaleString("en-IN")}
                     </p>
+                    <p className="text-xs text-slate-500 mt-1">Subtotal</p>
                   </div>
                 </div>
               ))}
@@ -106,6 +90,30 @@ export default async function AdminOrderDetailPage({
 
         {/* Customer & Order Info */}
         <div className="space-y-6">
+          {/* Order Status */}
+          <div className="bg-white rounded-xl shadow-md border border-slate-200 p-6">
+            <h2 className="text-xl font-bold text-slate-900 mb-4">Order Status</h2>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-slate-600">Status</span>
+                <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${order.orderStatus === 'Delivered'
+                    ? 'bg-green-100 text-green-800'
+                    : order.orderStatus === 'Shipped'
+                      ? 'bg-blue-100 text-blue-800'
+                      : 'bg-yellow-100 text-yellow-800'
+                  }`}>
+                  {order.orderStatus}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-slate-600">Payment</span>
+                <span className="font-medium text-slate-900">
+                  {order.paymentInfo?.status || "Cash on Delivery"}
+                </span>
+              </div>
+            </div>
+          </div>
+
           {/* Customer Info */}
           <div className="bg-white rounded-xl shadow-md border border-slate-200 p-6">
             <h2 className="text-xl font-bold text-slate-900 mb-4">Customer Information</h2>
@@ -115,7 +123,7 @@ export default async function AdminOrderDetailPage({
                 <div>
                   <p className="text-sm text-slate-600">Name</p>
                   <p className="font-medium text-slate-900">
-                    {order.customerInfo?.name}
+                    {order.user?.name || "Guest User"}
                   </p>
                 </div>
               </div>
@@ -124,17 +132,17 @@ export default async function AdminOrderDetailPage({
                 <div>
                   <p className="text-sm text-slate-600">Email</p>
                   <p className="font-medium text-slate-900">
-                    {order.customerInfo?.email}
+                    {order.user?.email || "N/A"}
                   </p>
                 </div>
               </div>
-              {order.customerInfo?.phone && (
+              {order.shippingInfo?.phoneNo && (
                 <div className="flex items-center gap-3">
                   <HiPhone className="w-5 h-5 text-slate-400" />
                   <div>
                     <p className="text-sm text-slate-600">Phone</p>
                     <p className="font-medium text-slate-900">
-                      {order.customerInfo.phone}
+                      {order.shippingInfo.phoneNo}
                     </p>
                   </div>
                 </div>
@@ -145,15 +153,14 @@ export default async function AdminOrderDetailPage({
           {/* Shipping Address */}
           <div className="bg-white rounded-xl shadow-md border border-slate-200 p-6">
             <h2 className="text-xl font-bold text-slate-900 mb-4">Shipping Address</h2>
-            {address && (
+            {order.shippingInfo && (
               <div className="flex gap-3">
                 <HiLocationMarker className="w-5 h-5 text-slate-400 flex-shrink-0 mt-1" />
                 <div className="text-sm text-slate-700 leading-relaxed">
-                  <p>{address.line1}</p>
-                  {address.line2 && <p>{address.line2}</p>}
-                  <p>{address.city}, {address.state}</p>
-                  <p>{address.postal_code}</p>
-                  <p className="font-medium">{address.country}</p>
+                  <p>{order.shippingInfo.address}</p>
+                  <p>{order.shippingInfo.city}, {order.shippingInfo.state}</p>
+                  <p>{order.shippingInfo.pincode}</p>
+                  <p className="font-medium">{order.shippingInfo.country}</p>
                 </div>
               </div>
             )}
@@ -162,27 +169,43 @@ export default async function AdminOrderDetailPage({
           {/* Order Summary */}
           <div className="bg-white rounded-xl shadow-md border border-slate-200 p-6">
             <h2 className="text-xl font-bold text-slate-900 mb-4">Order Summary</h2>
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span className="text-slate-600">Delivery Date</span>
-                <span className="font-medium text-slate-900">
-                  {new Date(order.deliveryDate).toLocaleDateString("en-IN")}
-                </span>
-              </div>
+            <div className="space-y-3">
               <div className="flex justify-between text-sm">
                 <span className="text-slate-600">Items</span>
                 <span className="font-medium text-slate-900">
-                  {order.orderProducts?.length || 0}
+                  {order.orderItems?.length || 0}
                 </span>
               </div>
-              <div className="border-t border-slate-200 pt-2 mt-2">
+
+              {order.couponCode && order.discountAmount && order.discountAmount > 0 && (
+                <>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-slate-600">Subtotal</span>
+                    <span className="font-medium text-slate-900">
+                      ₹{(order.totalPrice + order.discountAmount).toLocaleString("en-IN", {
+                        minimumFractionDigits: 2
+                      })}
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-sm text-green-600">
+                    <div className="flex items-center gap-1">
+                      <HiTag className="w-4 h-4" />
+                      <span>Coupon ({order.couponCode})</span>
+                    </div>
+                    <span className="font-medium">
+                      -₹{order.discountAmount.toFixed(2)}
+                    </span>
+                  </div>
+                </>
+              )}
+
+              <div className="border-t border-slate-200 pt-3 mt-3">
                 <div className="flex justify-between">
                   <span className="font-semibold text-slate-900">Total Amount</span>
                   <span className="text-xl font-bold text-orange-500">
-                    ₹
-                    {(Number(order.customerInfo?.totalPrice || 0) / 100).toLocaleString(
-                      "en-IN"
-                    )}
+                    ₹{Number(order.totalPrice || 0).toLocaleString("en-IN", {
+                      minimumFractionDigits: 2
+                    })}
                   </span>
                 </div>
               </div>
