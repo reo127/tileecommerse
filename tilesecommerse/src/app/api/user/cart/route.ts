@@ -5,6 +5,20 @@ import { cookies } from "next/headers";
 // Updated to use async/await with cookies() for Next.js 15+
 const cartStorage = new Map<string, any[]>();
 
+// CORS headers helper
+function setCorsHeaders(response: NextResponse) {
+  response.headers.set('Access-Control-Allow-Origin', '*');
+  response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  response.headers.set('Access-Control-Allow-Credentials', 'true');
+  return response;
+}
+
+// Handle OPTIONS requests for CORS preflight
+export async function OPTIONS(request: NextRequest) {
+  return setCorsHeaders(new NextResponse(null, { status: 200 }));
+}
+
 async function getUserId(request: NextRequest): Promise<string> {
   // Get user ID from session or create a guest session
   const cookieStore = await cookies();
@@ -27,7 +41,7 @@ export async function GET(request: NextRequest) {
     maxAge: 60 * 60 * 24 * 30, // 30 days
   });
 
-  return response;
+  return setCorsHeaders(response);
 }
 
 export async function POST(request: NextRequest) {
@@ -73,7 +87,7 @@ export async function POST(request: NextRequest) {
     maxAge: 60 * 60 * 24 * 30,
   });
 
-  return response;
+  return setCorsHeaders(response);
 }
 
 export async function DELETE(request: NextRequest) {
@@ -82,7 +96,8 @@ export async function DELETE(request: NextRequest) {
   const itemId = searchParams.get('id');
 
   if (!itemId) {
-    return NextResponse.json({ error: 'Item ID required' }, { status: 400 });
+    const errorResponse = NextResponse.json({ error: 'Item ID required' }, { status: 400 });
+    return setCorsHeaders(errorResponse);
   }
 
   const items = cartStorage.get(userId) || [];
@@ -90,7 +105,7 @@ export async function DELETE(request: NextRequest) {
 
   cartStorage.set(userId, filteredItems);
 
-  return NextResponse.json({ success: true, items: filteredItems });
+  return setCorsHeaders(NextResponse.json({ success: true, items: filteredItems }));
 }
 
 export async function PATCH(request: NextRequest) {
@@ -106,5 +121,5 @@ export async function PATCH(request: NextRequest) {
     cartStorage.set(userId, items);
   }
 
-  return NextResponse.json({ success: true, items });
+  return setCorsHeaders(NextResponse.json({ success: true, items }));
 }
