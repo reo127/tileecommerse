@@ -12,6 +12,7 @@ exports.newOrder = asyncErrorHandler(async (req, res, next) => {
         orderItems,
         paymentInfo,
         totalPrice,
+        couponCode,
     } = req.body;
 
     const orderExist = await Order.findOne({ paymentInfo });
@@ -20,11 +21,67 @@ exports.newOrder = asyncErrorHandler(async (req, res, next) => {
         return next(new ErrorHandler("Order Already Placed", 400));
     }
 
+    let couponData = null;
+    let discountAmount = 0;
+
+    // If coupon code is provided, apply it
+    if (couponCode) {
+        const Coupon = require('../models/couponModel');
+        const coupon = await Coupon.findOne({ code: couponCode.toUpperCase() });
+
+        if (!coupon) {
+            return next(new ErrorHandler("Invalid coupon code", 404));
+        }
+
+        // Check if coupon is valid
+        const validityCheck = coupon.isValid();
+        if (!validityCheck.valid) {
+            return next(new ErrorHandler(validityCheck.message, 400));
+        }
+
+        // Check if user can use this coupon
+        const userCheck = coupon.canUserUse(req.user._id);
+        if (!userCheck.canUse) {
+            return next(new ErrorHandler(userCheck.message, 400));
+        }
+
+        // Check minimum purchase amount
+        if (totalPrice < coupon.minPurchaseAmount) {
+            return next(
+                new ErrorHandler(
+                    `Minimum purchase amount of ₹${coupon.minPurchaseAmount} required`,
+                    400
+                )
+            );
+        }
+
+        // Calculate discount
+        discountAmount = coupon.calculateDiscount(totalPrice);
+
+        // Track usage
+        coupon.usedBy.push({
+            user: req.user._id,
+            usedAt: new Date(),
+            orderAmount: totalPrice
+        });
+
+        // Increment usage count
+        coupon.usageCount += 1;
+        await coupon.save();
+
+        couponData = {
+            couponUsed: coupon._id,
+            couponCode: coupon.code,
+            discountAmount: discountAmount
+        };
+    }
+
     const order = await Order.create({
         shippingInfo,
         orderItems,
         paymentInfo,
         totalPrice,
+        ...couponData,
         paidAt: Date.now(),
         user: req.user._id,
     });
@@ -37,6 +94,8 @@ exports.newOrder = asyncErrorHandler(async (req, res, next) => {
             shippingInfo,
             orderItems,
             totalPrice,
+            discountAmount,
+            finalAmount: totalPrice - discountAmount,
             oid: order._id,
         }
     });
