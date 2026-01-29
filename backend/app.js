@@ -14,29 +14,27 @@ if (process.env.NODE_ENV !== 'production') {
 // CORS Configuration
 const cors = require('cors');
 
-// CORS Configuration
+// CORS Configuration - Allow all origins for now (can be restricted later)
+// Uncomment and update the whitelist if you want to restrict specific domains
+/*
 const whitelist = [
     'http://localhost:3000',
     'http://localhost:3001',
     'https://tiles-ecommerce.vercel.app',
     'https://ecom-fe-xi.vercel.app',
-    'https://ecom-fe-17kf.vercel.app'
+    'https://ecom-fe-17kf.vercel.app',
+    'https://tilesecommerse.vercel.app',
+    'https://tilesecommerse-*.vercel.app' // Allow all preview deployments
 ];
+*/
 
 app.use(cors({
-    origin: function (origin, callback) {
-        // allow requests with no origin (like mobile apps or curl requests)
-        if (!origin) return callback(null, true);
-        if (whitelist.indexOf(origin) !== -1) {
-            callback(null, true);
-        } else {
-            console.log('Blocked by CORS:', origin);
-            callback(new Error('Not allowed by CORS'));
-        }
-    },
+    origin: true, // Allow all origins
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+    exposedHeaders: ['Set-Cookie'],
+    maxAge: 86400 // 24 hours
 }));
 
 app.use(express.json({ limit: '50mb' }));
