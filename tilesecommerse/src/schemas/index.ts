@@ -11,6 +11,43 @@ export const ProductCategoryZod = z.enum(["living-room", "kitchen", "bathroom", 
 export const ProductSizeEnum = z.enum(["12x12", "12x24", "16x16", "18x18", "24x24", "32x32"]);
 export const WishlistItemSchema = z.any();
 
+// Coupon schemas
+export const CouponSchema = z.object({
+  _id: z.string(),
+  code: z.string(),
+  description: z.string().optional(),
+  discountType: z.enum(["percentage", "fixed"]),
+  discountValue: z.number(),
+  minPurchaseAmount: z.number().default(0),
+  maxDiscountAmount: z.number().nullable().optional(),
+  usageLimit: z.number().nullable().optional(),
+  usageCount: z.number().default(0),
+  perUserLimit: z.number().default(1),
+  expiryDate: z.string(),
+  isActive: z.boolean().default(true),
+  createdBy: z.string(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+
+export const CreateCouponSchema = z.object({
+  code: z.string().min(3, "Code must be at least 3 characters").max(20, "Code cannot exceed 20 characters"),
+  description: z.string().max(200, "Description cannot exceed 200 characters").optional(),
+  discountType: z.enum(["percentage", "fixed"]),
+  discountValue: z.number().positive("Discount value must be positive"),
+  minPurchaseAmount: z.number().min(0).default(0),
+  maxDiscountAmount: z.number().positive().nullable().optional(),
+  usageLimit: z.number().positive().nullable().optional(),
+  perUserLimit: z.number().positive().default(1),
+  expiryDate: z.string(),
+  isActive: z.boolean().default(true),
+});
+
+export const ValidateCouponSchema = z.object({
+  code: z.string(),
+  orderAmount: z.number(),
+});
+
 export type ProductWithVariants = any;
 export type ProductVariant = any;
 export type Product = any;
@@ -25,3 +62,7 @@ export type WishlistItem = any;
 export type OrderProductWithDetails = any;
 export type OrderWithDetails = any;
 export type Address = any;
+
+export type Coupon = z.infer<typeof CouponSchema>;
+export type CreateCoupon = z.infer<typeof CreateCouponSchema>;
+export type ValidateCoupon = z.infer<typeof ValidateCouponSchema>;

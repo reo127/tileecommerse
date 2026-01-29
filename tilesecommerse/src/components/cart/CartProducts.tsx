@@ -1,14 +1,17 @@
 "use client";
 
 /** FUNCTIONALITY */
+import { useState } from "react";
 import { useCart } from "@/hooks/cart";
+import { useValidateCoupon } from "@/hooks/coupon";
+import { toast } from "sonner";
 /** COMPONENTS */
 import Link from "next/link";
 import { ButtonCheckout } from "./ButtonCheckout";
 import { CartProduct } from "./CartProduct";
 /** TYPES */
 import type { ProductWithVariants } from "@/schemas";
-import { HiShoppingCart, HiArrowRight, HiTag } from "react-icons/hi";
+import { HiShoppingCart, HiArrowRight, HiTag, HiX } from "react-icons/hi";
 
 export const CartProducts = ({
   allProducts,
@@ -16,6 +19,15 @@ export const CartProducts = ({
   allProducts: ProductWithVariants[];
 }) => {
   const { items } = useCart();
+  const { validateAsync, isValidating } = useValidateCoupon();
+
+  const [couponCode, setCouponCode] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState<{
+    code: string;
+    discount: number;
+    discountType: "percentage" | "fixed";
+    discountValue: number;
+  } | null>(null);
 
   if (items && items.length > 0) {
     const cartProductsWithInfo = items
@@ -46,13 +58,47 @@ export const CartProducts = ({
       0
     );
 
-    const tax = subtotal * 0.18; // 18% GST
-    const totalPrice = subtotal + tax;
+    const discount = appliedCoupon?.discount || 0;
+    const subtotalAfterDiscount = subtotal - discount;
+    const tax = subtotalAfterDiscount * 0.18; // 18% GST
+    const totalPrice = subtotalAfterDiscount + tax;
     const savings = cartProductsWithInfo.reduce(
       (sum, { product, cartItem }) =>
         sum + ((product.cuttedPrice || product.price) - product.price) * cartItem.quantity,
       0
     );
+
+    const handleApplyCoupon = async () => {
+      if (!couponCode.trim()) {
+        toast.error("Please enter a coupon code");
+        return;
+      }
+
+      try {
+        const result = await validateAsync({
+          code: couponCode.toUpperCase(),
+          orderAmount: subtotal,
+        });
+
+        if (result.valid && result.coupon) {
+          setAppliedCoupon({
+            code: result.coupon.code,
+            discount: result.coupon.discount,
+            discountType: result.coupon.discountType,
+            discountValue: result.coupon.discountValue,
+          });
+          toast.success(`Coupon "${result.coupon.code}" applied successfully!`);
+        }
+      } catch (error: any) {
+        toast.error(error.message || "Invalid coupon code");
+      }
+    };
+
+    const handleRemoveCoupon = () => {
+      setAppliedCoupon(null);
+      setCouponCode("");
+      toast.success("Coupon removed");
+    };
 
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 py-8 px-4 sm:px-6 lg:px-8">
@@ -89,6 +135,60 @@ export const CartProducts = ({
                   Order Summary
                 </h2>
 
+                {/* COUPON SECTION - COMMENTED OUT (Not working - Use checkout page coupon instead)
+                   TODO: Uncomment the code below if you want to use cart page coupon in the future
+                
+                <div className="mb-6 pb-6 border-b border-slate-200">
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Have a coupon code?
+                  </label>
+                  {!appliedCoupon ? (
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={couponCode}
+                        onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                        placeholder="Enter coupon code"
+                        className="flex-1 px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent uppercase"
+                        onKeyPress={(e) => {
+                          if (e.key === 'Enter') {
+                            handleApplyCoupon();
+                          }
+                        }}
+                      />
+                      <button
+                        onClick={handleApplyCoupon}
+                        disabled={isValidating || !couponCode.trim()}
+                        className="px-6 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {isValidating ? "..." : "Apply"}
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
+                      <div className="flex items-center gap-2">
+                        <HiTag className="w-5 h-5 text-green-600" />
+                        <div>
+                          <div className="font-semibold text-green-900">{appliedCoupon.code}</div>
+                          <div className="text-sm text-green-700">
+                            {appliedCoupon.discountType === 'percentage'
+                              ? `${appliedCoupon.discountValue}% off`
+                              : `₹${appliedCoupon.discountValue} off`}
+                          </div>
+                        </div>
+                      </div>
+                      <button
+                        onClick={handleRemoveCoupon}
+                        className="p-1 hover:bg-green-100 rounded-lg transition-colors"
+                        title="Remove coupon"
+                      >
+                        <HiX className="w-5 h-5 text-green-700" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+                */}
+
                 {/* Price Breakdown */}
                 <div className="space-y-4 mb-6">
                   <div className="flex justify-between text-slate-600">
@@ -103,6 +203,16 @@ export const CartProducts = ({
                         Savings
                       </span>
                       <span className="font-medium">-₹{savings.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                    </div>
+                  )}
+
+                  {appliedCoupon && discount > 0 && (
+                    <div className="flex justify-between text-green-600">
+                      <span className="flex items-center gap-1">
+                        <HiTag className="w-4 h-4" />
+                        Coupon Discount
+                      </span>
+                      <span className="font-medium">-₹{discount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
                     </div>
                   )}
 

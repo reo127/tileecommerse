@@ -6,12 +6,21 @@ import { useCart, useCartMutation } from "@/hooks/cart";
 import { getAllProducts } from "@/app/actions";
 import { toast } from "sonner";
 import LoadingButton from "@/components/ui/loadingButton";
+import { useValidateCoupon } from "@/hooks/coupon/mutations/useValidateCoupon";
 
 export const CheckoutForm = () => {
   const router = useRouter();
   const { items } = useCart();
   const { clear: clearCart } = useCartMutation();
   const [isLoading, setIsLoading] = useState(false);
+  const { validateAsync, isValidating } = useValidateCoupon();
+
+  const [couponCode, setCouponCode] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState<{
+    code: string;
+    discount: number;
+    finalAmount: number;
+  } | null>(null);
 
   const [formData, setFormData] = useState({
     // Shipping Info
@@ -28,6 +37,56 @@ export const CheckoutForm = () => {
       ...formData,
       [e.target.name]: e.target.value,
     });
+  };
+
+  const handleApplyCoupon = async () => {
+    if (!couponCode.trim()) {
+      toast.error("Please enter a coupon code");
+      return;
+    }
+
+    try {
+      // Get all products to calculate total
+      const allProducts = await getAllProducts();
+      const orderItems = items.map(item => {
+        const product = allProducts.find((p: any) => p.id === item.productId);
+        return {
+          product: item.productId,
+          name: product?.name || "Unknown Product",
+          price: product?.price || 0,
+          quantity: item.quantity,
+          image: product?.img || "",
+        };
+      });
+
+      const totalPrice = orderItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+      const taxPrice = totalPrice * 0.18; // 18% GST
+      const shippingPrice = totalPrice > 5000 ? 0 : 200;
+      const totalAmount = totalPrice + taxPrice + shippingPrice;
+
+      const result = await validateAsync({
+        code: couponCode,
+        orderAmount: totalAmount,
+      });
+
+      if (result.success && result.valid) {
+        setAppliedCoupon({
+          code: result.coupon.code,
+          discount: result.coupon.discount,
+          finalAmount: result.coupon.finalAmount,
+        });
+        toast.success(`Coupon applied! You saved ₹${result.coupon.discount}`);
+      }
+    } catch (error) {
+      console.error("Error applying coupon:", error);
+      setAppliedCoupon(null);
+    }
+  };
+
+  const handleRemoveCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponCode("");
+    toast.info("Coupon removed");
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -60,22 +119,23 @@ export const CheckoutForm = () => {
           city: formData.shippingCity,
           state: formData.shippingState,
           country: formData.shippingCountry,
-          pincode: parseInt(formData.shippingPinCode), // lowercase 'c' and convert to number
-          phoneNo: parseInt(formData.shippingPhoneNo), // convert to number
+          pincode: parseInt(formData.shippingPinCode),
+          phoneNo: parseInt(formData.shippingPhoneNo),
         },
         orderItems,
         paymentInfo: {
           id: `cash_${Date.now()}`,
           status: "Cash on Delivery",
         },
-        totalPrice: totalAmount,
+        totalPrice: appliedCoupon ? appliedCoupon.finalAmount : totalAmount,
+        couponCode: appliedCoupon ? appliedCoupon.code : undefined,
       };
 
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000/api/v1'}/order/new`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
         },
         credentials: 'include',
         body: JSON.stringify(orderData),
@@ -112,6 +172,25 @@ export const CheckoutForm = () => {
       </div>
     );
   }
+
+  // Calculate totals for display
+  const calculateTotals = async () => {
+    const allProducts = await getAllProducts();
+    const orderItems = items.map(item => {
+      const product = allProducts.find((p: any) => p.id === item.productId);
+      return {
+        price: product?.price || 0,
+        quantity: item.quantity,
+      };
+    });
+
+    const subtotal = orderItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const tax = subtotal * 0.18;
+    const shipping = subtotal > 5000 ? 0 : 200;
+    const total = subtotal + tax + shipping;
+
+    return { subtotal, tax, shipping, total };
+  };
 
   return (
     <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-md p-6">
@@ -196,6 +275,44 @@ export const CheckoutForm = () => {
             placeholder="10-digit mobile number"
           />
         </div>
+      </div>
+
+      {/* Coupon Section */}
+      <div className="mt-8 p-4 bg-gray-50 rounded-lg border border-gray-200">
+        <h3 className="text-lg font-semibold mb-4">Apply Coupon</h3>
+        {!appliedCoupon ? (
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={couponCode}
+              onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+              placeholder="Enter coupon code"
+              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+            />
+            <button
+              type="button"
+              onClick={handleApplyCoupon}
+              disabled={isValidating || !couponCode.trim()}
+              className="px-6 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isValidating ? "Validating..." : "Apply"}
+            </button>
+          </div>
+        ) : (
+          <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded-lg p-3">
+            <div>
+              <p className="font-semibold text-green-800">{appliedCoupon.code}</p>
+              <p className="text-sm text-green-600">You saved ₹{appliedCoupon.discount.toFixed(2)}</p>
+            </div>
+            <button
+              type="button"
+              onClick={handleRemoveCoupon}
+              className="text-red-600 hover:text-red-800 font-medium"
+            >
+              Remove
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="mt-8 p-4 bg-gray-50 rounded-lg">
