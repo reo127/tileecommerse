@@ -26,8 +26,18 @@ export const useAuthMutation = () => {
 
       return result;
     },
-    onSuccess: () => {
-      router.push("/");
+    onSuccess: (result) => {
+      // Redirect based on user role
+      const user = result.data;
+
+      if (user?.role === 'admin') {
+        toast.success("Welcome Admin!");
+        router.push("/admin");
+      } else {
+        toast.success("Login successful!");
+        router.push("/");
+      }
+
       router.refresh();
     },
     onError: (error) => {

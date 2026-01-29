@@ -8,9 +8,12 @@ type WishlistResponse = { items: WishlistItem[] };
 export const useWishlist = () => {
   const { data: session } = useSession();
 
+  // Get user ID - handle both 'id' and '_id' fields
+  const userId = session?.user?.id || (session?.user as any)?._id || session?.user?.email;
+
   const query = useQuery({
-    enabled: !!session?.user?.id,
-    queryKey: WISHLIST_QUERY_KEYS.wishlistList(session?.user?.id!),
+    enabled: !!session?.user && !!userId,
+    queryKey: WISHLIST_QUERY_KEYS.wishlistList(userId!),
     queryFn: async () => {
       const response = await fetch("/api/user/wishlist", {
         method: "GET",

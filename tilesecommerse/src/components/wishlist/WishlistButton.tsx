@@ -3,6 +3,7 @@
 /** FUNCTIONALITY */
 import { useWishlist } from "@/hooks/wishlist";
 import { useThrottleFn } from "ahooks";
+import { toast } from "sonner";
 /** ICONS */
 import { MdFavorite, MdFavoriteBorder } from "react-icons/md";
 /** COMPONENTS */
@@ -24,11 +25,17 @@ const WishlistButton = ({ productId }: WishlistButtonProps) => {
   const isFavorite = isInWishlist(productId);
 
   const { run: throttledToggle } = useThrottleFn(
-    () => {
+    (e: React.MouseEvent) => {
+      // Prevent navigation to product page
+      e.preventDefault();
+      e.stopPropagation();
+
       if (isFavorite) {
         removeFromWishlist({ productId });
+        toast.success("Removed from wishlist");
       } else {
         addToWishlist(productId);
+        toast.success("Added to wishlist");
       }
     },
     {

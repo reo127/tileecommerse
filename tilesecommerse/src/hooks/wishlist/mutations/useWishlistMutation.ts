@@ -10,10 +10,19 @@ export const useWishlistMutation = () => {
   const { data: session } = useSession();
   const queryClient = useQueryClient();
 
+  // Get user ID - handle both 'id' and '_id' fields
+  const userId = session?.user?.id || (session?.user as any)?._id || session?.user?.email;
+
   const add = useMutation({
     mutationFn: async (productId: number) => {
+      // Check authentication before making the request
+      if (!session?.user || !userId) {
+        toast.info("Login first to add to wishlist");
+        throw new Error("Unauthorized");
+      }
+
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_APP_URL}/api/user/wishlist`,
+        `/api/user/wishlist`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -31,17 +40,16 @@ export const useWishlistMutation = () => {
       return WishlistItemSchema.parse(item);
     },
     onMutate: async (productId: number) => {
-      if (!session?.user?.id) {
-        toast.info("Login first to add to wishlist");
-        throw new Error("Unauthorized");
+      if (!session?.user || !userId) {
+        return; // Already handled in mutationFn
       }
 
       await queryClient.cancelQueries({
-        queryKey: WISHLIST_QUERY_KEYS.wishlistList(session.user.id),
+        queryKey: WISHLIST_QUERY_KEYS.wishlistList(userId),
       });
 
       const previousData = queryClient.getQueryData<WishlistResponse>(
-        WISHLIST_QUERY_KEYS.wishlistList(session.user.id)
+        WISHLIST_QUERY_KEYS.wishlistList(userId)
       );
 
       const tempItem: WishlistItem = {
@@ -53,7 +61,7 @@ export const useWishlistMutation = () => {
       };
 
       queryClient.setQueryData<WishlistResponse>(
-        WISHLIST_QUERY_KEYS.wishlistList(session.user.id),
+        WISHLIST_QUERY_KEYS.wishlistList(userId),
         (old = { items: [] }) => {
           if (old.items.some((w) => w.productId === productId)) {
             return old;
@@ -70,8 +78,10 @@ export const useWishlistMutation = () => {
         tempItem: WishlistItem;
       };
 
+      if (!userId) return;
+
       queryClient.setQueryData<WishlistResponse>(
-        WISHLIST_QUERY_KEYS.wishlistList(session?.user?.id!),
+        WISHLIST_QUERY_KEYS.wishlistList(userId),
         (old = { items: [] }) => ({
           items: old.items
             .filter((i) => i.id !== tempItem.id)
@@ -85,15 +95,18 @@ export const useWishlistMutation = () => {
         previousData?: WishlistResponse;
         tempItem: WishlistItem;
       };
-      if (previousData) {
+      if (previousData && userId) {
         queryClient.setQueryData<WishlistResponse>(
-          WISHLIST_QUERY_KEYS.wishlistList(session?.user?.id!),
+          WISHLIST_QUERY_KEYS.wishlistList(userId),
           previousData
         );
       }
 
       console.error("Error adding to wishlist:", error);
-      toast.error("Error adding to wishlist");
+      // Only show error toast if it's not an auth error
+      if (error.message !== "Unauthorized") {
+        toast.error("Error adding to wishlist");
+      }
     },
   });
 
@@ -116,20 +129,20 @@ export const useWishlistMutation = () => {
       return true;
     },
     onMutate: async (params: { itemId?: number; productId?: number }) => {
-      if (!session?.user?.id) {
+      if (!session?.user || !userId) {
         throw new Error("Unauthorized");
       }
 
       await queryClient.cancelQueries({
-        queryKey: WISHLIST_QUERY_KEYS.wishlistList(session.user.id),
+        queryKey: WISHLIST_QUERY_KEYS.wishlistList(userId),
       });
 
       const previousData = queryClient.getQueryData<WishlistResponse>(
-        WISHLIST_QUERY_KEYS.wishlistList(session.user.id)
+        WISHLIST_QUERY_KEYS.wishlistList(userId)
       );
 
       queryClient.setQueryData<WishlistResponse>(
-        WISHLIST_QUERY_KEYS.wishlistList(session.user.id),
+        WISHLIST_QUERY_KEYS.wishlistList(userId),
         (current = { items: [] }) => ({
           items: current.items.filter((i) =>
             params.itemId
@@ -144,9 +157,9 @@ export const useWishlistMutation = () => {
     onError: (error, _, context) => {
       const { previousData } = context as { previousData?: WishlistResponse };
 
-      if (previousData) {
+      if (previousData && userId) {
         queryClient.setQueryData<WishlistResponse>(
-          WISHLIST_QUERY_KEYS.wishlistList(session?.user?.id!),
+          WISHLIST_QUERY_KEYS.wishlistList(userId),
           previousData
         );
       }

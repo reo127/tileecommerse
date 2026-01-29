@@ -8,6 +8,8 @@ import Link from "next/link";
 import { useWishlist } from "@/hooks/wishlist";
 /** TYPES */
 import type { ProductWithVariants } from "@/schemas";
+/** ICONS */
+import { FiHeart, FiArrowRight } from "react-icons/fi";
 
 export const WishlistProducts = ({
   allProducts,
@@ -24,29 +26,57 @@ export const WishlistProducts = ({
     );
 
     return (
-      <div className="pt-12">
-        <h2 className="mb-5 text-xl font-bold sm:text-2xl">YOUR WISHLIST</h2>
-        <GridProducts className="grid-cols-auto-fill-110">
-          {products.map((product) => (
-            <ProductItem key={product.id} product={product} />
-          ))}
-        </GridProducts>
+      <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto">
+          {/* Header */}
+          <div className="mb-12 text-center">
+            <span className="text-xs font-semibold tracking-widest text-slate-500 uppercase mb-3 block">
+              Saved Items
+            </span>
+            <h1 className="text-3xl md:text-4xl font-light text-slate-900 mb-4 tracking-tight">
+              My Wishlist
+            </h1>
+            <p className="text-slate-500 font-light max-w-lg mx-auto text-lg leading-relaxed">
+              Your curated collection of favorites. Review and add them to your cart when you&apos;re ready.
+            </p>
+            <div className="w-16 h-1 bg-slate-900 mx-auto mt-8 rounded-full opacity-10"></div>
+          </div>
+
+          <GridProducts className="grid-cols-auto-fill-250">
+            {products.map((product) => (
+              <ProductItem key={product.id} product={product} />
+            ))}
+          </GridProducts>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col items-center justify-center w-full h-[calc(100vh-91px)] gap-2 px-4">
-      <h1 className="mb-6 text-4xl font-bold">YOUR WISHLIST IS EMPTY</h1>
-      <p className="mb-4 text-lg">
-        When you have added something to your wishlist, it will appear here.
-        Want to get started?
+    <div className="min-h-[70vh] flex flex-col items-center justify-center w-full bg-gray-50 px-4">
+      <div className="relative mb-8">
+        <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center shadow-sm border border-slate-100 relative z-10">
+          <FiHeart className="w-8 h-8 text-slate-300" />
+        </div>
+        <div className="absolute inset-0 bg-slate-200 rounded-full blur-xl opacity-20 transform scale-150"></div>
+      </div>
+
+      <h1 className="mb-3 text-2xl md:text-3xl font-light text-slate-900 text-center tracking-tight">
+        Your wishlist is empty
+      </h1>
+
+      <p className="mb-10 text-slate-500 text-center max-w-md font-light text-lg leading-relaxed">
+        It seems you haven't found any favorites yet. Explore our premium collection to find the perfect tiles for your space.
       </p>
+
       <Link
-        className="flex font-medium items-center bg-[#0C0C0C] justify-center text-sm min-w-[160px] max-w-[160px] h-[40px] px-[10px] rounded-md border border-solid border-[#2E2E2E] transition-all hover:bg-background-tertiary hover:border-[#454545]"
         href="/"
+        className="group relative inline-flex items-center justify-center px-8 py-4 bg-slate-900 text-white text-sm font-medium tracking-wide transition-all duration-300 hover:bg-slate-800 hover:shadow-xl hover:-translate-y-0.5 rounded-full overflow-hidden"
       >
-        Start
+        <span className="relative z-10 flex items-center gap-2">
+          Start Exploring
+          <FiArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+        </span>
       </Link>
     </div>
   );

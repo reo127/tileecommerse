@@ -140,7 +140,7 @@ export const useCartMutation = () => {
       const response = await fetch("/api/user/cart", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: itemId, quantity }),
+        body: JSON.stringify({ itemId, quantity }),
       });
 
       if (!response.ok) {
@@ -149,26 +149,25 @@ export const useCartMutation = () => {
         throw new Error(errorMessage);
       }
 
-      const { item } = await response.json();
-      return CartItemSchema.parse(item);
+      const { items } = await response.json();
+      return { success: true, items };
     },
     onMutate: async (params: { itemId: number; quantity: number }) => {
-      if (!session?.user?.id) {
-        throw new Error("Unauthorized");
-      }
+      // Use guest session if not logged in
+      const userId = session?.user?.id || "guest";
 
       const { itemId, quantity } = params;
 
       await queryClient.cancelQueries({
-        queryKey: CART_QUERY_KEYS.cartList(session.user.id),
+        queryKey: CART_QUERY_KEYS.cartList(userId),
       });
 
       const previousData = queryClient.getQueryData<CartResponse>(
-        CART_QUERY_KEYS.cartList(session.user.id)
+        CART_QUERY_KEYS.cartList(userId)
       );
 
       queryClient.setQueryData<CartResponse>(
-        CART_QUERY_KEYS.cartList(session.user.id),
+        CART_QUERY_KEYS.cartList(userId),
         (current = { items: [] }) => {
           const next = [...current.items];
           const idx = next.findIndex((i) => i.id === itemId);
@@ -183,25 +182,20 @@ export const useCartMutation = () => {
         }
       );
 
-      return { previousData };
+      return { previousData, userId };
     },
     onSuccess: (data, _, context) => {
-      queryClient.setQueryData<CartResponse>(
-        CART_QUERY_KEYS.cartList(session?.user?.id!),
-        (current = { items: [] }) => {
-          const next = [...current.items];
-          const idx = next.findIndex((i) => i.id === data.id);
-          if (idx >= 0) next[idx] = data;
-          return { items: next };
-        }
-      );
+      const { userId } = context as { previousData?: CartResponse; userId: string };
+
+      // Invalidate to refetch fresh data
+      queryClient.invalidateQueries({ queryKey: CART_QUERY_KEYS.cartList(userId) });
     },
     onError: (error, _, context) => {
-      const { previousData } = context as { previousData?: CartResponse };
+      const { previousData, userId } = context as { previousData?: CartResponse; userId: string };
 
       if (previousData) {
         queryClient.setQueryData<CartResponse>(
-          CART_QUERY_KEYS.cartList(session?.user?.id!),
+          CART_QUERY_KEYS.cartList(userId),
           previousData
         );
       }
@@ -216,7 +210,7 @@ export const useCartMutation = () => {
       const { itemId } = params;
 
       const qs = new URLSearchParams();
-      qs.set("itemId", String(itemId));
+      qs.set("id", String(itemId));
 
       const response = await fetch(`/api/user/cart?${qs.toString()}`, {
         method: "DELETE",
@@ -231,35 +225,41 @@ export const useCartMutation = () => {
       return true;
     },
     onMutate: async (params: { itemId: number }) => {
-      if (!session?.user?.id) {
-        throw new Error("Unauthorized");
-      }
+      // Use guest session if not logged in
+      const userId = session?.user?.id || "guest";
 
       const { itemId } = params;
 
       await queryClient.cancelQueries({
-        queryKey: CART_QUERY_KEYS.cartList(session.user.id),
+        queryKey: CART_QUERY_KEYS.cartList(userId),
       });
 
       const previousData = queryClient.getQueryData<CartResponse>(
-        CART_QUERY_KEYS.cartList(session.user.id)
+        CART_QUERY_KEYS.cartList(userId)
       );
 
       queryClient.setQueryData<CartResponse>(
-        CART_QUERY_KEYS.cartList(session.user.id),
+        CART_QUERY_KEYS.cartList(userId),
         (current = { items: [] }) => ({
           items: current.items.filter((i) => i.id !== itemId),
         })
       );
 
-      return { previousData };
+      return { previousData, userId };
+    },
+    onSuccess: (data, _, context) => {
+      const { userId } = context as { previousData?: CartResponse; userId: string };
+
+      toast.success("Removed from cart");
+      // Invalidate to refetch fresh data
+      queryClient.invalidateQueries({ queryKey: CART_QUERY_KEYS.cartList(userId) });
     },
     onError: (error, _, context) => {
-      const { previousData } = context as { previousData?: CartResponse };
+      const { previousData, userId } = context as { previousData?: CartResponse; userId: string };
 
       if (previousData) {
         queryClient.setQueryData<CartResponse>(
-          CART_QUERY_KEYS.cartList(session?.user?.id!),
+          CART_QUERY_KEYS.cartList(userId),
           previousData
         );
       }
@@ -284,31 +284,30 @@ export const useCartMutation = () => {
       return true;
     },
     onMutate: async () => {
-      if (!session?.user?.id) {
-        throw new Error("Unauthorized");
-      }
+      // Use guest session if not logged in
+      const userId = session?.user?.id || "guest";
 
       await queryClient.cancelQueries({
-        queryKey: CART_QUERY_KEYS.cartList(session.user.id),
+        queryKey: CART_QUERY_KEYS.cartList(userId),
       });
 
       const previousData = queryClient.getQueryData<CartResponse>(
-        CART_QUERY_KEYS.cartList(session.user.id)
+        CART_QUERY_KEYS.cartList(userId)
       );
 
       queryClient.setQueryData<CartResponse>(
-        CART_QUERY_KEYS.cartList(session.user.id),
+        CART_QUERY_KEYS.cartList(userId),
         { items: [] }
       );
 
-      return { previousData };
+      return { previousData, userId };
     },
     onError: (error, _, context) => {
-      const { previousData } = context as { previousData?: CartResponse };
+      const { previousData, userId } = context as { previousData?: CartResponse; userId: string };
 
       if (previousData) {
         queryClient.setQueryData<CartResponse>(
-          CART_QUERY_KEYS.cartList(session?.user?.id!),
+          CART_QUERY_KEYS.cartList(userId),
           previousData
         );
       }

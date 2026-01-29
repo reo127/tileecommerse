@@ -55,6 +55,10 @@ export const authClient = {
         if (data.token) {
           localStorage.setItem('auth_token', data.token);
           localStorage.setItem('user', JSON.stringify(data.user));
+
+          // Also set cookies for server-side access
+          document.cookie = `token=${data.token}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
+          document.cookie = `user=${encodeURIComponent(JSON.stringify(data.user))}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
         }
 
         return { data: data.user, error: null };
@@ -102,10 +106,14 @@ export const authClient = {
           };
         }
 
-        // Store token in localStorage
+        // Store token in localStorage and cookies
         if (data.token) {
           localStorage.setItem('auth_token', data.token);
           localStorage.setItem('user', JSON.stringify(data.user));
+
+          // Also set cookies for server-side access
+          document.cookie = `token=${data.token}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
+          document.cookie = `user=${encodeURIComponent(JSON.stringify(data.user))}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
         }
 
         return { data: data.user, error: null };
@@ -126,16 +134,22 @@ export const authClient = {
         credentials: 'include',
       });
 
-      // Clear local storage
+      // Clear local storage and cookies
       localStorage.removeItem('auth_token');
       localStorage.removeItem('user');
+
+      // Clear cookies
+      document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+      document.cookie = 'user=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
 
       return { data: { success: true }, error: null };
     } catch (error) {
       console.error('Sign out error:', error);
-      // Still clear local storage even if request fails
+      // Still clear local storage and cookies even if request fails
       localStorage.removeItem('auth_token');
       localStorage.removeItem('user');
+      document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+      document.cookie = 'user=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
       return { data: { success: true }, error: null };
     }
   },

@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { useCartMutation } from "@/hooks/cart";
-// import { useWishlistMutation } from "@/hooks/wishlist";
+import { useWishlistMutation } from "@/hooks/wishlist";
+import { useSession } from "@/lib/auth/client";
 import { toast } from "sonner";
 import type { ProductWithVariants } from "@/schemas";
 
@@ -19,8 +20,9 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
   const [quantity, setQuantity] = useState(1);
   const [pincode, setPincode] = useState("");
 
+  const { data: session } = useSession();
   const { add: addToCart, isAdding } = useCartMutation();
-  // const { add: addToWishlist, isAddingToWishlist } = useWishlistMutation();
+  const { add: addToWishlist, isAddingToWishlist } = useWishlistMutation();
 
   const handleAddToCart = () => {
     const selectedVariant = product.variants.find((v: any) => v.color === selectedColor);
@@ -37,8 +39,12 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
   };
 
   const handleAddToWishlist = () => {
-    // addToWishlist(product.id);
-    toast.info("Wishlist feature coming soon!");
+    if (!session?.user) {
+      toast.info("Login first to add to wishlist");
+      return;
+    }
+    addToWishlist(product.id);
+    toast.success("Added to wishlist!");
   };
 
   const uniqueColors = Array.from(new Set(product.variants.map((v: any) => v.color)));
@@ -180,9 +186,10 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
       <div className="flex gap-3">
         <button
           onClick={handleAddToWishlist}
-          className="flex-1 bg-slate-900 text-white py-4 rounded-lg hover:bg-slate-800 transition-colors font-semibold text-lg"
+          disabled={isAddingToWishlist}
+          className="flex-1 bg-slate-900 text-white py-4 rounded-lg hover:bg-slate-800 transition-colors font-semibold text-lg disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Add to Wishlist
+          {isAddingToWishlist ? "Adding..." : "Add to Wishlist"}
         </button>
         <button
           onClick={handleAddToCart}

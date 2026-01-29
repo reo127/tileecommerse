@@ -4,6 +4,7 @@ import { getUser } from "@/lib/auth/server";
 import { SVGLoadingIcon } from "@/components/ui/loader";
 import { WishlistProducts } from "@/components/wishlist";
 import { getAllProducts } from "@/app/actions";
+import { FiUser, FiArrowRight } from "react-icons/fi";
 
 export async function generateMetadata() {
   return {
@@ -32,17 +33,30 @@ const WishlistPage = async () => {
   }
 
   return (
-    <div className="flex flex-col items-center justify-center w-full h-[calc(100vh-91px)] gap-2 px-4">
-      <h1 className="mb-6 text-4xl font-bold">YOUR WISHLIST IS EMPTY</h1>
-      <p className="mb-4 text-lg">
-        Not registered? You must be in order to save your products in the
-        wishlist.
+    <div className="min-h-[70vh] flex flex-col items-center justify-center w-full bg-gray-50 px-4">
+      <div className="relative mb-8">
+        <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center shadow-sm border border-slate-100 relative z-10">
+          <FiUser className="w-8 h-8 text-slate-300" />
+        </div>
+        <div className="absolute inset-0 bg-slate-200 rounded-full blur-xl opacity-20 transform scale-150"></div>
+      </div>
+
+      <h1 className="mb-3 text-2xl md:text-3xl font-light text-slate-900 text-center tracking-tight">
+        Please Login
+      </h1>
+
+      <p className="mb-10 text-slate-500 text-center max-w-md font-light text-lg leading-relaxed">
+        Sign in to view your wishlist and save your favorite items for later.
       </p>
+
       <Link
-        className="flex font-medium items-center bg-[#0C0C0C] justify-center text-sm min-w-[160px] max-w-[160px] h-[40px] px-[10px] rounded-md border border-solid border-[#2E2E2E] transition-all hover:bg-background-tertiary hover:border-[#454545]"
         href="/login"
+        className="group relative inline-flex items-center justify-center px-8 py-4 bg-slate-900 text-white text-sm font-medium tracking-wide transition-all duration-300 hover:bg-slate-800 hover:shadow-xl hover:-translate-y-0.5 rounded-full overflow-hidden"
       >
-        Login
+        <span className="relative z-10 flex items-center gap-2">
+          Login Now
+          <FiArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+        </span>
       </Link>
     </div>
   );

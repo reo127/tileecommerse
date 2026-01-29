@@ -1,53 +1,54 @@
+"use client";
+
 import { Sidebar } from "@/components/admin/Sidebar";
-import { getSession } from "@/lib/auth/server";
-import { redirect } from "next/navigation";
+import { useSession } from "@/lib/auth/client";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+import { toast } from "sonner";
 
-// Force dynamic rendering for all admin pages (they require authentication)
-export const dynamic = 'force-dynamic';
-
-export default async function AdminLayout({
+export default function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  console.log("\n\n=== ADMIN LAYOUT ACCESSED ===");
-  console.log("Timestamp:", new Date().toISOString());
+  const { data: session, isPending } = useSession();
+  const router = useRouter();
 
-  // Mock session for frontend-only demo
-  const session = await getSession();
+  useEffect(() => {
+    // Check authentication on client side
+    if (!isPending && !session?.user) {
+      toast.error("Please login to access admin panel");
+      router.push("/login?redirect=/admin");
+      return;
+    }
 
-  console.log("Session exists:", !!session);
-  console.log("User exists:", !!session?.user);
+    // Check admin role
+    if (!isPending && session?.user) {
+      const userRole = (session.user as any)?.role;
+      if (userRole !== "admin" && userRole !== "superadmin") {
+        toast.error("You don't have permission to access admin panel");
+        router.push("/");
+        return;
+      }
+    }
+  }, [session, isPending, router]);
 
-  if (session?.user) {
-    console.log("User ID:", session.user.id);
-    console.log("User email:", session.user.email);
+  // Show loading while checking auth
+  if (isPending) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-orange-500 mx-auto mb-4"></div>
+          <p className="text-gray-600 text-lg">Loading Admin Dashboard...</p>
+        </div>
+      </div>
+    );
   }
 
-  // For frontend-only demo, comment out redirect
-  // In real app, redirect to login if no session
-  // if (!session?.user) {
-  //   console.log("NO USER - redirecting");
-  //   redirect("/login?redirect=/admin");
-  // }
-
-  // Get user role - Better Auth returns it in the user object
-  const userRole = (session.user as any).role;
-  console.log("User role from session:", userRole);
-  console.log("User role type:", typeof userRole);
-  console.log("User role strict equality check (admin):", userRole === "admin");
-  console.log("User role strict equality check (superadmin):", userRole === "superadmin");
-
-  // Check if user has admin or superadmin role
-  if (!userRole || (userRole !== "admin" && userRole !== "superadmin")) {
-    console.error("\n!!! UNAUTHORIZED ACCESS ATTEMPT !!!");
-    console.error("User role:", userRole);
-    console.error("Full user object:", JSON.stringify(session.user, null, 2));
-    console.error("Redirecting to home page\n");
-    redirect("/?error=unauthorized");
+  // Don't render if not authenticated or not admin
+  if (!session?.user || ((session.user as any)?.role !== "admin" && (session.user as any)?.role !== "superadmin")) {
+    return null;
   }
-
-  console.log("✅ ACCESS GRANTED to admin dashboard\n\n");
 
   return (
     <div className="flex min-h-screen bg-gray-50">
