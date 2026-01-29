@@ -1,0 +1,9 @@
+export { HeroBanner } from "./HeroBanner";
+export { HeroSlider } from "./HeroSlider";
+export { CollectionGrid } from "./CollectionGrid";
+export { BrowseByColor } from "./BrowseByColor";
+export { Testimonials } from "./Testimonials";
+export { FeaturedCategories } from "./FeaturedCategories";
+export { FeaturedProductsSection } from "./FeaturedProductsSection";
+export { AccessoriesSection } from "./AccessoriesSection";
+export { LatestBlogs } from "./LatestBlogs";
