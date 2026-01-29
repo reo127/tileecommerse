@@ -45,13 +45,10 @@ export const SingleProduct = async ({
     );
   }
 
-  // Generate multiple images for gallery (in real app, these would come from database)
-  const productImages = [
-    productPlainObject.img,
-    productPlainObject.img,
-    productPlainObject.img,
-    productPlainObject.img,
-  ];
+  // Use actual product images from database
+  const productImages = (productPlainObject as any).images && (productPlainObject as any).images.length > 0
+    ? (productPlainObject as any).images.map((img: any) => img.url || img)
+    : [productPlainObject.img]; // Fallback to main image if no images array
 
   return (
     <ProductDetailClient
