@@ -58,64 +58,42 @@ export default function CustomersPage() {
   const fetchCustomers = async () => {
     try {
       setLoading(true);
-      // Mock data for now - replace with actual API call
-      const mockCustomers: Customer[] = [
-        {
-          _id: '1',
-          name: 'Rajesh Kumar',
-          email: 'rajesh.kumar@example.com',
-          phone: '+91 98765 43210',
-          role: 'user',
-          isBlocked: false,
-          createdAt: '2025-01-15T10:30:00Z',
-          totalOrders: 12,
-          totalSpent: 45000,
-          addresses: [
-            {
-              street: '123 MG Road',
-              city: 'Bangalore',
-              state: 'Karnataka',
-              pincode: '560001',
-              country: 'India'
-            }
-          ]
+      const token = localStorage.getItem('auth_token');
+      if (!token) {
+        showAlert('error', 'Authentication token not found. Please log in.');
+        setLoading(false);
+        return;
+      }
+
+      const response = await fetch(`${API_BASE_URL}/admin/users`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
         },
-        {
-          _id: '2',
-          name: 'Priya Sharma',
-          email: 'priya.sharma@example.com',
-          phone: '+91 87654 32109',
-          role: 'user',
-          isBlocked: false,
-          createdAt: '2025-12-20T14:45:00Z',
-          totalOrders: 8,
-          totalSpent: 32000,
-          addresses: [
-            {
-              street: '456 Brigade Road',
-              city: 'Bangalore',
-              state: 'Karnataka',
-              pincode: '560025',
-              country: 'India'
-            }
-          ]
-        },
-        {
-          _id: '3',
-          name: 'Amit Patel',
-          email: 'amit.patel@example.com',
-          phone: '+91 76543 21098',
-          role: 'user',
-          isBlocked: true,
-          createdAt: '2025-11-10T09:15:00Z',
-          totalOrders: 3,
-          totalSpent: 8500,
-        }
-      ];
-      setCustomers(mockCustomers);
-      setFilteredCustomers(mockCustomers);
-    } catch (error) {
-      showAlert('error', 'Failed to fetch customers');
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to fetch customers');
+      }
+
+      const data = await response.json();
+      
+      // Adapt backend data to frontend Customer interface
+      const adaptedCustomers = data.users.map((user: any) => ({
+        ...user,
+        phone: user.phone || 'N/A',
+        isBlocked: user.role === 'disabled',
+        totalOrders: user.totalOrders || 0,
+        totalSpent: user.totalSpent || 0,
+        addresses: user.addresses || [],
+      }));
+
+      setCustomers(adaptedCustomers);
+      setFilteredCustomers(adaptedCustomers);
+    } catch (error: any) {
+      showAlert('error', error.message || 'Failed to fetch customers');
     } finally {
       setLoading(false);
     }
@@ -137,22 +115,8 @@ export default function CustomersPage() {
   };
 
   const toggleBlockStatus = async (customer: Customer) => {
-    const action = customer.isBlocked ? 'unblock' : 'block';
-    if (!confirm(`Are you sure you want to ${action} ${customer.name}?`)) return;
-
-    setActionLoading(customer._id);
-    try {
-      // Mock action - replace with actual API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      setCustomers(customers.map(c =>
-        c._id === customer._id ? { ...c, isBlocked: !c.isBlocked } : c
-      ));
-      showAlert('success', `Customer ${action}ed successfully!`);
-    } catch (error) {
-      showAlert('error', `Failed to ${action} customer`);
-    } finally {
-      setActionLoading(null);
-    }
+    // This is a mock action as the backend does not support it yet.
+    showAlert('success', `This is a mock action. The '${customer.isBlocked ? 'unblock' : 'block'}' feature is not yet implemented in the backend.`);
   };
 
   if (loading) {
