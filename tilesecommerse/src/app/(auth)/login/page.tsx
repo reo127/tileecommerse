@@ -63,14 +63,14 @@ const Login = () => {
               )}
 
               <div className="space-y-2">
-                <label className="text-xs font-medium text-gray-400 tracking-wider uppercase">
+                <label className="text-xs font-medium text-zinc-400 tracking-wider uppercase ml-1">
                   Email Address
                 </label>
                 <input
                   type="email"
                   ref={emailRef}
-                  placeholder="you@example.com"
-                  className="w-full px-4 py-3.5 bg-black/50 border border-zinc-800 rounded-xl text-white placeholder-gray-600 focus:outline-none focus:border-zinc-600 transition-all duration-200 font-light"
+                  placeholder="name@example.com"
+                  className="w-full px-4 py-3.5 bg-zinc-900/50 border border-zinc-800 rounded-xl text-white placeholder:text-zinc-600 focus:outline-none focus:border-zinc-700 focus:ring-1 focus:ring-zinc-700/50 transition-all duration-200 font-light"
                   name="email"
                   required
                   disabled={isLoading}
@@ -78,7 +78,7 @@ const Login = () => {
               </div>
 
               <div className="space-y-2">
-                <label className="text-xs font-medium text-gray-400 tracking-wider uppercase">
+                <label className="text-xs font-medium text-zinc-400 tracking-wider uppercase ml-1">
                   Password
                 </label>
                 <PasswordInput
@@ -86,7 +86,8 @@ const Login = () => {
                   name="password"
                   required
                   disabled={isLoading}
-                  className="w-full px-4 py-3.5 bg-black/50 border border-zinc-800 rounded-xl text-white placeholder-gray-600 focus:outline-none focus:border-zinc-600 transition-all duration-200 font-light"
+                  placeholder="Enter your password"
+                  className="w-full px-4 py-3.5 bg-zinc-900/50 border border-zinc-800 rounded-xl text-white focus-within:border-zinc-700 focus-within:ring-1 focus-within:ring-zinc-700/50 transition-all duration-200 font-light"
                 />
               </div>
 

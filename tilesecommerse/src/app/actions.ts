@@ -55,7 +55,7 @@ function transformProduct(backendProduct: any) {
 export async function getAllProducts() {
   try {
     const response = await fetch(`${API_BASE_URL}/products/all`, {
-      cache: 'no-store', // Don't cache to always get fresh data
+      next: { revalidate: 60 }, // Cache for 60 seconds
     });
 
     if (!response.ok) {
@@ -75,7 +75,7 @@ export async function getAllProducts() {
 export async function getCategoryProducts(category: ProductCategory) {
   try {
     const response = await fetch(`${API_BASE_URL}/products?category=${category}`, {
-      cache: 'no-store',
+      next: { revalidate: 60 }, // Cache for 60 seconds
     });
 
     if (!response.ok) {
@@ -95,7 +95,7 @@ export async function getCategoryProducts(category: ProductCategory) {
 export async function getProduct(productId: string) {
   try {
     const response = await fetch(`${API_BASE_URL}/product/${productId}`, {
-      cache: 'no-store',
+      next: { revalidate: 60 }, // Cache for 60 seconds
     });
 
     if (!response.ok) {
@@ -125,7 +125,7 @@ export async function getRandomProducts(limit: number = 4) {
 export async function searchProducts(query: string) {
   try {
     const response = await fetch(`${API_BASE_URL}/products?keyword=${encodeURIComponent(query)}`, {
-      cache: 'no-store',
+      next: { revalidate: 30 }, // Cache search results for 30 seconds
     });
 
     if (!response.ok) {

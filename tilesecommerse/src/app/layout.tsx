@@ -16,6 +16,8 @@ export const metadata: Metadata = {
   keywords: "tiles, ceramic tiles, vitrified tiles, marble tiles, bengaluru, showroom",
 };
 
+const isDevelopment = process.env.NODE_ENV === 'development';
+
 export default async function RootLayout({
   children,
 }: {
@@ -28,8 +30,12 @@ export default async function RootLayout({
           <LayoutWrapper>
             {children}
             <Toaster position="bottom-right" />
-            <Analytics />
-            <SpeedInsights />
+            {!isDevelopment && (
+              <>
+                <Analytics />
+                <SpeedInsights />
+              </>
+            )}
           </LayoutWrapper>
         </Providers>
       </body>

@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useState } from "react";
 
 const featuredProducts = [
   {
@@ -104,14 +103,10 @@ const featuredProducts = [
 ];
 
 const ProductCard = ({ product }: { product: typeof featuredProducts[0] }) => {
-  const [isHovered, setIsHovered] = useState(false);
-
   return (
     <Link
       href={product.href}
       className="group bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden hover:-translate-y-2"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
     >
       {/* Image Container */}
       <div className="relative h-48 md:h-56 overflow-hidden bg-gray-100">
@@ -130,7 +125,7 @@ const ProductCard = ({ product }: { product: typeof featuredProducts[0] }) => {
         </div>
 
         {/* Quick View & Add to Cart on Hover */}
-        <div className={`absolute inset-0 bg-black/40 flex items-center justify-center gap-3 transition-opacity duration-300 ${isHovered ? "opacity-100" : "opacity-0"}`}>
+        <div className="absolute inset-0 bg-black/40 flex items-center justify-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
           <button className="px-4 py-2 bg-white text-slate-900 font-semibold rounded-lg hover:bg-yellow-500 hover:text-white transition-colors shadow-lg">
             Quick View
           </button>

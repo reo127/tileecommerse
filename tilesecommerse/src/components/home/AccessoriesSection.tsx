@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useState } from "react";
 
 const accessories = [
   {
@@ -62,14 +61,10 @@ const accessories = [
 ];
 
 const AccessoryCard = ({ accessory }: { accessory: typeof accessories[0] }) => {
-  const [isHovered, setIsHovered] = useState(false);
-
   return (
     <Link
       href={accessory.href}
       className="group bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden flex hover:-translate-y-1"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
     >
       {/* Image */}
       <div className="relative w-32 h-32 flex-shrink-0 overflow-hidden bg-gray-100">
@@ -80,7 +75,7 @@ const AccessoryCard = ({ accessory }: { accessory: typeof accessories[0] }) => {
           className="object-cover group-hover:scale-110 transition-transform duration-500"
         />
         {/* Add to Cart overlay on hover */}
-        <div className={`absolute inset-0 bg-black/40 flex items-center justify-center transition-opacity duration-300 ${isHovered ? "opacity-100" : "opacity-0"}`}>
+        <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
           <button className="px-3 py-1.5 bg-yellow-500 text-white text-sm font-semibold rounded-lg hover:bg-yellow-600 transition-colors shadow-lg">
             Add to Cart
           </button>

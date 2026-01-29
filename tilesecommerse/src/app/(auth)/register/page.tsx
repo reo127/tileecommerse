@@ -65,7 +65,7 @@ const Register = () => {
               )}
 
               <div className="space-y-2">
-                <label className="text-xs font-medium text-gray-400 tracking-wider uppercase">
+                <label className="text-xs font-medium text-zinc-400 tracking-wider uppercase ml-1">
                   Full Name
                 </label>
                 <input
@@ -73,47 +73,54 @@ const Register = () => {
                   ref={nameRef}
                   required
                   placeholder="John Doe"
-                  className="w-full px-4 py-3.5 bg-black/50 border border-zinc-800 rounded-xl text-white placeholder-gray-600 focus:outline-none focus:border-zinc-600 transition-all duration-200 font-light"
+                  className="w-full px-4 py-3.5 bg-zinc-900/50 border border-zinc-800 rounded-xl text-white placeholder:text-zinc-600 focus:outline-none focus:border-zinc-700 focus:ring-1 focus:ring-zinc-700/50 transition-all duration-200 font-light"
                   name="name"
                   disabled={isLoading}
                 />
               </div>
 
               <div className="space-y-2">
-                <label className="text-xs font-medium text-gray-400 tracking-wider uppercase">
+                <label className="text-xs font-medium text-zinc-400 tracking-wider uppercase ml-1">
                   Email Address
                 </label>
                 <input
                   type="email"
                   ref={emailRef}
                   required
-                  placeholder="you@example.com"
-                  className="w-full px-4 py-3.5 bg-black/50 border border-zinc-800 rounded-xl text-white placeholder-gray-600 focus:outline-none focus:border-zinc-600 transition-all duration-200 font-light"
+                  placeholder="name@example.com"
+                  className="w-full px-4 py-3.5 bg-zinc-900/50 border border-zinc-800 rounded-xl text-white placeholder:text-zinc-600 focus:outline-none focus:border-zinc-700 focus:ring-1 focus:ring-zinc-700/50 transition-all duration-200 font-light"
                   name="email"
                   disabled={isLoading}
                 />
               </div>
 
               <div className="space-y-2">
-                <label className="text-xs font-medium text-gray-400 tracking-wider uppercase">
+                <label className="text-xs font-medium text-zinc-400 tracking-wider uppercase ml-1">
                   Gender
                 </label>
-                <select
-                  ref={genderRef}
-                  required
-                  className="w-full px-4 py-3.5 bg-black/50 border border-zinc-800 rounded-xl text-white placeholder-gray-600 focus:outline-none focus:border-zinc-600 transition-all duration-200 font-light"
-                  name="gender"
-                  disabled={isLoading}
-                >
-                  <option value="">Select gender</option>
-                  <option value="male">Male</option>
-                  <option value="female">Female</option>
-                  <option value="other">Other</option>
-                </select>
+                <div className="relative">
+                  <select
+                    ref={genderRef}
+                    required
+                    className="w-full px-4 py-3.5 bg-zinc-900/50 border border-zinc-800 rounded-xl text-white focus:outline-none focus:border-zinc-700 focus:ring-1 focus:ring-zinc-700/50 transition-all duration-200 font-light appearance-none"
+                    name="gender"
+                    disabled={isLoading}
+                  >
+                    <option value="" className="bg-zinc-900 text-gray-500">Select gender</option>
+                    <option value="male" className="bg-zinc-900">Male</option>
+                    <option value="female" className="bg-zinc-900">Female</option>
+                    <option value="other" className="bg-zinc-900">Other</option>
+                  </select>
+                  <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-zinc-500">
+                    <svg className="w-4 h-4 fill-current" viewBox="0 0 20 20">
+                      <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" fillRule="evenodd"></path>
+                    </svg>
+                  </div>
+                </div>
               </div>
 
               <div className="space-y-2">
-                <label className="text-xs font-medium text-gray-400 tracking-wider uppercase">
+                <label className="text-xs font-medium text-zinc-400 tracking-wider uppercase ml-1">
                   Password
                 </label>
                 <PasswordInput
@@ -121,9 +128,10 @@ const Register = () => {
                   name="password"
                   required
                   disabled={isLoading}
-                  className="w-full px-4 py-3.5 bg-black/50 border border-zinc-800 rounded-xl text-white placeholder-gray-600 focus:outline-none focus:border-zinc-600 transition-all duration-200 font-light"
+                  placeholder="Create a password"
+                  className="w-full px-4 py-3.5 bg-zinc-900/50 border border-zinc-800 rounded-xl text-white focus-within:border-zinc-700 focus-within:ring-1 focus-within:ring-zinc-700/50 transition-all duration-200 font-light"
                 />
-                <p className="text-xs text-gray-600 mt-1 font-light">
+                <p className="text-xs text-zinc-500 mt-1 font-light ml-1">
                   Must be at least 8 characters long
                 </p>
               </div>

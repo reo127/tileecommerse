@@ -30,9 +30,10 @@ export const useCart = () => {
         items: CartItemSchema.array().parse(data.items),
       } as CartResponse;
     },
-    refetchOnWindowFocus: true,
-    refetchOnReconnect: true,
-    refetchOnMount: true,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    refetchOnMount: false,
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
   const items = query.data?.items ?? [];

@@ -1,40 +1,38 @@
 "use client";
 
-/** FUNCTIONALITY */
+import { cn } from "@/lib/utils";
 import { forwardRef, useState, InputHTMLAttributes } from "react";
-/** ICONS */
 import { AiOutlineEye, AiOutlineEyeInvisible } from "react-icons/ai";
 
 export const PasswordInput = forwardRef<
   HTMLInputElement,
   InputHTMLAttributes<HTMLInputElement>
->((props, ref) => {
+>(({ className, ...props }, ref) => {
   const [showPassword, setShowPassword] = useState(false);
 
   return (
-    <div className="flex w-full">
+    <div
+      className={cn(
+        "flex w-full items-center relative overflow-hidden transition-all duration-200",
+        className // This applies the border, bg, padding, etc. to the wrapper
+      )}
+    >
       <input
         {...props}
         ref={ref}
-        required
         type={showPassword ? "text" : "password"}
-        placeholder={props.placeholder || "Password"}
-        className="w-full text-color-secondary h-8 border border-solid border-[#2E2E2E] py-1 px-2.5 rounded-l bg-background-primary text-13"
-        name={props.name || "password"}
+        className="flex-1 min-w-0 bg-transparent border-none outline-none w-full h-full text-inherit placeholder:text-gray-500 focus:ring-0 p-0"
       />
       <button
-        className="flex text-color-secondary items-center justify-center w-2/12 transition duration-150 bg-background-primary border-r border-solid rounded-r border-y border-[#2E2E2E] ease hover:bg-background-tertiary disabled:opacity-50 disabled:cursor-not-allowed"
-        onClick={(e) => {
-          e.preventDefault();
-          setShowPassword(!showPassword);
-        }}
         type="button"
+        onClick={() => setShowPassword(!showPassword)}
         disabled={props.disabled}
+        className="ml-3 text-gray-500 hover:text-gray-300 focus:outline-none transition-colors disabled:opacity-50 flex-shrink-0"
       >
         {showPassword ? (
-          <AiOutlineEye size={16} />
+          <AiOutlineEye size={20} />
         ) : (
-          <AiOutlineEyeInvisible size={16} />
+          <AiOutlineEyeInvisible size={20} />
         )}
       </button>
     </div>

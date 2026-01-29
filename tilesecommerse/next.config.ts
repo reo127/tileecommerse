@@ -16,7 +16,9 @@ const nextConfig: NextConfig = {
         hostname: "res.cloudinary.com",
       },
     ],
+    formats: ['image/webp'],
   },
+  reactStrictMode: true,
 };
 
 export default nextConfig;

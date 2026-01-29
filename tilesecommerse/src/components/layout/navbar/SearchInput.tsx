@@ -1,19 +1,37 @@
 "use client";
 
-import { useCallback, Suspense } from "react";
+import { useCallback, Suspense, useRef, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 
 function SearchInputContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Cleanup debounce timer on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, []);
 
   const handleChange = useCallback(
     (term: string) => {
-      if (term) {
-        router.replace(`/search?q=${encodeURIComponent(term)}`);
-      } else {
-        router.replace("/search");
+      // Clear existing timer
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
       }
+
+      // Set new timer to debounce the navigation
+      debounceTimerRef.current = setTimeout(() => {
+        if (term) {
+          router.replace(`/search?q=${encodeURIComponent(term)}`);
+        } else {
+          router.replace("/search");
+        }
+      }, 500); // Wait 500ms after user stops typing
     },
     [router]
   );
