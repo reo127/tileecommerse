@@ -213,7 +213,35 @@ exports.updateProfile = asyncErrorHandler(async (req, res, next) => {
 // Get All Users --ADMIN
 exports.getAllUsers = asyncErrorHandler(async (req, res, next) => {
 
-    const users = await User.find();
+    const users = await User.aggregate([
+        {
+            $lookup: {
+                from: "orders",
+                localField: "_id",
+                foreignField: "user",
+                as: "userOrders"
+            }
+        },
+        {
+            $addFields: {
+                totalOrders: { $size: "$userOrders" },
+                totalSpent: { $sum: "$userOrders.totalPrice" },
+                phone: { $ifNull: [ { $arrayElemAt: ["$addresses.phoneNo", 0] }, "N/A" ] }
+            }
+        },
+        {
+            $project: {
+                // Exclude fields to keep the payload clean
+                userOrders: 0,
+                cart: 0,
+                wishlist: 0,
+                recentlyViewed: 0,
+                __v: 0,
+                resetPasswordToken: 0,
+                resetPasswordExpire: 0
+            }
+        }
+    ]);
 
     res.status(200).json({
         success: true,
