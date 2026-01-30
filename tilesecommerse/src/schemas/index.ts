@@ -48,6 +48,31 @@ export const ValidateCouponSchema = z.object({
   orderAmount: z.number(),
 });
 
+// Category schemas
+export const CategorySchema = z.object({
+  _id: z.string(),
+  name: z.string(),
+  slug: z.string(),
+  description: z.string().optional(),
+  parent: z.string().nullable().optional(),
+  level: z.number().default(0),
+  order: z.number().default(0),
+  productCount: z.number().default(0),
+  isActive: z.boolean().default(true),
+  createdBy: z.string().optional(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+  children: z.array(z.any()).optional(),
+});
+
+export const CreateCategorySchema = z.object({
+  name: z.string().min(2, "Name must be at least 2 characters").max(100, "Name cannot exceed 100 characters"),
+  description: z.string().max(500, "Description cannot exceed 500 characters").optional(),
+  parent: z.string().nullable().optional(),
+  order: z.number().min(0).default(0),
+  isActive: z.boolean().default(true),
+});
+
 export type ProductWithVariants = any;
 export type ProductVariant = any;
 export type Product = any;
@@ -66,3 +91,6 @@ export type Address = any;
 export type Coupon = z.infer<typeof CouponSchema>;
 export type CreateCoupon = z.infer<typeof CreateCouponSchema>;
 export type ValidateCoupon = z.infer<typeof ValidateCouponSchema>;
+
+export type Category = z.infer<typeof CategorySchema>;
+export type CreateCategory = z.infer<typeof CreateCategorySchema>;
