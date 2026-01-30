@@ -7,50 +7,10 @@ import {
   HiPlus,
   HiArrowRight,
 } from "react-icons/hi";
-import { productsRepository, ordersRepository } from "@/lib/db/drizzle/repositories";
-
-async function getAdminStats() {
-  try {
-    const [products, orders] = await Promise.all([
-      productsRepository.findAll(),
-      ordersRepository.findAll(),
-    ]);
-
-    const totalProducts = products?.length || 0;
-    const totalOrders = orders?.length || 0;
-
-    // Calculate total revenue from orders
-    let totalRevenue = 0;
-    if (orders) {
-      for (const order of orders) {
-        if (order.customerInfo?.totalPrice) {
-          totalRevenue += Number(order.customerInfo.totalPrice);
-        }
-      }
-    }
-
-    // Get recent orders (last 5)
-    const recentOrders = orders?.slice(0, 5) || [];
-
-    return {
-      totalProducts,
-      totalOrders,
-      totalRevenue: totalRevenue / 100, // Convert from paise to rupees
-      recentOrders,
-    };
-  } catch (error) {
-    console.error("Error fetching admin stats:", error);
-    return {
-      totalProducts: 0,
-      totalOrders: 0,
-      totalRevenue: 0,
-      recentOrders: [],
-    };
-  }
-}
+import { getAdminDashboardStats } from "./actions";
 
 export default async function AdminDashboard() {
-  const stats = await getAdminStats();
+  const stats = await getAdminDashboardStats();
 
   const statCards = [
     {
@@ -79,7 +39,7 @@ export default async function AdminDashboard() {
     },
     {
       title: "Total Customers",
-      value: "-",
+      value: stats.totalCustomers,
       icon: HiUsers,
       color: "bg-purple-500",
       href: "/admin/customers",
@@ -93,7 +53,7 @@ export default async function AdminDashboard() {
         <div>
           <h1 className="text-3xl font-bold text-slate-900">Dashboard</h1>
           <p className="text-slate-600 mt-1">
-            Welcome to SRI LAKSHMI NARASIMHA TRADERS Admin Panel
+            Welcome to SLN TILES SHOWROOM Admin Panel
           </p>
         </div>
         <Link
@@ -159,7 +119,7 @@ export default async function AdminDashboard() {
               <thead>
                 <tr className="border-b border-slate-200">
                   <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700">
-                    Order #
+                    Order ID
                   </th>
                   <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700">
                     Customer
@@ -167,31 +127,47 @@ export default async function AdminDashboard() {
                   <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700">
                     Date
                   </th>
+                  <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700">
+                    Status
+                  </th>
                   <th className="text-right py-3 px-4 text-sm font-semibold text-slate-700">
                     Amount
                   </th>
                 </tr>
               </thead>
               <tbody>
-                {stats.recentOrders.map((order) => (
+                {stats.recentOrders.map((order: any) => (
                   <tr
-                    key={order.id}
+                    key={order._id}
                     className="border-b border-slate-100 hover:bg-slate-50 transition-colors"
                   >
-                    <td className="py-3 px-4 text-sm font-medium text-slate-900">
-                      #{order.orderNumber}
+                    <td className="py-3 px-4 text-sm font-mono text-slate-900">
+                      #{order._id.slice(-8).toUpperCase()}
                     </td>
                     <td className="py-3 px-4 text-sm text-slate-600">
-                      {order.customerInfo?.name || "N/A"}
+                      {order.user?.name || "Guest User"}
                     </td>
                     <td className="py-3 px-4 text-sm text-slate-600">
-                      {new Date(order.createdAt).toLocaleDateString("en-IN")}
+                      {new Date(order.createdAt).toLocaleDateString("en-IN", {
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
+                      })}
+                    </td>
+                    <td className="py-3 px-4 text-sm">
+                      <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${order.orderStatus === 'Delivered'
+                          ? 'bg-green-100 text-green-800'
+                          : order.orderStatus === 'Shipped'
+                            ? 'bg-blue-100 text-blue-800'
+                            : 'bg-yellow-100 text-yellow-800'
+                        }`}>
+                        {order.orderStatus}
+                      </span>
                     </td>
                     <td className="py-3 px-4 text-sm font-medium text-slate-900 text-right">
-                      ₹
-                      {(
-                        Number(order.customerInfo?.totalPrice || 0) / 100
-                      ).toLocaleString("en-IN")}
+                      ₹{Number(order.totalPrice || 0).toLocaleString("en-IN", {
+                        minimumFractionDigits: 2,
+                      })}
                     </td>
                   </tr>
                 ))}
@@ -234,7 +210,7 @@ export default async function AdminDashboard() {
         </Link>
 
         <Link
-          href="/admin/blogs"
+          href="/admin/coupons"
           className="bg-white rounded-xl shadow-md hover:shadow-xl transition-all p-6 border border-slate-200 hover:border-blue-300 group"
         >
           <div className="flex items-center gap-4">
@@ -242,8 +218,8 @@ export default async function AdminDashboard() {
               <HiPlus className="w-6 h-6 text-blue-600" />
             </div>
             <div>
-              <h3 className="font-semibold text-slate-900">Create Blog</h3>
-              <p className="text-sm text-slate-600">Add new blog post</p>
+              <h3 className="font-semibold text-slate-900">Manage Coupons</h3>
+              <p className="text-sm text-slate-600">Create discount coupons</p>
             </div>
           </div>
         </Link>
