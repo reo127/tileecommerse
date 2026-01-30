@@ -3,6 +3,12 @@
 import { useState, FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { FiUpload, FiCheck, FiX, FiStar, FiTrash2, FiImage } from "react-icons/fi";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000/api/v1';
 
@@ -234,385 +240,401 @@ export function SimpleProductForm() {
           </div>
         )}
 
-        {/* Form Content */}
-        <div className="space-y-8">
-          {/* Basic Information */}
-          <section className="bg-white rounded-3xl shadow-sm border border-slate-200 p-8">
-            <h2 className="text-xl font-medium text-slate-900 mb-6 pb-4 border-b border-slate-100">Basic Information</h2>
-            <div className="grid md:grid-cols-2 gap-6">
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-slate-700 mb-2">Product Name</label>
-                <input
-                  name="name"
-                  required
-                  placeholder="Premium Marble Floor Tiles"
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
-                />
-              </div>
+        {/* Form Content - Accordion Sections */}
+        <Accordion type="multiple" defaultValue={["basic"]} className="space-y-4">
 
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-slate-700 mb-2">Description</label>
-                <textarea
-                  name="description"
-                  required
-                  rows={4}
-                  placeholder="Elegant marble tiles with luxurious finish..."
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all resize-none"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Price (₹)</label>
-                <input
-                  name="price"
-                  type="number"
-                  required
-                  placeholder="999"
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">MRP (₹)</label>
-                <input
-                  name="cuttedPrice"
-                  type="number"
-                  required
-                  placeholder="1499"
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Category</label>
-                <select
-                  name="category"
-                  required
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
-                >
-                  <option value="">Select category</option>
-                  <option value="floor-tiles">Floor Tiles</option>
-                  <option value="wall-tiles">Wall Tiles</option>
-                  <option value="bathroom-tiles">Bathroom Tiles</option>
-                  <option value="kitchen-tiles">Kitchen Tiles</option>
-                  <option value="outdoor-tiles">Outdoor Tiles</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Stock</label>
-                <input
-                  name="stock"
-                  type="number"
-                  required
-                  defaultValue="100"
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Brand Name</label>
-                <input
-                  name="brandname"
-                  required
-                  placeholder="Premium Tiles Co."
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Warranty (years)</label>
-                <input
-                  name="warranty"
-                  type="number"
-                  required
-                  defaultValue="5"
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
-                />
-              </div>
-            </div>
-          </section>
-
-          {/* Tile Specifications */}
-          <section className="bg-white rounded-3xl shadow-sm border border-slate-200 p-8">
-            <h2 className="text-xl font-medium text-slate-900 mb-6 pb-4 border-b border-slate-100">Tile Specifications</h2>
-            <div className="grid md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Material</label>
-                <select name="material" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all">
-                  <option value="">Select material</option>
-                  <option value="ceramic">Ceramic</option>
-                  <option value="porcelain">Porcelain</option>
-                  <option value="marble">Marble</option>
-                  <option value="vitrified">Vitrified</option>
-                  <option value="granite">Granite</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Finish</label>
-                <select name="finish" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all">
-                  <option value="">Select finish</option>
-                  <option value="glossy">Glossy</option>
-                  <option value="matte">Matte</option>
-                  <option value="polished">Polished</option>
-                  <option value="anti-skid">Anti-Skid</option>
-                </select>
-              </div>
-
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-slate-700 mb-2">Color</label>
-                <input name="color" placeholder="White, Beige, Gray..." className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Length</label>
-                <input name="length" type="number" placeholder="24" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Width</label>
-                <input name="width" type="number" placeholder="24" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Unit</label>
-                <select name="unit" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all">
-                  <option value="inches">Inches</option>
-                  <option value="cm">CM</option>
-                  <option value="mm">MM</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Thickness (mm)</label>
-                <input name="thickness" type="number" placeholder="8" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Coverage (sq ft/box)</label>
-                <input name="coverage" type="number" placeholder="20" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Tiles per Box</label>
-                <input name="tilesPerBox" type="number" placeholder="4" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Weight (kg/box)</label>
-                <input name="weight" type="number" placeholder="25" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Slip Resistance</label>
-                <select name="slipResistance" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all">
-                  <option value="">Select rating</option>
-                  <option value="R9">R9</option>
-                  <option value="R10">R10</option>
-                  <option value="R11">R11</option>
-                  <option value="R12">R12</option>
-                </select>
-              </div>
-
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-slate-700 mb-2">Water Absorption</label>
-                <input name="waterAbsorption" placeholder="<0.5%, 0.5-3%" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
-              </div>
-
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-slate-700 mb-3">Room Type</label>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  {['Bathroom', 'Kitchen', 'Living Room', 'Bedroom', 'Outdoor', 'Floor', 'Wall', 'Commercial'].map((room) => (
-                    <label key={room} className="flex items-center gap-2 p-3 bg-slate-50 rounded-lg hover:bg-slate-100 cursor-pointer transition-colors">
-                      <input type="checkbox" name="roomType" value={room.toLowerCase().replace(' ', '-')} className="w-4 h-4 text-slate-900 rounded focus:ring-2 focus:ring-slate-900" />
-                      <span className="text-sm text-slate-700">{room}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </section>
-
-          {/* Highlights & Specs */}
-          <section className="bg-white rounded-3xl shadow-sm border border-slate-200 p-8">
-            <h2 className="text-xl font-medium text-slate-900 mb-6 pb-4 border-b border-slate-100">Highlights & Details</h2>
-            <div className="space-y-6">
-              <div className="space-y-3">
-                <label className="block text-sm font-medium text-slate-700">Product Highlights</label>
-                <input name="highlight1" placeholder="Highlight 1" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
-                <input name="highlight2" placeholder="Highlight 2" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
-                <input name="highlight3" placeholder="Highlight 3" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
-              </div>
-
-              <div className="pt-4">
-                <label className="block text-sm font-medium text-slate-700 mb-3">Technical Specifications</label>
-                <div className="grid md:grid-cols-2 gap-4 mb-3">
-                  <input name="specTitle1" placeholder="Spec Title 1" className="px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
-                  <input name="specDesc1" placeholder="Spec Description 1" className="px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
-                </div>
-                <div className="grid md:grid-cols-2 gap-4">
-                  <input name="specTitle2" placeholder="Spec Title 2" className="px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
-                  <input name="specDesc2" placeholder="Spec Description 2" className="px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
-                </div>
-              </div>
-            </div>
-          </section>
-
-          {/* Images */}
-          <section className="bg-white rounded-3xl shadow-sm border border-slate-200 p-8">
-            <h2 className="text-xl font-medium text-slate-900 mb-6 pb-4 border-b border-slate-100">Images</h2>
-            <div className="space-y-6">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-3">
-                  Product Images {imagePreviews.length > 0 && `(${imagePreviews.length})`}
-                </label>
-
-                {/* Upload Area */}
-                <div
-                  onDragOver={handleDragOver}
-                  onDragLeave={handleDragLeave}
-                  onDrop={handleDrop}
-                  className={`relative border-2 border-dashed rounded-xl transition-all ${isDragging
-                    ? 'border-orange-500 bg-orange-50'
-                    : 'border-slate-300 bg-slate-50'
-                    }`}
-                >
+          {/* 1. Basic Information */}
+          <AccordionItem value="basic" className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
+            <AccordionTrigger className="px-8 py-6 hover:no-underline hover:bg-slate-50 transition-colors">
+              <h2 className="text-xl font-medium text-slate-900">1. Basic Information</h2>
+            </AccordionTrigger>
+            <AccordionContent className="px-8 pb-8">
+              <div className="grid md:grid-cols-2 gap-6 pt-4">
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Product Name</label>
                   <input
-                    type="file"
-                    accept="image/*"
-                    multiple
-                    onChange={(e) => handleImageSelect(e.target.files)}
-                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                    name="name"
+                    required
+                    placeholder="Premium Marble Floor Tiles"
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
                   />
-                  <div className="py-12 px-4 text-center pointer-events-none">
-                    <FiUpload className={`w-12 h-12 mx-auto mb-3 ${isDragging ? 'text-orange-500' : 'text-slate-400'}`} />
-                    <p className="text-sm font-medium text-slate-700 mb-1">
-                      {isDragging ? 'Drop images here' : 'Click to upload or drag and drop'}
-                    </p>
-                    <p className="text-xs text-slate-500">
-                      PNG, JPG, GIF up to 10MB each
-                    </p>
-                  </div>
                 </div>
 
-                {/* Image Previews */}
-                {imagePreviews.length > 0 && (
-                  <div className="mt-6">
-                    <div className="flex items-center justify-between mb-3">
-                      <p className="text-sm font-medium text-slate-700">
-                        Selected Images
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Description</label>
+                  <textarea
+                    name="description"
+                    required
+                    rows={4}
+                    placeholder="Elegant marble tiles with luxurious finish..."
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all resize-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Price (₹)</label>
+                  <input
+                    name="price"
+                    type="number"
+                    required
+                    placeholder="999"
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">MRP (₹)</label>
+                  <input
+                    name="cuttedPrice"
+                    type="number"
+                    required
+                    placeholder="1499"
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Category</label>
+                  <select
+                    name="category"
+                    required
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
+                  >
+                    <option value="">Select category</option>
+                    <option value="floor-tiles">Floor Tiles</option>
+                    <option value="wall-tiles">Wall Tiles</option>
+                    <option value="bathroom-tiles">Bathroom Tiles</option>
+                    <option value="kitchen-tiles">Kitchen Tiles</option>
+                    <option value="outdoor-tiles">Outdoor Tiles</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Stock</label>
+                  <input
+                    name="stock"
+                    type="number"
+                    required
+                    defaultValue="100"
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Brand Name</label>
+                  <input
+                    name="brandname"
+                    required
+                    placeholder="Premium Tiles Co."
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Warranty (years)</label>
+                  <input
+                    name="warranty"
+                    type="number"
+                    required
+                    defaultValue="5"
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
+                  />
+                </div>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+
+          {/* 2. Images */}
+          <AccordionItem value="images" className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
+            <AccordionTrigger className="px-8 py-6 hover:no-underline hover:bg-slate-50 transition-colors">
+              <h2 className="text-xl font-medium text-slate-900">2. Images</h2>
+            </AccordionTrigger>
+            <AccordionContent className="px-8 pb-8">
+              <div className="space-y-6 pt-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-3">
+                    Product Images {imagePreviews.length > 0 && `(${imagePreviews.length})`}
+                  </label>
+
+                  {/* Upload Area */}
+                  <div
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                    onDrop={handleDrop}
+                    className={`relative border-2 border-dashed rounded-xl transition-all ${isDragging
+                      ? 'border-orange-500 bg-orange-50'
+                      : 'border-slate-300 bg-slate-50'
+                      }`}
+                  >
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={(e) => handleImageSelect(e.target.files)}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                    />
+                    <div className="py-12 px-4 text-center pointer-events-none">
+                      <FiUpload className={`w-12 h-12 mx-auto mb-3 ${isDragging ? 'text-orange-500' : 'text-slate-400'}`} />
+                      <p className="text-sm font-medium text-slate-700 mb-1">
+                        {isDragging ? 'Drop images here' : 'Click to upload or drag and drop'}
                       </p>
                       <p className="text-xs text-slate-500">
-                        Click <FiStar className="inline w-3 h-3" /> to set as featured image
+                        PNG, JPG, GIF up to 10MB each
                       </p>
                     </div>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                      {imagePreviews.map((image, index) => (
-                        <div
-                          key={image.id}
-                          className={`relative group rounded-lg overflow-hidden border-2 transition-all ${index === featuredImageIndex
-                            ? 'border-orange-500 ring-2 ring-orange-200'
-                            : 'border-slate-200 hover:border-slate-300'
-                            }`}
-                        >
-                          {/* Image */}
-                          <div className="aspect-square bg-slate-100">
-                            <img
-                              src={image.preview}
-                              alt={`Preview ${index + 1}`}
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
-
-                          {/* Featured Badge */}
-                          {index === featuredImageIndex && (
-                            <div className="absolute top-2 left-2 bg-orange-500 text-white px-2 py-1 rounded-md text-xs font-medium flex items-center gap-1">
-                              <FiStar className="w-3 h-3 fill-current" />
-                              Featured
-                            </div>
-                          )}
-
-                          {/* Action Buttons */}
-                          <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
-                            <button
-                              type="button"
-                              onClick={() => setFeaturedImage(index)}
-                              className="p-2 bg-white rounded-lg hover:bg-orange-500 hover:text-white transition-colors"
-                              title="Set as featured"
-                            >
-                              <FiStar className={index === featuredImageIndex ? 'fill-current' : ''} />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => removeImage(image.id)}
-                              className="p-2 bg-white text-red-600 rounded-lg hover:bg-red-600 hover:text-white transition-colors"
-                              title="Remove image"
-                            >
-                              <FiTrash2 />
-                            </button>
-                          </div>
-
-                          {/* Image Number */}
-                          <div className="absolute bottom-2 right-2 bg-black bg-opacity-60 text-white px-2 py-1 rounded text-xs font-medium">
-                            {index + 1}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
                   </div>
-                )}
 
-                {imagePreviews.length === 0 && (
-                  <p className="text-xs text-red-500 mt-2">* At least one product image is required</p>
-                )}
+                  {/* Image Previews */}
+                  {imagePreviews.length > 0 && (
+                    <div className="mt-6">
+                      <div className="flex items-center justify-between mb-3">
+                        <p className="text-sm font-medium text-slate-700">
+                          Selected Images
+                        </p>
+                        <p className="text-xs text-slate-500">
+                          Click <FiStar className="inline w-3 h-3" /> to set as featured image
+                        </p>
+                      </div>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        {imagePreviews.map((image, index) => (
+                          <div
+                            key={image.id}
+                            className={`relative group rounded-lg overflow-hidden border-2 transition-all ${index === featuredImageIndex
+                              ? 'border-orange-500 ring-2 ring-orange-200'
+                              : 'border-slate-200 hover:border-slate-300'
+                              }`}
+                          >
+                            {/* Image */}
+                            <div className="aspect-square bg-slate-100">
+                              <img
+                                src={image.preview}
+                                alt={`Preview ${index + 1}`}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+
+                            {/* Featured Badge */}
+                            {index === featuredImageIndex && (
+                              <div className="absolute top-2 left-2 bg-orange-500 text-white px-2 py-1 rounded-md text-xs font-medium flex items-center gap-1">
+                                <FiStar className="w-3 h-3 fill-current" />
+                                Featured
+                              </div>
+                            )}
+
+                            {/* Action Buttons */}
+                            <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
+                              <button
+                                type="button"
+                                onClick={() => setFeaturedImage(index)}
+                                className="p-2 bg-white rounded-lg hover:bg-orange-500 hover:text-white transition-colors"
+                                title="Set as featured"
+                              >
+                                <FiStar className={index === featuredImageIndex ? 'fill-current' : ''} />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => removeImage(image.id)}
+                                className="p-2 bg-white text-red-600 rounded-lg hover:bg-red-600 hover:text-white transition-colors"
+                                title="Remove image"
+                              >
+                                <FiTrash2 />
+                              </button>
+                            </div>
+
+                            {/* Image Number */}
+                            <div className="absolute bottom-2 right-2 bg-black bg-opacity-60 text-white px-2 py-1 rounded text-xs font-medium">
+                              {index + 1}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {imagePreviews.length === 0 && (
+                    <p className="text-xs text-red-500 mt-2">* At least one product image is required</p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-3">Brand Logo</label>
+                  <input
+                    name="logo"
+                    type="file"
+                    accept="image/*"
+                    required
+                    className="w-full px-4 py-4 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-slate-900 file:text-white file:text-sm hover:file:bg-slate-800"
+                  />
+                </div>
               </div>
+            </AccordionContent>
+          </AccordionItem>
 
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-3">Brand Logo</label>
-                <input
-                  name="logo"
-                  type="file"
-                  accept="image/*"
-                  required
-                  className="w-full px-4 py-4 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-slate-900 file:text-white file:text-sm hover:file:bg-slate-800"
-                />
+          {/* 3. Tile Specifications */}
+          <AccordionItem value="specs" className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
+            <AccordionTrigger className="px-8 py-6 hover:no-underline hover:bg-slate-50 transition-colors">
+              <h2 className="text-xl font-medium text-slate-900">3. Tile Specifications</h2>
+            </AccordionTrigger>
+            <AccordionContent className="px-8 pb-8">
+              <div className="grid md:grid-cols-2 gap-6 pt-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Material</label>
+                  <select name="material" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all">
+                    <option value="">Select material</option>
+                    <option value="ceramic">Ceramic</option>
+                    <option value="porcelain">Porcelain</option>
+                    <option value="marble">Marble</option>
+                    <option value="vitrified">Vitrified</option>
+                    <option value="granite">Granite</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Finish</label>
+                  <select name="finish" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all">
+                    <option value="">Select finish</option>
+                    <option value="glossy">Glossy</option>
+                    <option value="matte">Matte</option>
+                    <option value="polished">Polished</option>
+                    <option value="anti-skid">Anti-Skid</option>
+                  </select>
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Color</label>
+                  <input name="color" placeholder="White, Beige, Gray..." className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Length</label>
+                  <input name="length" type="number" placeholder="24" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Width</label>
+                  <input name="width" type="number" placeholder="24" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Unit</label>
+                  <select name="unit" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all">
+                    <option value="inches">Inches</option>
+                    <option value="cm">CM</option>
+                    <option value="mm">MM</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Thickness (mm)</label>
+                  <input name="thickness" type="number" placeholder="8" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Coverage (sq ft/box)</label>
+                  <input name="coverage" type="number" placeholder="20" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Tiles per Box</label>
+                  <input name="tilesPerBox" type="number" placeholder="4" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Weight (kg/box)</label>
+                  <input name="weight" type="number" placeholder="25" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Slip Resistance</label>
+                  <select name="slipResistance" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all">
+                    <option value="">Select rating</option>
+                    <option value="R9">R9</option>
+                    <option value="R10">R10</option>
+                    <option value="R11">R11</option>
+                    <option value="R12">R12</option>
+                  </select>
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Water Absorption</label>
+                  <input name="waterAbsorption" placeholder="<0.5%, 0.5-3%" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-slate-700 mb-3">Room Type</label>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    {['Bathroom', 'Kitchen', 'Living Room', 'Bedroom', 'Outdoor', 'Floor', 'Wall', 'Commercial'].map((room) => (
+                      <label key={room} className="flex items-center gap-2 p-3 bg-slate-50 rounded-lg hover:bg-slate-100 cursor-pointer transition-colors">
+                        <input type="checkbox" name="roomType" value={room.toLowerCase().replace(' ', '-')} className="w-4 h-4 text-slate-900 rounded focus:ring-2 focus:ring-slate-900" />
+                        <span className="text-sm text-slate-700">{room}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
               </div>
-            </div>
-          </section>
+            </AccordionContent>
+          </AccordionItem>
 
-          {/* Submit Button */}
-          <div className="flex gap-4 pt-4">
-            <button
-              type="button"
-              onClick={() => router.push('/admin/products')}
-              className="flex-1 py-4 px-6 bg-white border-2 border-slate-200 text-slate-700 rounded-2xl hover:bg-slate-50 transition-all duration-200 font-medium"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={loading}
-              className="flex-1 py-4 px-6 bg-slate-900 text-white rounded-2xl hover:bg-slate-800 transition-all duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-            >
-              {loading ? (
-                <>
-                  <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                  </svg>
-                  <span>Creating...</span>
-                </>
-              ) : (
-                <>
-                  <FiCheck className="w-5 h-5" />
-                  <span>Create Product</span>
-                </>
-              )}
-            </button>
-          </div>
+          {/* 4. Highlights & Details */}
+          <AccordionItem value="highlights" className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
+            <AccordionTrigger className="px-8 py-6 hover:no-underline hover:bg-slate-50 transition-colors">
+              <h2 className="text-xl font-medium text-slate-900">4. Highlights & Details</h2>
+            </AccordionTrigger>
+            <AccordionContent className="px-8 pb-8">
+              <div className="space-y-6 pt-4">
+                <div className="space-y-3">
+                  <label className="block text-sm font-medium text-slate-700">Product Highlights</label>
+                  <input name="highlight1" placeholder="Highlight 1" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
+                  <input name="highlight2" placeholder="Highlight 2" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
+                  <input name="highlight3" placeholder="Highlight 3" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
+                </div>
+
+                <div className="pt-4">
+                  <label className="block text-sm font-medium text-slate-700 mb-3">Technical Specifications</label>
+                  <div className="grid md:grid-cols-2 gap-4 mb-3">
+                    <input name="specTitle1" placeholder="Spec Title 1" className="px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
+                    <input name="specDesc1" placeholder="Spec Description 1" className="px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
+                  </div>
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <input name="specTitle2" placeholder="Spec Title 2" className="px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
+                    <input name="specDesc2" placeholder="Spec Description 2" className="px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
+                  </div>
+                </div>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
+        <div className="flex gap-4 pt-4">
+          <button
+            type="button"
+            onClick={() => router.push('/admin/products')}
+            className="flex-1 py-4 px-6 bg-white border-2 border-slate-200 text-slate-700 rounded-2xl hover:bg-slate-50 transition-all duration-200 font-medium"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            disabled={loading}
+            className="flex-1 py-4 px-6 bg-slate-900 text-white rounded-2xl hover:bg-slate-800 transition-all duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          >
+            {loading ? (
+              <>
+                <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                </svg>
+                <span>Creating...</span>
+              </>
+            ) : (
+              <>
+                <FiCheck className="w-5 h-5" />
+                <span>Create Product</span>
+              </>
+            )}
+          </button>
         </div>
       </form>
     </div>
   );
 }
+

@@ -8,6 +8,8 @@ import { toast } from "sonner";
 import {
   HiHome,
   HiShoppingBag,
+  HiFolder,
+  HiStar,
   HiClipboardList,
   HiNewspaper,
   HiTag,
@@ -26,6 +28,16 @@ const sidebarItems = [
     title: "Products",
     href: "/admin/products",
     icon: HiShoppingBag,
+  },
+  {
+    title: "Categories",
+    href: "/admin/categories",
+    icon: HiFolder,
+  },
+  {
+    title: "Brands",
+    href: "/admin/brand",
+    icon: HiStar,
   },
   {
     title: "Orders",
@@ -77,7 +89,7 @@ export function Sidebar() {
         {sidebarItems.map((item) => {
           const Icon = item.icon;
           const isActive = pathname === item.href ||
-                          (item.href !== "/admin" && pathname.startsWith(item.href));
+            (item.href !== "/admin" && pathname.startsWith(item.href));
 
           return (
             <Link

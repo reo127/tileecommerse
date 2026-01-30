@@ -1,16 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { HiViewGrid, HiCog, HiTruck, HiCreditCard } from "react-icons/hi";
-import CategoryManagement from "@/components/admin/settings/CategoryManagement";
+import { HiCog, HiTruck, HiCreditCard } from "react-icons/hi";
 
-type TabType = "categories" | "general" | "shipping" | "payments";
+type TabType = "general" | "shipping" | "payments";
 
 export default function AdminSettingsPage() {
-  const [activeTab, setActiveTab] = useState<TabType>("categories");
+  const [activeTab, setActiveTab] = useState<TabType>("general");
 
   const tabs = [
-    { id: "categories" as TabType, name: "Categories", icon: HiViewGrid },
     { id: "general" as TabType, name: "General", icon: HiCog },
     { id: "shipping" as TabType, name: "Shipping", icon: HiTruck },
     { id: "payments" as TabType, name: "Payments", icon: HiCreditCard },
@@ -34,11 +32,10 @@ export default function AdminSettingsPage() {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-2 px-6 py-4 text-sm font-medium border-b-2 transition-colors ${
-                    activeTab === tab.id
+                  className={`flex items-center gap-2 px-6 py-4 text-sm font-medium border-b-2 transition-colors ${activeTab === tab.id
                       ? "border-orange-500 text-orange-600"
                       : "border-transparent text-slate-600 hover:text-slate-900 hover:border-slate-300"
-                  }`}
+                    }`}
                 >
                   <Icon className="w-5 h-5" />
                   {tab.name}
@@ -50,8 +47,6 @@ export default function AdminSettingsPage() {
 
         {/* Tab Content */}
         <div className="p-6">
-          {activeTab === "categories" && <CategoryManagement />}
-
           {activeTab === "general" && (
             <div className="text-center py-12 text-slate-600">
               <HiCog className="w-12 h-12 mx-auto mb-4 text-slate-400" />
