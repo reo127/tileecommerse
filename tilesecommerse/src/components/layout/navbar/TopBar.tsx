@@ -14,7 +14,7 @@ export const TopBar = ({ editProfileManager }: { editProfileManager: Manager }) 
   const [isDark, setIsDark] = useState(false);
 
   return (
-    <div className="text-white" style={{ backgroundColor: '#7C0A02' }}>
+    <div className="text-white bg-gradient-to-r from-red-600 via-red-500 to-orange-500">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20">
           {/* Left Section: Logo */}

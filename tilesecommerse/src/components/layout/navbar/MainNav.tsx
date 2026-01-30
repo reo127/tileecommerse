@@ -30,7 +30,7 @@ export const MainNav = () => {
   ];
 
   return (
-    <nav className="text-white border-t" style={{ backgroundColor: '#7C0A02', borderTopColor: '#5A0701' }}>
+    <nav className="text-white bg-gradient-to-r from-slate-800 via-slate-700 to-gray-800 border-t border-slate-600/50 shadow-lg">
       <div className="max-w-7xl mx-auto">
         {/* Multi-line Categories */}
         <div>
@@ -46,10 +46,7 @@ export const MainNav = () => {
               >
                 <Link
                   href={category.href}
-                  className="flex items-center gap-1 px-4 py-2 transition-colors text-sm"
-                  style={{ ['&:hover' as any]: { backgroundColor: '#5A0701' } }}
-                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#5A0701'}
-                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                  className="flex items-center gap-1 px-4 py-2 hover:bg-gradient-to-r hover:from-orange-600 hover:to-orange-500 transition-all duration-300 text-sm rounded-md"
                 >
                   <span className="whitespace-nowrap">{category.name}</span>
                   {category.subcategories.length > 0 && (

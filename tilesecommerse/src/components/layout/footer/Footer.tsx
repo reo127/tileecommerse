@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import {
   FaFacebook,
   FaInstagram,
@@ -16,13 +17,23 @@ export const Footer = () => {
   const liStyles = "text-white my-2";
 
   return (
-    <footer className="text-white mt-20" style={{ backgroundColor: '#7C0A02' }}>
+    <footer className="text-white mt-20 bg-gradient-to-r from-slate-900 via-slate-800 to-gray-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         {/* Main Footer Content */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-12">
           {/* Company Info */}
           <div>
-            <h3 className="text-xl font-bold mb-4 text-white">SLN TILES SHOWROOM</h3>
+            {/* Logo */}
+            <div className="mb-4">
+              <Image
+                src="/logo.png"
+                alt="SLN Tiles Showroom Logo"
+                width={128}
+                height={128}
+                className="rounded-lg shadow-lg"
+              />
+            </div>
+            <h3 className="text-xl font-bold mb-4 bg-gradient-to-r from-red-500 to-orange-500 bg-clip-text text-transparent">SLN TILES SHOWROOM</h3>
             <p className="text-white text-sm mb-4">
               Your trusted partner for premium quality tiles in Bengaluru. Transforming spaces with innovative designs and exceptional service.
             </p>
@@ -60,7 +71,7 @@ export const Footer = () => {
 
           {/* Products */}
           <div>
-            <h3 className="text-lg font-semibold mb-4 text-white">Products</h3>
+            <h3 className="text-lg font-semibold mb-4 bg-gradient-to-r from-red-500 to-orange-500 bg-clip-text text-transparent">Products</h3>
             <ul>
               <li className={liStyles}>
                 <Link href="/ceramic" className={linkStyles}>
@@ -102,7 +113,7 @@ export const Footer = () => {
 
           {/* Quick Links */}
           <div>
-            <h3 className="text-lg font-semibold mb-4 text-white">Quick Links</h3>
+            <h3 className="text-lg font-semibold mb-4 bg-gradient-to-r from-red-500 to-orange-500 bg-clip-text text-transparent">Quick Links</h3>
             <ul>
               <li className={liStyles}>
                 <Link href="/" className={linkStyles}>
@@ -144,10 +155,10 @@ export const Footer = () => {
 
           {/* Contact Info */}
           <div>
-            <h3 className="text-lg font-semibold mb-4 text-white">Contact Us</h3>
+            <h3 className="text-lg font-semibold mb-4 bg-gradient-to-r from-red-500 to-orange-500 bg-clip-text text-transparent">Contact Us</h3>
             <ul className="space-y-4">
               <li className="flex items-start gap-3 text-gray-400 text-sm">
-                <FaMapMarkerAlt className="mt-1 text-orange-400 flex-shrink-0" />
+                <FaMapMarkerAlt className="mt-1 text-red-500 flex-shrink-0" />
                 <span>
                   321/1, 80 ft road, K Channasandra Main Rd,<br />
                   near canara bank, horamavu post,<br />
@@ -155,13 +166,13 @@ export const Footer = () => {
                 </span>
               </li>
               <li className="flex items-center gap-3 text-gray-400 text-sm">
-                <FaPhone className="text-orange-400 flex-shrink-0" />
+                <FaPhone className="text-red-500 flex-shrink-0" />
                 <a href="tel:+919738522119" className={linkStyles}>
                   097385 22119
                 </a>
               </li>
               <li className="flex items-center gap-3 text-gray-400 text-sm">
-                <FaEnvelope className="text-orange-400 flex-shrink-0" />
+                <FaEnvelope className="text-red-500 flex-shrink-0" />
                 <a href="mailto:info@slntilesshowroom.com" className={linkStyles}>
                   info@slntilesshowroom.com
                 </a>
@@ -182,17 +193,17 @@ export const Footer = () => {
               © {new Date().getFullYear()} SLN TILES SHOWROOM. All rights reserved.
             </p>
             <div className="flex flex-wrap gap-6 text-sm">
-              <Link href="#" className={linkStyles}>
+              <Link href="/legal/privacy" className={linkStyles}>
                 Privacy Policy
               </Link>
-              <Link href="#" className={linkStyles}>
+              <Link href="/legal/terms" className={linkStyles}>
                 Terms & Conditions
               </Link>
-              <Link href="#" className={linkStyles}>
+              <Link href="/legal/shipping" className={linkStyles}>
                 Shipping Policy
               </Link>
-              <Link href="#" className={linkStyles}>
-                Refund Policy
+              <Link href="/legal/returns" className={linkStyles}>
+                Returns & Refund Policy
               </Link>
             </div>
           </div>
