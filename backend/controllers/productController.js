@@ -15,12 +15,14 @@ exports.getAllProducts = asyncErrorHandler(async (req, res, next) => {
         .search()
         .filter();
 
-    let products = await searchFeature.query;
+    await searchFeature.filterByCategory();
+
+    let products = await searchFeature.query.populate('category subcategory', 'name slug');
     let filteredProductsCount = products.length;
 
     searchFeature.pagination(resultPerPage);
 
-    products = await searchFeature.query.clone();
+    products = await searchFeature.query.clone().populate('category subcategory', 'name slug');
 
     res.status(200).json({
         success: true,
@@ -33,7 +35,7 @@ exports.getAllProducts = asyncErrorHandler(async (req, res, next) => {
 
 // Get All Products ---Product Sliders
 exports.getProducts = asyncErrorHandler(async (req, res, next) => {
-    const products = await Product.find();
+    const products = await Product.find().populate('category subcategory', 'name slug');
 
     res.status(200).json({
         success: true,
@@ -44,7 +46,7 @@ exports.getProducts = asyncErrorHandler(async (req, res, next) => {
 // Get Product Details
 exports.getProductDetails = asyncErrorHandler(async (req, res, next) => {
 
-    const product = await Product.findById(req.params.id);
+    const product = await Product.findById(req.params.id).populate('category subcategory', 'name slug');
 
     if (!product) {
         return next(new ErrorHandler("Product Not Found", 404));
@@ -58,7 +60,7 @@ exports.getProductDetails = asyncErrorHandler(async (req, res, next) => {
 
 // Get All Products ---ADMIN
 exports.getAdminProducts = asyncErrorHandler(async (req, res, next) => {
-    const products = await Product.find();
+    const products = await Product.find().populate('category subcategory', 'name slug');
 
     res.status(200).json({
         success: true,

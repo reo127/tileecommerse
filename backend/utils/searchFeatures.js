@@ -38,6 +38,27 @@ class SearchFeatures {
         return this;
     }
 
+    async filterByCategory() {
+        const Category = require('../models/categoryModel');
+        const queryCopy = { ...this.queryString };
+
+        if (queryCopy.category) {
+            const category = await Category.findOne({ slug: queryCopy.category });
+            if (category) {
+                this.query = this.query.find({ category: category._id });
+            }
+        }
+
+        if (queryCopy.subcategory) {
+            const subcategory = await Category.findOne({ slug: queryCopy.subcategory });
+            if (subcategory) {
+                this.query = this.query.find({ subcategory: subcategory._id });
+            }
+        }
+
+        return this;
+    }
+
     pagination(resultPerPage) {
         const currentPage = Number(this.queryString.page) || 1;
 

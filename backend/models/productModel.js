@@ -69,8 +69,14 @@ const productSchema = new mongoose.Schema({
         }
     },
     category: {
-        type: String,
-        required: [true, "Please enter product category"]
+        type: mongoose.Schema.ObjectId,
+        ref: "Category",
+        required: [true, "Please select product category"]
+    },
+    subcategory: {
+        type: mongoose.Schema.ObjectId,
+        ref: "Category",
+        required: false
     },
 
     // Tiles-specific fields
