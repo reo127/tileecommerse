@@ -20,7 +20,7 @@ export const Footer = () => {
     <footer className="text-white mt-20 bg-gradient-to-r from-slate-900 via-slate-800 to-gray-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         {/* Main Footer Content */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
           {/* Company Info */}
           <div>
             {/* Logo */}
@@ -69,47 +69,6 @@ export const Footer = () => {
             </div>
           </div>
 
-          {/* Products */}
-          <div>
-            <h3 className="text-lg font-semibold mb-4 bg-gradient-to-r from-red-500 to-orange-500 bg-clip-text text-transparent">Products</h3>
-            <ul>
-              <li className={liStyles}>
-                <Link href="/ceramic" className={linkStyles}>
-                  Ceramic Tiles
-                </Link>
-              </li>
-              <li className={liStyles}>
-                <Link href="/porcelain" className={linkStyles}>
-                  Vitrified Tiles
-                </Link>
-              </li>
-              <li className={liStyles}>
-                <Link href="/marble" className={linkStyles}>
-                  Marble Finish
-                </Link>
-              </li>
-              <li className={liStyles}>
-                <Link href="/ceramic" className={linkStyles}>
-                  Bathroom Tiles
-                </Link>
-              </li>
-              <li className={liStyles}>
-                <Link href="/ceramic" className={linkStyles}>
-                  Kitchen Tiles
-                </Link>
-              </li>
-              <li className={liStyles}>
-                <Link href="/porcelain" className={linkStyles}>
-                  Floor Tiles
-                </Link>
-              </li>
-              <li className={liStyles}>
-                <Link href="/ceramic" className={linkStyles}>
-                  Wall Tiles
-                </Link>
-              </li>
-            </ul>
-          </div>
 
           {/* Quick Links */}
           <div>
@@ -153,35 +112,83 @@ export const Footer = () => {
             </ul>
           </div>
 
-          {/* Contact Info */}
+          {/* Branch 1 - Horamavu */}
           <div>
-            <h3 className="text-lg font-semibold mb-4 bg-gradient-to-r from-red-500 to-orange-500 bg-clip-text text-transparent">Contact Us</h3>
-            <ul className="space-y-4">
-              <li className="flex items-start gap-3 text-gray-400 text-sm">
-                <FaMapMarkerAlt className="mt-1 text-red-500 flex-shrink-0" />
+            <h3 className="text-lg font-semibold mb-4 bg-gradient-to-r from-red-500 to-orange-500 bg-clip-text text-transparent">Branch 1 - Horamavu</h3>
+            <ul className="space-y-3">
+              <li className="flex items-start gap-2 text-gray-400 text-sm">
+                <FaMapMarkerAlt className="mt-1 text-red-500 flex-shrink-0 text-xs" />
                 <span>
                   321/1, 80 ft road, K Channasandra Main Rd,<br />
                   near canara bank, horamavu post,<br />
                   Kalkere, Bengaluru, Karnataka 560113
                 </span>
               </li>
-              <li className="flex items-center gap-3 text-gray-400 text-sm">
-                <FaPhone className="text-red-500 flex-shrink-0" />
+              <li className="flex items-center gap-2 text-gray-400 text-sm">
+                <FaPhone className="text-red-500 flex-shrink-0 text-xs" />
                 <a href="tel:+919738522119" className={linkStyles}>
                   097385 22119
                 </a>
               </li>
-              <li className="flex items-center gap-3 text-gray-400 text-sm">
-                <FaEnvelope className="text-red-500 flex-shrink-0" />
+              <li className="flex items-center gap-2 text-gray-400 text-sm">
+                <FaEnvelope className="text-red-500 flex-shrink-0 text-xs" />
                 <a href="mailto:info@slntilesshowroom.com" className={linkStyles}>
                   info@slntilesshowroom.com
                 </a>
               </li>
             </ul>
-            <div className="mt-6">
-              <p className="text-gray-400 text-sm mb-2">Business Hours:</p>
-              <p className="text-gray-300 text-sm">Mon - Sat: 9:00 AM - 7:00 PM</p>
-              <p className="text-gray-300 text-sm">Sunday: 10:00 AM - 5:00 PM</p>
+            {/* Map */}
+            <div className="mt-4 rounded-lg overflow-hidden border border-slate-700 shadow-lg">
+              <iframe
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3886.8!2d77.6!3d13.0!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMTPCsDAwJzAwLjAiTiA3N8KwMzYnMDAuMCJF!5e0!3m2!1sen!2sin!4v1234567890"
+                width="100%"
+                height="180"
+                style={{ border: 0 }}
+                allowFullScreen
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                title="Branch 1 Location"
+              />
+            </div>
+          </div>
+
+          {/* Branch 2 - Second Location */}
+          <div>
+            <h3 className="text-lg font-semibold mb-4 bg-gradient-to-r from-red-500 to-orange-500 bg-clip-text text-transparent">Branch 2 - Location</h3>
+            <ul className="space-y-3">
+              <li className="flex items-start gap-2 text-gray-400 text-sm">
+                <FaMapMarkerAlt className="mt-1 text-red-500 flex-shrink-0 text-xs" />
+                <span>
+                  321/1, 80 ft road, K Channasandra Main Rd,<br />
+                  near canara bank, horamavu post,<br />
+                  Kalkere, Bengaluru, Karnataka 560113
+                </span>
+              </li>
+              <li className="flex items-center gap-2 text-gray-400 text-sm">
+                <FaPhone className="text-red-500 flex-shrink-0 text-xs" />
+                <a href="tel:+919XXXXXXXXX" className={linkStyles}>
+                  09876 54321
+                </a>
+              </li>
+              <li className="flex items-center gap-2 text-gray-400 text-sm">
+                <FaEnvelope className="text-red-500 flex-shrink-0 text-xs" />
+                <a href="mailto:branch2@slntilesshowroom.com" className={linkStyles}>
+                  branch2@slntilesshowroom.com
+                </a>
+              </li>
+            </ul>
+            {/* Map */}
+            <div className="mt-4 rounded-lg overflow-hidden border border-slate-700 shadow-lg">
+              <iframe
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3886.8!2d77.6!3d13.0!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMTPCsDAwJzAwLjAiTiA3N8KwMzYnMDAuMCJF!5e0!3m2!1sen!2sin!4v1234567890"
+                width="100%"
+                height="180"
+                style={{ border: 0 }}
+                allowFullScreen
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                title="Branch 2 Location"
+              />
             </div>
           </div>
         </div>

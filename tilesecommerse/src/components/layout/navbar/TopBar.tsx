@@ -2,16 +2,15 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { FaPhone, FaCalculator, FaStore, FaMoon, FaSun, FaSearch, FaUser, FaHeart, FaShoppingCart } from "react-icons/fa";
+import { FaPhone, FaCalculator, FaStore, FaSearch, FaUser } from "react-icons/fa";
 import { useSession } from "@/lib/auth/client";
-import { useState } from "react";
+
 import { WishlistLink } from "./WishlistLink";
 import { CartLink } from "./CartLink";
 import type { Manager } from "@/hooks/useManager";
 
 export const TopBar = ({ editProfileManager }: { editProfileManager: Manager }) => {
   const { data: session, isPending } = useSession();
-  const [isDark, setIsDark] = useState(false);
 
   return (
     <div className="text-white bg-gradient-to-r from-red-600 via-red-500 to-orange-500">
@@ -128,19 +127,7 @@ export const TopBar = ({ editProfileManager }: { editProfileManager: Manager }) 
               <span className="text-xs mt-1 hidden md:block text-white">Cart</span>
             </div>
 
-            {/* Theme Toggle */}
-            <button
-              onClick={() => setIsDark(!isDark)}
-              className="flex flex-col items-center justify-center text-white hover:text-orange-400 transition-colors"
-              aria-label="Toggle theme"
-            >
-              {isDark ? (
-                <FaSun className="text-orange-400" size={20} />
-              ) : (
-                <FaMoon size={20} />
-              )}
-              <span className="text-xs mt-1 hidden md:block">Theme</span>
-            </button>
+
           </div>
         </div>
       </div>
