@@ -6,24 +6,16 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
 import { forwardRef, useImperativeHandle, useState } from "react";
 import { cn } from "@/lib/utils";
+import { useCategories } from "@/hooks/category/queries/useCategories";
 import type { ProductCategory } from "@/schemas";
-
-const PRODUCT_CATEGORIES: { value: ProductCategory; label: string }[] = [
-  { value: "floor-tiles", label: "Floor Tiles" },
-  { value: "wall-tiles", label: "Wall Tiles" },
-  { value: "bathroom-tiles", label: "Bathroom Tiles" },
-  { value: "kitchen-tiles", label: "Kitchen Tiles" },
-  { value: "outdoor-tiles", label: "Outdoor Tiles" },
-  { value: "vitrified-tiles", label: "Vitrified Tiles" },
-  { value: "ceramic-tiles", label: "Ceramic Tiles" },
-  { value: "marble-tiles", label: "Marble Tiles" },
-];
 
 export type BasicInfoRef = {
   name: string;
@@ -51,6 +43,8 @@ export const BasicInfo = forwardRef<BasicInfoRef, BasicInfoProps>(
     const [description, setDescription] = useState(initialData?.description || "");
     const [price, setPrice] = useState(initialData?.price?.toString() || "");
     const [category, setCategory] = useState<ProductCategory | "">(initialData?.category || "");
+
+    const { categories, isLoading: categoriesLoading } = useCategories();
 
     useImperativeHandle(ref, () => ({
       name,
@@ -143,7 +137,7 @@ export const BasicInfo = forwardRef<BasicInfoRef, BasicInfoProps>(
               Category <span className="text-red-400">*</span>
             </Label>
             <Select value={category} onValueChange={(v) => setCategory(v as ProductCategory)}>
-              <SelectTrigger 
+              <SelectTrigger
                 id="category"
                 className={cn(
                   "h-11",
@@ -153,11 +147,31 @@ export const BasicInfo = forwardRef<BasicInfoRef, BasicInfoProps>(
                 <SelectValue placeholder="Select a category" />
               </SelectTrigger>
               <SelectContent>
-                {PRODUCT_CATEGORIES.map(({ value, label }) => (
-                  <SelectItem key={value} value={value}>
-                    {label}
+                {categoriesLoading ? (
+                  <SelectItem value="" disabled>
+                    Loading categories...
                   </SelectItem>
-                ))}
+                ) : Array.isArray(categories) && categories.length > 0 ? (
+                  categories.map((parent: any) => (
+                    <SelectGroup key={parent._id}>
+                      <SelectLabel>{parent.name}</SelectLabel>
+                      <SelectItem value={parent.slug}>
+                        {parent.name}
+                      </SelectItem>
+                      {parent.children && parent.children.length > 0 && (
+                        parent.children.map((child: any) => (
+                          <SelectItem key={child._id} value={child.slug} className="pl-6">
+                            {child.name}
+                          </SelectItem>
+                        ))
+                      )}
+                    </SelectGroup>
+                  ))
+                ) : (
+                  <SelectItem value="" disabled>
+                    No categories available
+                  </SelectItem>
+                )}
               </SelectContent>
             </Select>
             {errors?.category && (

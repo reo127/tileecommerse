@@ -9,6 +9,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { useCategories } from "@/hooks/category/queries/useCategories";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000/api/v1';
 
@@ -31,6 +32,10 @@ export function SimpleProductForm() {
   const [featuredImageIndex, setFeaturedImageIndex] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [specCount, setSpecCount] = useState(2); // Start with 2 specifications
+  const [selectedCategory, setSelectedCategory] = useState('');
+
+  // Fetch categories from backend
+  const { categories, isLoading: categoriesLoading } = useCategories();
 
   // Variants state
   const [hasVariants, setHasVariants] = useState(false);
@@ -340,14 +345,22 @@ export function SimpleProductForm() {
                   <select
                     name="category"
                     required
+                    value={selectedCategory}
+                    onChange={(e) => setSelectedCategory(e.target.value)}
                     className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
                   >
                     <option value="">Select category</option>
-                    <option value="floor-tiles">Floor Tiles</option>
-                    <option value="wall-tiles">Wall Tiles</option>
-                    <option value="bathroom-tiles">Bathroom Tiles</option>
-                    <option value="kitchen-tiles">Kitchen Tiles</option>
-                    <option value="outdoor-tiles">Outdoor Tiles</option>
+                    {categoriesLoading ? (
+                      <option disabled>Loading categories...</option>
+                    ) : Array.isArray(categories) && categories.length > 0 ? (
+                      categories.map((cat: any) => (
+                        <option key={cat._id} value={cat.slug}>
+                          {cat.name}
+                        </option>
+                      ))
+                    ) : (
+                      <option disabled>No categories available</option>
+                    )}
                   </select>
                 </div>
 
@@ -365,14 +378,19 @@ export function SimpleProductForm() {
                   <label className="block text-sm font-medium text-slate-700 mb-2">Sub Category</label>
                   <select
                     name="subcategory"
-                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
+                    disabled={!selectedCategory}
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <option value="">Select category</option>
-                    <option value="floor-tiles">Floor Tiles</option>
-                    <option value="wall-tiles">Wall Tiles</option>
-                    <option value="bathroom-tiles">Bathroom Tiles</option>
-                    <option value="kitchen-tiles">Kitchen Tiles</option>
-                    <option value="outdoor-tiles">Outdoor Tiles</option>
+                    <option value="">{selectedCategory ? 'Select subcategory' : 'Select category first'}</option>
+                    {selectedCategory && Array.isArray(categories) && categories.length > 0 && (
+                      categories
+                        .find((cat: any) => cat.slug === selectedCategory)
+                        ?.children?.map((subcat: any) => (
+                          <option key={subcat._id} value={subcat.slug}>
+                            {subcat.name}
+                          </option>
+                        ))
+                    )}
                   </select>
                 </div>
 
