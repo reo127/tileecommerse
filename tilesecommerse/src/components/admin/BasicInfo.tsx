@@ -155,12 +155,12 @@ export const BasicInfo = forwardRef<BasicInfoRef, BasicInfoProps>(
                   categories.map((parent: any) => (
                     <SelectGroup key={parent._id}>
                       <SelectLabel>{parent.name}</SelectLabel>
-                      <SelectItem value={parent.slug}>
+                      <SelectItem value={parent._id}>
                         {parent.name}
                       </SelectItem>
                       {parent.children && parent.children.length > 0 && (
                         parent.children.map((child: any) => (
-                          <SelectItem key={child._id} value={child.slug} className="pl-6">
+                          <SelectItem key={child._id} value={child._id} className="pl-6">
                             {child.name}
                           </SelectItem>
                         ))

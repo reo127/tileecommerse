@@ -11,20 +11,57 @@ function transformProduct(backendProduct: any) {
   const featuredImage = backendProduct.images?.find((img: any) => img.isFeatured);
   const mainImage = featuredImage || backendProduct.images?.[0];
 
+  // Transform variants - use real variants if available, otherwise create default
+  let variants = [];
+  if (backendProduct.hasVariants && backendProduct.variants && backendProduct.variants.length > 0) {
+    variants = backendProduct.variants.map((variant: any) => ({
+      color: variant.color || backendProduct.color || 'Default',
+      size: variant.size || (backendProduct.dimensions ?
+        `${backendProduct.dimensions.length}x${backendProduct.dimensions.width} ${backendProduct.dimensions.unit}` :
+        ''),
+      sizes: variant.size ? [variant.size] : (backendProduct.dimensions ?
+        [`${backendProduct.dimensions.length}x${backendProduct.dimensions.width} ${backendProduct.dimensions.unit}`] :
+        []),
+      finish: variant.finish || backendProduct.finish,
+      price: variant.price || backendProduct.price,
+      stock: variant.stock || backendProduct.stock,
+      images: backendProduct.images || []
+    }));
+  } else {
+    // Create default variant from product data
+    variants = [{
+      color: backendProduct.color || 'Default',
+      size: backendProduct.dimensions ?
+        `${backendProduct.dimensions.length}x${backendProduct.dimensions.width} ${backendProduct.dimensions.unit}` :
+        '',
+      sizes: backendProduct.dimensions ?
+        [`${backendProduct.dimensions.length}x${backendProduct.dimensions.width} ${backendProduct.dimensions.unit}`] :
+        [],
+      finish: backendProduct.finish,
+      price: backendProduct.price,
+      stock: backendProduct.stock,
+      images: backendProduct.images || []
+    }];
+  }
+
   return {
     id: backendProduct._id,
     name: backendProduct.name,
     description: backendProduct.description,
+    shortDescription: backendProduct.shortDescription,
     price: backendProduct.price,
     cuttedPrice: backendProduct.cuttedPrice,
-    category: backendProduct.category,
+    category: backendProduct.category?.slug || backendProduct.category,
+    categoryName: backendProduct.category?.name || backendProduct.category,
+    subcategory: backendProduct.subcategory?.slug || backendProduct.subcategory,
+    subcategoryName: backendProduct.subcategory?.name,
     img: mainImage?.url || '/placeholder.jpg',
     images: backendProduct.images || [],
     brand: backendProduct.brand,
     stock: backendProduct.stock,
     warranty: backendProduct.warranty,
-    ratings: backendProduct.ratings,
-    numOfReviews: backendProduct.numOfReviews,
+    ratings: backendProduct.ratings || 0,
+    numOfReviews: backendProduct.numOfReviews || 0,
     // Tiles-specific fields
     material: backendProduct.material,
     finish: backendProduct.finish,
@@ -37,16 +74,11 @@ function transformProduct(backendProduct: any) {
     weight: backendProduct.weight,
     waterAbsorption: backendProduct.waterAbsorption,
     slipResistance: backendProduct.slipResistance,
-    highlights: backendProduct.highlights,
-    specifications: backendProduct.specifications,
-    // Create a dummy variant for compatibility with ProductItem component
-    variants: [{
-      color: backendProduct.color || 'Default',
-      sizes: backendProduct.dimensions ? [
-        `${backendProduct.dimensions.length}x${backendProduct.dimensions.width} ${backendProduct.dimensions.unit}`
-      ] : [],
-      images: backendProduct.images || []
-    }]
+    highlights: backendProduct.highlights || [],
+    specifications: backendProduct.specifications || [],
+    tags: backendProduct.tags || [],
+    hasVariants: backendProduct.hasVariants || false,
+    variants: variants
   };
 }
 

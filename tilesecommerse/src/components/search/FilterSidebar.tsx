@@ -12,6 +12,7 @@ interface FilterSidebarProps {
   selectedFinishes: string[];
   selectedColors: string[];
   selectedRoomTypes: string[];
+  selectedSizes: string[];
   minPrice?: number;
   maxPrice?: number;
 }
@@ -23,6 +24,7 @@ export const FilterSidebar = ({
   selectedFinishes,
   selectedColors,
   selectedRoomTypes,
+  selectedSizes,
   minPrice: initialMinPrice,
   maxPrice: initialMaxPrice,
 }: FilterSidebarProps) => {
@@ -48,11 +50,14 @@ export const FilterSidebar = ({
     const finishes = new Map<string, number>();
     const colors = new Map<string, number>();
     const roomTypes = new Map<string, number>();
+    const sizes = new Map<string, number>();
 
     allProducts.forEach(product => {
-      // Count categories
-      if (product.category) {
-        categories.set(product.category, (categories.get(product.category) || 0) + 1);
+      // Count categories - use categoryName if available
+      const categoryValue = product.category || '';
+      const categoryLabel = product.categoryName || categoryValue;
+      if (categoryValue) {
+        categories.set(categoryValue, (categories.get(categoryValue) || 0) + 1);
       }
 
       // Count materials
@@ -60,14 +65,41 @@ export const FilterSidebar = ({
         materials.set(product.material, (materials.get(product.material) || 0) + 1);
       }
 
-      // Count finishes
+      // Count finishes from base product
       if (product.finish) {
         finishes.set(product.finish, (finishes.get(product.finish) || 0) + 1);
       }
 
-      // Count colors
+      // Count colors from base product
       if (product.color) {
         colors.set(product.color, (colors.get(product.color) || 0) + 1);
+      }
+
+      // Extract finishes, colors, and sizes from variants
+      if (product.variants && product.variants.length > 0) {
+        product.variants.forEach((variant: any) => {
+          // Variant finishes
+          if (variant.finish) {
+            finishes.set(variant.finish, (finishes.get(variant.finish) || 0) + 1);
+          }
+
+          // Variant colors
+          if (variant.color) {
+            colors.set(variant.color, (colors.get(variant.color) || 0) + 1);
+          }
+
+          // Variant sizes
+          if (variant.size) {
+            sizes.set(variant.size, (sizes.get(variant.size) || 0) + 1);
+          }
+          if (variant.sizes && Array.isArray(variant.sizes)) {
+            variant.sizes.forEach((size: string) => {
+              if (size) {
+                sizes.set(size, (sizes.get(size) || 0) + 1);
+              }
+            });
+          }
+        });
       }
 
       // Count room types
@@ -101,6 +133,11 @@ export const FilterSidebar = ({
       })),
       roomTypes: Array.from(roomTypes.entries()).map(([value, count]) => ({
         label: value.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '),
+        value,
+        count,
+      })),
+      sizes: Array.from(sizes.entries()).map(([value, count]) => ({
+        label: value,
         value,
         count,
       })),
@@ -399,6 +436,46 @@ export const FilterSidebar = ({
                         type="checkbox"
                         checked={selectedRoomTypes.includes(option.value)}
                         onChange={(e) => updateFilters('roomType', option.value, e.target.checked)}
+                        className="w-4 h-4 text-orange-500 border-gray-300 rounded focus:ring-orange-500 cursor-pointer"
+                      />
+                      <span className="text-sm text-slate-700 group-hover:text-orange-500">
+                        {option.label}
+                      </span>
+                    </div>
+                    <span className="text-xs text-gray-500">({option.count})</span>
+                  </label>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Size Filter */}
+        {filterOptions.sizes.length > 0 && (
+          <div className="mb-6">
+            <button
+              onClick={() => toggleSection("Size")}
+              className="flex items-center justify-between w-full mb-3"
+            >
+              <h3 className="font-semibold text-slate-800">Size</h3>
+              {openSections.includes("Size") ? (
+                <FaChevronUp className="text-slate-600 text-sm" />
+              ) : (
+                <FaChevronDown className="text-slate-600 text-sm" />
+              )}
+            </button>
+            {openSections.includes("Size") && (
+              <div className="space-y-2 max-h-64 overflow-y-auto">
+                {filterOptions.sizes.map((option) => (
+                  <label
+                    key={option.value}
+                    className="flex items-center justify-between cursor-pointer group"
+                  >
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={selectedSizes.includes(option.value)}
+                        onChange={(e) => updateFilters('size', option.value, e.target.checked)}
                         className="w-4 h-4 text-orange-500 border-gray-300 rounded focus:ring-orange-500 cursor-pointer"
                       />
                       <span className="text-sm text-slate-700 group-hover:text-orange-500">

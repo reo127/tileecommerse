@@ -1,30 +1,72 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 
-export const PreviouslyViewed = () => {
-  const products = [
-    {
-      id: "1",
-      name: "Italian Beige (Matt)",
-      price: 92,
-      rating: 4.5,
-      image: "https://images.unsplash.com/photo-1615873968403-89e068629265?w=400",
-    },
-    {
-      id: "2",
-      name: "Wooden Walnut Tiles",
-      price: 78,
-      rating: 4.3,
-      image: "https://images.unsplash.com/photo-1615971677499-5467cbab01c0?w=400",
-    },
-    {
-      id: "3",
-      name: "Royal Marble Look Tiles",
-      price: 105,
-      rating: 4.7,
-      image: "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=400",
-    },
-  ];
+interface PreviouslyViewedProps {
+  currentProductId: string;
+}
+
+export const PreviouslyViewed = ({ currentProductId }: PreviouslyViewedProps) => {
+  const [products, setProducts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000/api/v1';
+        const response = await fetch(`${API_BASE_URL}/products/all`);
+
+        if (response.ok) {
+          const data = await response.json();
+          // Filter out current product and get up to 3 products
+          const filteredProducts = (data.products || [])
+            .filter((p: any) => p._id !== currentProductId)
+            .slice(0, 3)
+            .map((p: any) => ({
+              id: p._id,
+              name: p.name,
+              price: p.price,
+              rating: p.ratings || 0,
+              image: p.images?.[0]?.url || '/placeholder.jpg',
+              category: p.category?.slug || p.category,
+            }));
+
+          setProducts(filteredProducts);
+        }
+      } catch (error) {
+        console.error('Error fetching products:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, [currentProductId]);
+
+  if (loading) {
+    return (
+      <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <h2 className="text-2xl font-bold text-slate-800 mb-6">Previously Viewed</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="border border-gray-200 rounded-lg overflow-hidden animate-pulse">
+              <div className="aspect-square bg-gray-200" />
+              <div className="p-4 space-y-3">
+                <div className="h-4 bg-gray-200 rounded w-3/4" />
+                <div className="h-4 bg-gray-200 rounded w-1/2" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (products.length === 0) {
+    return null; // Don't show section if no products
+  }
 
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-6">
@@ -32,7 +74,7 @@ export const PreviouslyViewed = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {products.map((product) => (
           <div key={product.id} className="group border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
-            <Link href={`/product/${product.id}`} className="block">
+            <Link href={`/${product.category}/${product.id}`} className="block">
               <div className="relative aspect-square bg-gray-100">
                 <Image
                   src={product.image}
@@ -43,7 +85,7 @@ export const PreviouslyViewed = () => {
               </div>
             </Link>
             <div className="p-4">
-              <Link href={`/product/${product.id}`}>
+              <Link href={`/${product.category}/${product.id}`}>
                 <h3 className="font-semibold text-slate-800 mb-2 hover:text-orange-500 transition-colors line-clamp-2 min-h-[3rem]">
                   {product.name}
                 </h3>
@@ -67,7 +109,7 @@ export const PreviouslyViewed = () => {
                   <p className="text-xl font-bold text-orange-500">₹{product.price}</p>
                   <p className="text-xs text-gray-500">per sq.ft</p>
                 </div>
-                <Link href={`/product/${product.id}`}>
+                <Link href={`/${product.category}/${product.id}`}>
                   <button className="px-4 py-2 bg-slate-900 text-white rounded-lg hover:bg-orange-500 transition-colors text-sm font-medium">
                     View Item
                   </button>

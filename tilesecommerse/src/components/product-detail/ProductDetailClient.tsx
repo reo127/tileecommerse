@@ -7,7 +7,6 @@ import {
   ProductSpecifications,
   ProductDetailsTabs,
   FAQSection,
-  RecommendedAccessories,
   PreviouslyViewed,
   ShopByReels,
 } from "@/components/product-detail";
@@ -33,14 +32,14 @@ export const ProductDetailClient = ({ product, productImages }: ProductDetailCli
           <ProductInfo product={product} />
         </div>
 
-        {/* Product Specifications */}
-        <div className="mb-8">
-          <ProductSpecifications category={product.category} />
-        </div>
-
         {/* Product Details Tabs */}
         <div className="mb-8">
-          <ProductDetailsTabs />
+          <ProductDetailsTabs product={product} />
+        </div>
+
+        {/* Product Specifications */}
+        <div className="mb-8">
+          <ProductSpecifications product={product} />
         </div>
 
         {/* FAQ Section */}
@@ -48,14 +47,9 @@ export const ProductDetailClient = ({ product, productImages }: ProductDetailCli
           <FAQSection />
         </div>
 
-        {/* Recommended Accessories */}
-        <div className="mb-8">
-          <RecommendedAccessories />
-        </div>
-
         {/* Previously Viewed */}
         <div className="mb-8">
-          <PreviouslyViewed />
+          <PreviouslyViewed currentProductId={product.id} />
         </div>
 
         {/* Shop by Reels */}

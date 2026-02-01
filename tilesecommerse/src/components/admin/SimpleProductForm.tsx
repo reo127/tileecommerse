@@ -135,9 +135,11 @@ export function SimpleProductForm() {
 
       const name = formData.get('name') as string;
       const description = formData.get('description') as string;
+      const shortDescription = formData.get('shortDescription') as string;
       const price = formData.get('price') as string;
       const cuttedPrice = formData.get('cuttedPrice') as string;
       const category = formData.get('category') as string;
+      const subcategory = formData.get('subcategory') as string;
       const brandname = formData.get('brandname') as string;
       const stock = formData.get('stock') as string;
       const warranty = formData.get('warranty') as string;
@@ -197,9 +199,11 @@ export function SimpleProductForm() {
       const requestBody: any = {
         name,
         description,
+        shortDescription,
         price: Number(price),
         cuttedPrice: Number(cuttedPrice),
         category,
+        subcategory: subcategory || undefined,
         brandname,
         logo,
         images,
@@ -222,9 +226,9 @@ export function SimpleProductForm() {
       if (waterAbsorption) requestBody.waterAbsorption = waterAbsorption;
       if (slipResistance) requestBody.slipResistance = slipResistance;
 
-      // Add variants if enabled
-      if (hasVariants && variants.length > 0) {
-        requestBody.hasVariants = true;
+      // Always add variants data (even if empty)
+      requestBody.hasVariants = hasVariants;
+      if (variants.length > 0) {
         requestBody.variants = JSON.stringify(variants);
       }
 
@@ -354,7 +358,7 @@ export function SimpleProductForm() {
                       <option disabled>Loading categories...</option>
                     ) : Array.isArray(categories) && categories.length > 0 ? (
                       categories.map((cat: any) => (
-                        <option key={cat._id} value={cat.slug}>
+                        <option key={cat._id} value={cat._id}>
                           {cat.name}
                         </option>
                       ))
@@ -384,9 +388,9 @@ export function SimpleProductForm() {
                     <option value="">{selectedCategory ? 'Select subcategory' : 'Select category first'}</option>
                     {selectedCategory && Array.isArray(categories) && categories.length > 0 && (
                       categories
-                        .find((cat: any) => cat.slug === selectedCategory)
+                        .find((cat: any) => cat._id === selectedCategory)
                         ?.children?.map((subcat: any) => (
-                          <option key={subcat._id} value={subcat.slug}>
+                          <option key={subcat._id} value={subcat._id}>
                             {subcat.name}
                           </option>
                         ))

@@ -15,6 +15,7 @@ interface SearchProps {
     material?: string | string[];
     finish?: string | string[];
     color?: string | string[];
+    size?: string | string[];
     minPrice?: string;
     maxPrice?: string;
     roomType?: string | string[];
@@ -31,6 +32,7 @@ const Search = async ({ searchParams }: SearchProps) => {
   const finishes = params.finish ? (Array.isArray(params.finish) ? params.finish : [params.finish]) : [];
   const colors = params.color ? (Array.isArray(params.color) ? params.color : [params.color]) : [];
   const roomTypes = params.roomType ? (Array.isArray(params.roomType) ? params.roomType : [params.roomType]) : [];
+  const sizes = params.size ? (Array.isArray(params.size) ? params.size : [params.size]) : [];
   const minPrice = params.minPrice ? parseFloat(params.minPrice) : undefined;
   const maxPrice = params.maxPrice ? parseFloat(params.maxPrice) : undefined;
 
@@ -66,6 +68,20 @@ const Search = async ({ searchParams }: SearchProps) => {
     filteredProducts = filteredProducts.filter(p =>
       p.color && colors.some(color => p.color?.toLowerCase().includes(color.toLowerCase()))
     );
+  }
+
+  // Apply size filter (check variants)
+  if (sizes.length > 0) {
+    filteredProducts = filteredProducts.filter(p => {
+      if (!p.variants || p.variants.length === 0) return false;
+      return p.variants.some((variant: any) => {
+        if (variant.size && sizes.includes(variant.size)) return true;
+        if (variant.sizes && Array.isArray(variant.sizes)) {
+          return variant.sizes.some((s: string) => sizes.includes(s));
+        }
+        return false;
+      });
+    });
   }
 
   // Apply room type filter
@@ -105,6 +121,7 @@ const Search = async ({ searchParams }: SearchProps) => {
             selectedFinishes={finishes}
             selectedColors={colors}
             selectedRoomTypes={roomTypes}
+            selectedSizes={sizes}
             minPrice={minPrice}
             maxPrice={maxPrice}
           />

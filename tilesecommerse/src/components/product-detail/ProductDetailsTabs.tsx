@@ -1,14 +1,19 @@
 "use client";
 
 import { useState } from "react";
+import type { ProductWithVariants } from "@/schemas";
 
-export const ProductDetailsTabs = () => {
+interface ProductDetailsTabsProps {
+  product: ProductWithVariants;
+}
+
+export const ProductDetailsTabs = ({ product }: ProductDetailsTabsProps) => {
   const [activeTab, setActiveTab] = useState("description");
 
   const tabs = [
     { id: "description", label: "Description" },
     { id: "specifications", label: "Specifications" },
-    { id: "installation", label: "Installation Guide" },
+    { id: "highlights", label: "Highlights" },
     { id: "care", label: "Care Instructions" },
   ];
 
@@ -20,11 +25,10 @@ export const ProductDetailsTabs = () => {
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`flex-1 px-6 py-4 font-semibold transition-colors ${
-              activeTab === tab.id
-                ? "bg-white text-orange-500 border-b-2 border-orange-500"
-                : "text-slate-600 hover:text-slate-800"
-            }`}
+            className={`flex-1 px-6 py-4 font-semibold transition-colors ${activeTab === tab.id
+              ? "bg-white text-orange-500 border-b-2 border-orange-500"
+              : "text-slate-600 hover:text-slate-800"
+              }`}
           >
             {tab.label}
           </button>
@@ -35,57 +39,104 @@ export const ProductDetailsTabs = () => {
       <div className="p-6">
         {activeTab === "description" && (
           <div className="space-y-4 text-slate-700">
-            <p>
-              Premium quality tiles designed to enhance the beauty of your spaces. These tiles combine
-              durability with aesthetic appeal, making them perfect for both residential and commercial
-              applications.
-            </p>
-            <p>
-              Manufactured using advanced technology and high-quality materials, these tiles offer
-              excellent resistance to wear, stains, and moisture. The polished finish adds a luxurious
-              touch to any room.
-            </p>
-            <ul className="list-disc list-inside space-y-2 ml-4">
-              <li>High durability and longevity</li>
-              <li>Easy to clean and maintain</li>
-              <li>Resistant to stains and scratches</li>
-              <li>Suitable for high-traffic areas</li>
-              <li>Eco-friendly manufacturing process</li>
-            </ul>
+            {/* Product Description */}
+            {product.description && (
+              <div className="prose max-w-none">
+                <p className="text-base leading-relaxed whitespace-pre-line">
+                  {product.description}
+                </p>
+              </div>
+            )}
+
+            {/* Short Description if available */}
+            {product.shortDescription && product.shortDescription !== product.description && (
+              <div className="bg-orange-50 border-l-4 border-orange-500 p-4">
+                <p className="text-sm font-medium text-slate-800">
+                  {product.shortDescription}
+                </p>
+              </div>
+            )}
           </div>
         )}
 
         {activeTab === "specifications" && (
           <div className="space-y-3 text-slate-700">
-            <p className="font-semibold text-slate-800">Technical Specifications:</p>
+            <p className="font-semibold text-slate-800 mb-4">Product Specifications:</p>
             <ul className="space-y-2">
-              <li><strong>Material:</strong> Vitrified Ceramic</li>
-              <li><strong>Finish:</strong> Polished Glazed</li>
-              <li><strong>Thickness:</strong> 8-10 mm</li>
-              <li><strong>Water Absorption:</strong> Less than 0.5%</li>
-              <li><strong>Breaking Strength:</strong> 1200+ N</li>
-              <li><strong>Chemical Resistance:</strong> High</li>
-              <li><strong>Frost Resistance:</strong> Yes</li>
+              {/* Category */}
+              {product.categoryName && (
+                <li><strong>Category:</strong> {product.categoryName}</li>
+              )}
+
+              {/* Subcategory */}
+              {product.subcategoryName && (
+                <li><strong>Subcategory:</strong> {product.subcategoryName}</li>
+              )}
+
+              {/* Brand */}
+              {product.brand?.name && (
+                <li><strong>Brand:</strong> {product.brand.name}</li>
+              )}
+
+              {/* Warranty */}
+              {product.warranty && (
+                <li><strong>Warranty:</strong> {product.warranty} {product.warranty === 1 ? 'year' : 'years'}</li>
+              )}
+
+              {/* Material */}
+              {product.material && (
+                <li><strong>Material:</strong> {product.material.charAt(0).toUpperCase() + product.material.slice(1)}</li>
+              )}
+
+              {/* Available Finishes */}
+              {product.variants && product.variants.length > 0 && (
+                <>
+                  {(() => {
+                    const finishes = Array.from(new Set(product.variants.map((v: any) => v.finish).filter(Boolean)));
+                    if (finishes.length > 0) {
+                      return <li><strong>Available Finish:</strong> {finishes.map((f: any) => f.charAt(0).toUpperCase() + f.slice(1)).join(', ')}</li>;
+                    }
+                    return null;
+                  })()}
+
+                  {/* Available Colors */}
+                  {(() => {
+                    const colors = Array.from(new Set(product.variants.map((v: any) => v.color).filter(Boolean)));
+                    if (colors.length > 0) {
+                      return <li><strong>Available Colors:</strong> {colors.join(', ')}</li>;
+                    }
+                    return null;
+                  })()}
+
+                  {/* Available Sizes */}
+                  {(() => {
+                    const sizes = Array.from(new Set(
+                      product.variants.flatMap((v: any) =>
+                        (v.sizes && v.sizes.length > 0) ? v.sizes : [v.size]
+                      ).filter(Boolean)
+                    ));
+                    if (sizes.length > 0) {
+                      return <li><strong>Available Sizes:</strong> {sizes.join(', ')}</li>;
+                    }
+                    return null;
+                  })()}
+                </>
+              )}
             </ul>
           </div>
         )}
 
-        {activeTab === "installation" && (
+        {activeTab === "highlights" && (
           <div className="space-y-4 text-slate-700">
-            <p className="font-semibold text-slate-800">Installation Steps:</p>
-            <ol className="list-decimal list-inside space-y-3 ml-4">
-              <li>Ensure the surface is clean, dry, and level</li>
-              <li>Apply tile adhesive evenly using a notched trowel</li>
-              <li>Place tiles with spacers to maintain uniform gaps</li>
-              <li>Press tiles firmly and check alignment</li>
-              <li>Allow adhesive to dry for 24-48 hours</li>
-              <li>Apply grout in the gaps between tiles</li>
-              <li>Clean excess grout with a damp sponge</li>
-              <li>Allow to cure completely before use</li>
-            </ol>
-            <p className="bg-orange-50 border-l-4 border-orange-500 p-4 mt-4">
-              <strong>Note:</strong> Professional installation is recommended for best results.
-            </p>
+            {product.highlights && product.highlights.length > 0 ? (
+              <ul className="list-disc list-inside space-y-2 ml-4">
+                {product.highlights.map((highlight: string, index: number) => (
+                  <li key={index} className="text-slate-700">{highlight}</li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-slate-500 italic">No highlights available for this product.</p>
+            )}
           </div>
         )}
 

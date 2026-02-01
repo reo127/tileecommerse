@@ -10,15 +10,37 @@ interface Product {
   _id: string;
   name: string;
   description: string;
+  shortDescription?: string;
   price: number;
   cuttedPrice: number;
-  category: string;
-  images: Array<{ url: string; public_id: string }>;
-  stock: number;
-  brand: {
+  category: {
+    _id: string;
     name: string;
-    logo: { url: string; public_id: string };
+    slug: string;
   };
+  subcategory?: {
+    _id: string;
+    name: string;
+    slug: string;
+  };
+  images: Array<{ url: string; public_id: string; isFeatured?: boolean }>;
+  stock: number;
+  brand?: {
+    name: string;
+    logo?: { url: string; public_id: string };
+  };
+  material?: string;
+  finish?: string;
+  color?: string;
+  warranty?: number;
+  hasVariants?: boolean;
+  variants?: Array<{
+    color?: string;
+    size?: string;
+    finish?: string;
+    price?: number;
+    stock?: number;
+  }>;
 }
 
 export default function AdminProductsPage() {
@@ -174,7 +196,7 @@ export default function AdminProductsPage() {
                 <div className="relative h-48 bg-slate-100 overflow-hidden">
                   {product.images && product.images.length > 0 ? (
                     <img
-                      src={product.images[0].url}
+                      src={product.images.find(img => img.isFeatured)?.url || product.images[0].url}
                       alt={product.name}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     />
@@ -183,16 +205,32 @@ export default function AdminProductsPage() {
                       <HiShoppingBag className="w-16 h-16" />
                     </div>
                   )}
+
+                  {/* Category Badge */}
                   <div className="absolute top-2 right-2">
                     <span className="px-3 py-1 bg-orange-500 text-white text-xs font-semibold rounded-full">
-                      {product.category}
+                      {product.category?.name || 'Uncategorized'}
                     </span>
                   </div>
+
+                  {/* Stock Badge */}
                   <div className="absolute top-2 left-2">
-                    <span className="px-3 py-1 bg-slate-900 text-white text-xs font-semibold rounded-full">
+                    <span className={`px-3 py-1 text-white text-xs font-semibold rounded-full ${product.stock > 50 ? 'bg-green-500' :
+                        product.stock > 10 ? 'bg-yellow-500' :
+                          'bg-red-500'
+                      }`}>
                       Stock: {product.stock}
                     </span>
                   </div>
+
+                  {/* Variants Badge */}
+                  {product.hasVariants && product.variants && product.variants.length > 0 && (
+                    <div className="absolute bottom-2 left-2">
+                      <span className="px-3 py-1 bg-purple-500 text-white text-xs font-semibold rounded-full">
+                        {product.variants.length} Variants
+                      </span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Product Info */}
@@ -200,12 +238,51 @@ export default function AdminProductsPage() {
                   <h3 className="font-semibold text-lg text-slate-900 mb-1 line-clamp-1">
                     {product.name}
                   </h3>
-                  <p className="text-sm text-slate-600 mb-2">
-                    {product.brand?.name || 'No Brand'}
-                  </p>
+
+                  {/* Brand & Material */}
+                  <div className="flex items-center gap-2 mb-2">
+                    {product.brand?.name && (
+                      <span className="text-sm text-slate-600">
+                        {product.brand.name}
+                      </span>
+                    )}
+                    {product.material && (
+                      <>
+                        {product.brand?.name && <span className="text-slate-400">•</span>}
+                        <span className="text-sm text-slate-600 capitalize">
+                          {product.material}
+                        </span>
+                      </>
+                    )}
+                  </div>
+
+                  {/* Description */}
                   <p className="text-sm text-slate-600 mb-3 line-clamp-2">
-                    {product.description}
+                    {product.shortDescription || product.description}
                   </p>
+
+                  {/* Subcategory & Finish */}
+                  {(product.subcategory || product.finish || product.color) && (
+                    <div className="flex flex-wrap gap-2 mb-3">
+                      {product.subcategory && (
+                        <span className="px-2 py-1 bg-slate-100 text-slate-700 text-xs rounded-md">
+                          {product.subcategory.name}
+                        </span>
+                      )}
+                      {product.finish && (
+                        <span className="px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded-md capitalize">
+                          {product.finish}
+                        </span>
+                      )}
+                      {product.color && (
+                        <span className="px-2 py-1 bg-purple-50 text-purple-700 text-xs rounded-md capitalize">
+                          {product.color}
+                        </span>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Pricing */}
                   <div className="flex items-center gap-3 mb-4">
                     <div>
                       <p className="text-xs text-slate-500">Price</p>
@@ -219,6 +296,13 @@ export default function AdminProductsPage() {
                         <p className="text-sm font-semibold text-slate-400 line-through">
                           ₹{Number(product.cuttedPrice).toLocaleString("en-IN")}
                         </p>
+                      </div>
+                    )}
+                    {product.cuttedPrice && product.cuttedPrice > product.price && (
+                      <div className="ml-auto">
+                        <span className="px-2 py-1 bg-green-100 text-green-700 text-xs font-bold rounded">
+                          {Math.round(((product.cuttedPrice - product.price) / product.cuttedPrice) * 100)}% OFF
+                        </span>
                       </div>
                     )}
                   </div>

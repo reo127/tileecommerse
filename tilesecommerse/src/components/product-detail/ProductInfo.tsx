@@ -114,7 +114,7 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
         <h1 className="text-2xl lg:text-3xl font-bold text-slate-800 mb-2">
           {product.name}
         </h1>
-        <p className="text-slate-600">{product.description}</p>
+        <p className="text-slate-600">{product.shortDescription || product.description}</p>
       </div>
 
       {/* Price with MRP and Discount */}
@@ -147,22 +147,22 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
       </div>
 
 
-      {/* Available Colors - Smaller boxes */}
+      {/* Available Colors - Smaller boxes with bigger text */}
       {uniqueColors.length > 0 && (
         <div>
           <h3 className="text-sm font-semibold text-slate-800 mb-3">Available Colors</h3>
-          <div className="grid grid-cols-5 sm:grid-cols-6 gap-2">
+          <div className="grid grid-cols-6 sm:grid-cols-8 gap-2">
             {uniqueColors.map((color: any) => (
               <button
                 key={color}
                 onClick={() => setSelectedColor(color)}
                 className={`relative aspect-square rounded-lg border-2 transition-all overflow-hidden ${selectedColor === color
-                    ? "border-orange-500 ring-2 ring-orange-200"
-                    : "border-gray-300 hover:border-orange-300"
+                  ? "border-orange-500 ring-2 ring-orange-200"
+                  : "border-gray-300 hover:border-orange-300"
                   }`}
               >
                 <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-400 flex items-center justify-center">
-                  <span className="text-[10px] text-center px-1 font-medium text-slate-700">
+                  <span className="text-xs text-center px-1 font-semibold text-slate-700">
                     {color}
                   </span>
                 </div>
@@ -189,8 +189,8 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
                 key={size}
                 onClick={() => setSelectedSize(size)}
                 className={`px-6 py-3 rounded-lg border-2 font-medium transition-all ${selectedSize === size
-                    ? "border-orange-500 bg-orange-50 text-orange-600"
-                    : "border-gray-300 text-slate-700 hover:border-orange-300"
+                  ? "border-orange-500 bg-orange-50 text-orange-600"
+                  : "border-gray-300 text-slate-700 hover:border-orange-300"
                   }`}
               >
                 {size}&quot;
@@ -200,51 +200,54 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
         </div>
       )}
 
-      {/* Available Finishes */}
-      {uniqueFinishes.length > 0 && (
-        <div>
-          <h3 className="text-sm font-semibold text-slate-800 mb-3">Select Finish</h3>
-          <select
-            value={selectedFinish}
-            onChange={(e) => setSelectedFinish(e.target.value)}
-            className="w-full px-4 py-3 bg-white border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all font-medium text-slate-700"
-          >
-            <option value="">Choose finish...</option>
-            {uniqueFinishes.map((finish: any) => (
-              <option key={finish} value={finish}>
-                {finish.charAt(0).toUpperCase() + finish.slice(1)}
-              </option>
-            ))}
-          </select>
-        </div>
-      )}
-
-      {/* Select Quantity */}
-      <div>
-        <h3 className="text-sm font-semibold text-slate-800 mb-3">Select Quantity</h3>
-        <div className="flex items-center gap-4">
-          <div className="flex items-center border-2 border-gray-300 rounded-lg">
-            <button
-              onClick={() => setQuantity(Math.max(1, quantity - 1))}
-              className="px-4 py-2 text-xl font-semibold text-slate-700 hover:bg-gray-100 transition-colors"
+      {/* Finish and Quantity - Side by Side */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Available Finishes */}
+        {uniqueFinishes.length > 0 && (
+          <div>
+            <h3 className="text-sm font-semibold text-slate-800 mb-3">Select Finish</h3>
+            <select
+              value={selectedFinish}
+              onChange={(e) => setSelectedFinish(e.target.value)}
+              className="w-full px-4 py-3 bg-white border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all font-medium text-slate-700"
             >
-              −
-            </button>
-            <input
-              type="number"
-              value={quantity}
-              onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
-              className="w-20 text-center py-2 font-semibold text-slate-800 focus:outline-none"
-              min="1"
-            />
-            <button
-              onClick={() => setQuantity(quantity + 1)}
-              className="px-4 py-2 text-xl font-semibold text-slate-700 hover:bg-gray-100 transition-colors"
-            >
-              +
-            </button>
+              <option value="">Choose finish...</option>
+              {uniqueFinishes.map((finish: any) => (
+                <option key={finish} value={finish}>
+                  {finish.charAt(0).toUpperCase() + finish.slice(1)}
+                </option>
+              ))}
+            </select>
           </div>
-          <span className="text-sm text-slate-600">Box (12 sq.ft)</span>
+        )}
+
+        {/* Select Quantity */}
+        <div>
+          <h3 className="text-sm font-semibold text-slate-800 mb-3">Select Quantity</h3>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center border-2 border-gray-300 rounded-lg">
+              <button
+                onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                className="px-4 py-2 text-xl font-semibold text-slate-700 hover:bg-gray-100 transition-colors"
+              >
+                −
+              </button>
+              <input
+                type="number"
+                value={quantity}
+                onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+                className="w-20 text-center py-2 font-semibold text-slate-800 focus:outline-none"
+                min="1"
+              />
+              <button
+                onClick={() => setQuantity(quantity + 1)}
+                className="px-4 py-2 text-xl font-semibold text-slate-700 hover:bg-gray-100 transition-colors"
+              >
+                +
+              </button>
+            </div>
+            <span className="text-sm text-slate-600">Box (12 sq.ft)</span>
+          </div>
         </div>
       </div>
 
