@@ -92,18 +92,28 @@ exports.createProduct = asyncErrorHandler(async (req, res, next) => {
         });
     }
 
-    const result = await cloudinary.v2.uploader.upload(req.body.logo, {
-        folder: "brands",
-    });
-    const brandLogo = {
-        public_id: result.public_id,
-        url: result.secure_url,
-    };
 
-    req.body.brand = {
-        name: req.body.brandname,
-        logo: brandLogo
+    // Handle brand logo upload if provided
+    if (req.body.logo) {
+        const result = await cloudinary.v2.uploader.upload(req.body.logo, {
+            folder: "brands",
+        });
+        const brandLogo = {
+            public_id: result.public_id,
+            url: result.secure_url,
+        };
+
+        req.body.brand = {
+            name: req.body.brandname,
+            logo: brandLogo
+        };
+    } else if (req.body.brandname) {
+        // If only brand name is provided without logo
+        req.body.brand = {
+            name: req.body.brandname
+        };
     }
+
     req.body.images = imagesLink;
     req.body.user = req.user.id;
 
@@ -124,6 +134,16 @@ exports.createProduct = asyncErrorHandler(async (req, res, next) => {
 
     if (req.body.bulkPricing && typeof req.body.bulkPricing === 'string') {
         req.body.bulkPricing = JSON.parse(req.body.bulkPricing);
+    }
+
+    // Handle tags (if it's a string, convert to array)
+    if (req.body.tags && typeof req.body.tags === 'string') {
+        req.body.tags = JSON.parse(req.body.tags);
+    }
+
+    // Handle variants (if it's a string, parse it)
+    if (req.body.variants && typeof req.body.variants === 'string') {
+        req.body.variants = JSON.parse(req.body.variants);
     }
 
     const product = await Product.create(req.body);
@@ -168,14 +188,20 @@ exports.updateProduct = asyncErrorHandler(async (req, res, next) => {
                 imagesLink.push({
                     public_id: result.public_id,
                     url: result.secure_url,
+                    isFeatured: i === 0 ? true : false,
                 });
             }
             req.body.images = imagesLink;
         }
     }
 
+    // Handle brand logo update
     if (req.body.logo && req.body.logo.length > 0) {
-        await cloudinary.v2.uploader.destroy(product.brand.logo.public_id);
+        // Delete old logo if exists
+        if (product.brand && product.brand.logo && product.brand.logo.public_id) {
+            await cloudinary.v2.uploader.destroy(product.brand.logo.public_id);
+        }
+
         const result = await cloudinary.v2.uploader.upload(req.body.logo, {
             folder: "brands",
         });
@@ -187,7 +213,13 @@ exports.updateProduct = asyncErrorHandler(async (req, res, next) => {
         req.body.brand = {
             name: req.body.brandname,
             logo: brandLogo
-        }
+        };
+    } else if (req.body.brandname) {
+        // Update brand name only if logo not provided
+        req.body.brand = {
+            name: req.body.brandname,
+            logo: product.brand?.logo // Keep existing logo
+        };
     }
 
     if (req.body.specifications && Array.isArray(req.body.specifications) && req.body.specifications.length > 0) {
@@ -213,6 +245,16 @@ exports.updateProduct = asyncErrorHandler(async (req, res, next) => {
 
     if (req.body.bulkPricing && typeof req.body.bulkPricing === 'string') {
         req.body.bulkPricing = JSON.parse(req.body.bulkPricing);
+    }
+
+    // Handle tags (if it's a string, convert to array)
+    if (req.body.tags && typeof req.body.tags === 'string') {
+        req.body.tags = JSON.parse(req.body.tags);
+    }
+
+    // Handle variants (if it's a string, parse it)
+    if (req.body.variants && typeof req.body.variants === 'string') {
+        req.body.variants = JSON.parse(req.body.variants);
     }
 
     req.body.user = req.user.id;
@@ -271,7 +313,7 @@ exports.createProductReview = asyncErrorHandler(async (req, res, next) => {
 
     if (isReviewed) {
 
-        product.reviews.forEach((rev) => { 
+        product.reviews.forEach((rev) => {
             if (rev.user.toString() === req.user._id.toString())
                 (rev.rating = rating, rev.comment = comment);
         });

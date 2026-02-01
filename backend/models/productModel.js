@@ -10,6 +10,11 @@ const productSchema = new mongoose.Schema({
         type: String,
         required: [true, "Please enter product description"]
     },
+    shortDescription: {
+        type: String,
+        required: false,
+        maxlength: [200, "Short description cannot exceed 200 characters"]
+    },
     highlights: [
         {
             type: String,
@@ -55,16 +60,16 @@ const productSchema = new mongoose.Schema({
     brand: {
         name: {
             type: String,
-            required: true
+            required: false
         },
         logo: {
             public_id: {
                 type: String,
-                required: true,
+                required: false,
             },
             url: {
                 type: String,
-                required: true,
+                required: false,
             }
         }
     },
@@ -157,6 +162,39 @@ const productSchema = new mongoose.Schema({
         price: {
             type: Number,
             required: true
+        }
+    }],
+
+    tags: [{
+        type: String,
+        trim: true
+    }],
+
+    // Product Variants
+    hasVariants: {
+        type: Boolean,
+        default: false
+    },
+    variants: [{
+        color: {
+            type: String,
+            required: false
+        },
+        size: {
+            type: String,
+            required: false
+        },
+        finish: {
+            type: String,
+            required: false
+        },
+        price: {
+            type: Number,
+            required: false
+        },
+        stock: {
+            type: Number,
+            required: false
         }
     }],
 
