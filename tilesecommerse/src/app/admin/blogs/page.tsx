@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { HiPlus, HiPencil, HiTrash, HiX, HiCheck, HiNewspaper, HiEye, HiCalendar, HiUser, HiTag } from "react-icons/hi";
 import Image from "next/image";
+import { TipTapEditor } from "@/components/admin/TipTapEditor";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000/api/v1';
 
@@ -42,6 +43,8 @@ export default function BlogsPage() {
   const [alert, setAlert] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [deleteLoading, setDeleteLoading] = useState<string | null>(null);
   const [previewMode, setPreviewMode] = useState(false);
+  const [submitLoading, setSubmitLoading] = useState(false);
+  const [modalError, setModalError] = useState<string | null>(null);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -64,59 +67,24 @@ export default function BlogsPage() {
   const fetchBlogs = async () => {
     try {
       setLoading(true);
-      // Mock data for now - replace with actual API call
-      const mockBlogs: Blog[] = [
-        {
-          _id: '1',
-          title: '2026 Tile Design Trends: What\'s Hot This Year',
-          slug: '2026-tile-design-trends',
-          excerpt: 'Discover the latest tile design trends that are transforming modern homes in 2026.',
-          content: `<h2>Introduction</h2><p>The world of tile design is constantly evolving, and 2026 brings exciting new trends that blend aesthetics with functionality.</p><h2>1. Large Format Tiles</h2><p>Large format tiles continue to dominate, creating seamless looks with fewer grout lines.</p><h2>2. Natural Stone Look</h2><p>Porcelain tiles mimicking natural stone are more popular than ever, offering durability without compromise.</p>`,
-          featuredImage: 'https://images.unsplash.com/photo-1615875221248-3e9d5b90e593?w=800',
-          author: 'Admin',
-          category: 'Tile Trends',
-          tags: ['trends', 'design', '2026'],
-          status: 'published',
-          views: 1250,
-          publishedAt: '2026-01-20T10:00:00Z',
-          createdAt: '2026-01-18T10:00:00Z',
-          updatedAt: '2026-01-20T10:00:00Z'
+      const token = localStorage.getItem('auth_token');
+      const response = await fetch(`${API_BASE_URL}/admin/blogs`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
         },
-        {
-          _id: '2',
-          title: 'Complete Guide to Tile Installation',
-          slug: 'complete-guide-tile-installation',
-          excerpt: 'Everything you need to know about professional tile installation from preparation to finishing.',
-          content: `<h2>Preparation</h2><p>Proper surface preparation is crucial for successful tile installation.</p><h2>Tools Required</h2><ul><li>Tile cutter</li><li>Trowel</li><li>Level</li><li>Spacers</li></ul>`,
-          featuredImage: 'https://images.unsplash.com/photo-1600607687644-aac4c3eac7f4?w=800',
-          author: 'Admin',
-          category: 'Installation Tips',
-          tags: ['installation', 'guide', 'diy'],
-          status: 'published',
-          views: 890,
-          publishedAt: '2026-01-15T14:30:00Z',
-          createdAt: '2026-01-14T14:30:00Z',
-          updatedAt: '2026-01-15T14:30:00Z'
-        },
-        {
-          _id: '3',
-          title: 'Bathroom Tile Ideas for Small Spaces',
-          slug: 'bathroom-tile-ideas-small-spaces',
-          excerpt: 'Maximize your small bathroom with these clever tile design ideas and space-saving tips.',
-          content: `<h2>Light Colors</h2><p>Using light-colored tiles can make small bathrooms feel more spacious.</p>`,
-          featuredImage: 'https://images.unsplash.com/photo-1552321554-5fefe8c9ef14?w=800',
-          author: 'Admin',
-          category: 'Design Ideas',
-          tags: ['bathroom', 'small-space', 'design'],
-          status: 'draft',
-          views: 0,
-          createdAt: '2026-01-25T09:00:00Z',
-          updatedAt: '2026-01-25T09:00:00Z'
-        }
-      ];
-      setBlogs(mockBlogs);
+        credentials: 'include',
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || 'Failed to fetch blogs');
+      }
+
+      setBlogs(data.blogs);
     } catch (error) {
-      showAlert('error', 'Failed to fetch blogs');
+      console.error('Error fetching blogs:', error);
+      showAlert('error', error instanceof Error ? error.message : 'Failed to fetch blogs');
     } finally {
       setLoading(false);
     }
@@ -125,6 +93,11 @@ export default function BlogsPage() {
   const showAlert = (type: 'success' | 'error', message: string) => {
     setAlert({ type, message });
     setTimeout(() => setAlert(null), 5000);
+  };
+
+  const showModalError = (message: string) => {
+    setModalError(message);
+    setTimeout(() => setModalError(null), 5000);
   };
 
   const handleOpenModal = (blog?: Blog) => {
@@ -161,38 +134,62 @@ export default function BlogsPage() {
     setShowModal(false);
     setEditingBlog(null);
     setPreviewMode(false);
+    setModalError(null);
+    setSubmitLoading(false);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    try {
-      const slug = formData.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 
-      if (editingBlog) {
-        setBlogs(blogs.map(b => b._id === editingBlog._id ? {
-          ...b,
-          ...formData,
-          slug,
-          updatedAt: new Date().toISOString(),
-          publishedAt: formData.status === 'published' && !b.publishedAt ? new Date().toISOString() : b.publishedAt
-        } : b));
-        showAlert('success', 'Blog updated successfully!');
-      } else {
-        const newBlog: Blog = {
-          _id: Date.now().toString(),
-          ...formData,
-          slug,
-          views: 0,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-          publishedAt: formData.status === 'published' ? new Date().toISOString() : undefined
-        };
-        setBlogs([newBlog, ...blogs]);
-        showAlert('success', 'Blog created successfully!');
+    // Validation
+    if (!formData.title.trim()) {
+      showModalError('Please enter a blog title');
+      return;
+    }
+    if (!formData.excerpt.trim()) {
+      showModalError('Please enter a blog excerpt');
+      return;
+    }
+    if (!formData.content.trim() || formData.content === '<p></p>') {
+      showModalError('Please enter blog content');
+      return;
+    }
+
+    setSubmitLoading(true);
+    setModalError(null);
+
+    try {
+      const token = localStorage.getItem('auth_token');
+      const url = editingBlog
+        ? `${API_BASE_URL}/admin/blog/${editingBlog._id}`
+        : `${API_BASE_URL}/admin/blog/new`;
+      const method = editingBlog ? 'PUT' : 'POST';
+
+      const response = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        credentials: 'include',
+        body: JSON.stringify(formData),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || 'Failed to save blog');
       }
+
+      showAlert('success', editingBlog ? 'Blog updated successfully!' : 'Blog created successfully!');
       handleCloseModal();
+      fetchBlogs();
     } catch (error) {
-      showAlert('error', 'Failed to save blog');
+      console.error('Error saving blog:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to save blog';
+      showModalError(errorMessage);
+    } finally {
+      setSubmitLoading(false);
     }
   };
 
@@ -201,11 +198,26 @@ export default function BlogsPage() {
 
     setDeleteLoading(id);
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      setBlogs(blogs.filter(b => b._id !== id));
+      const token = localStorage.getItem('auth_token');
+      const response = await fetch(`${API_BASE_URL}/admin/blog/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+        credentials: 'include',
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || 'Failed to delete blog');
+      }
+
       showAlert('success', 'Blog deleted successfully!');
+      fetchBlogs();
     } catch (error) {
-      showAlert('error', 'Failed to delete blog');
+      console.error('Error deleting blog:', error);
+      showAlert('error', error instanceof Error ? error.message : 'Failed to delete blog');
     } finally {
       setDeleteLoading(null);
     }
@@ -255,8 +267,8 @@ export default function BlogsPage() {
       {/* Alert */}
       {alert && (
         <div className={`p-4 rounded-lg border ${alert.type === 'success'
-            ? 'bg-green-50 border-green-200 text-green-700'
-            : 'bg-red-50 border-red-200 text-red-700'
+          ? 'bg-green-50 border-green-200 text-green-700'
+          : 'bg-red-50 border-red-200 text-red-700'
           } flex items-center gap-3`}>
           {alert.type === 'success' ? (
             <HiCheck className="w-5 h-5 flex-shrink-0" />
@@ -354,8 +366,8 @@ export default function BlogsPage() {
                   )}
                   <div className="absolute top-2 right-2">
                     <span className={`px-3 py-1 text-xs font-semibold rounded-full ${blog.status === 'published'
-                        ? 'bg-green-500 text-white'
-                        : 'bg-yellow-500 text-white'
+                      ? 'bg-green-500 text-white'
+                      : 'bg-yellow-500 text-white'
                       }`}>
                       {blog.status}
                     </span>
@@ -442,8 +454,14 @@ export default function BlogsPage() {
 
       {/* Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center p-4"
+          style={{ zIndex: 9999 }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) handleCloseModal();
+          }}
+        >
+          <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto relative" style={{ zIndex: 10000 }}>
             <div className="sticky top-0 bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between">
               <h2 className="text-2xl font-bold text-slate-900">
                 {editingBlog ? 'Edit Blog Post' : 'Create New Blog Post'}
@@ -465,42 +483,108 @@ export default function BlogsPage() {
             </div>
 
             {previewMode ? (
-              <div className="p-6 prose max-w-none">
-                <h1>{formData.title || 'Untitled Post'}</h1>
-                <div className="flex items-center gap-4 text-sm text-slate-600 mb-6">
-                  <span className="flex items-center gap-1">
-                    <HiUser className="w-4 h-4" />
-                    {formData.author}
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <HiTag className="w-4 h-4" />
-                    {formData.category}
-                  </span>
-                </div>
-                {formData.featuredImage && (
-                  <img
-                    src={formData.featuredImage}
-                    alt={formData.title}
-                    className="w-full rounded-lg mb-6"
-                  />
-                )}
-                <p className="text-lg text-slate-600 italic">{formData.excerpt}</p>
-                <div dangerouslySetInnerHTML={{ __html: formData.content }} />
-                {formData.tags.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mt-6">
-                    {formData.tags.map((tag) => (
-                      <span
-                        key={tag}
-                        className="px-3 py-1 bg-slate-100 text-slate-600 text-sm rounded-full"
-                      >
-                        #{tag}
+              <div className="p-6 md:p-12 max-w-4xl mx-auto">
+                {/* Preview Header */}
+                <div className="mb-8">
+                  {formData.category && (
+                    <div className="mb-6">
+                      <span className="px-4 py-2 bg-orange-500 text-white text-sm font-semibold rounded-lg shadow-sm">
+                        {formData.category}
                       </span>
-                    ))}
+                    </div>
+                  )}
+                  <h1 className="text-4xl md:text-5xl font-bold mb-6 text-slate-900 leading-tight tracking-tight">
+                    {formData.title || 'Untitled Post'}
+                  </h1>
+                  {formData.excerpt && (
+                    <p className="text-xl md:text-2xl text-slate-600 mb-10 leading-relaxed">
+                      {formData.excerpt}
+                    </p>
+                  )}
+
+                  {/* Meta Info */}
+                  <div className="flex flex-wrap items-center gap-6 pb-10 mb-10 border-b border-slate-100">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white font-bold text-lg shadow-md">
+                        {formData.author.charAt(0).toUpperCase()}
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-slate-900">{formData.author}</p>
+                        <p className="text-xs text-slate-500">Author</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Featured Image */}
+                {formData.featuredImage && (
+                  <div className="relative h-[400px] md:h-[500px] rounded-2xl overflow-hidden mb-12 shadow-xl">
+                    <img
+                      src={formData.featuredImage}
+                      alt={formData.title}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                )}
+
+                {/* Blog Content with Enhanced Typography */}
+                <div
+                  className="prose prose-lg md:prose-xl max-w-none
+                    prose-headings:font-bold prose-headings:text-slate-900 prose-headings:tracking-tight
+                    prose-h1:text-4xl prose-h1:mb-6 prose-h1:mt-12
+                    prose-h2:text-3xl prose-h2:mb-5 prose-h2:mt-10
+                    prose-h3:text-2xl prose-h3:mb-4 prose-h3:mt-8
+                    prose-p:text-slate-700 prose-p:leading-relaxed prose-p:mb-6
+                    prose-a:text-orange-600 prose-a:font-medium prose-a:no-underline hover:prose-a:underline hover:prose-a:text-orange-700
+                    prose-strong:text-slate-900 prose-strong:font-semibold
+                    prose-ul:my-6 prose-ul:list-disc prose-ul:pl-6
+                    prose-ol:my-6 prose-ol:list-decimal prose-ol:pl-6
+                    prose-li:text-slate-700 prose-li:my-2
+                    prose-img:rounded-2xl prose-img:shadow-lg prose-img:my-8
+                    prose-blockquote:border-l-4 prose-blockquote:border-orange-500 prose-blockquote:pl-6 prose-blockquote:italic prose-blockquote:text-slate-600 prose-blockquote:my-8
+                    prose-code:bg-slate-100 prose-code:text-slate-800 prose-code:px-2 prose-code:py-1 prose-code:rounded prose-code:text-sm prose-code:font-mono
+                    prose-pre:bg-slate-900 prose-pre:text-slate-100 prose-pre:rounded-xl prose-pre:p-6 prose-pre:my-8
+                  "
+                  dangerouslySetInnerHTML={{ __html: formData.content }}
+                />
+
+                {/* Tags */}
+                {formData.tags.length > 0 && (
+                  <div className="mt-16 pt-10 border-t border-slate-100">
+                    <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-4">Tagged With</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {formData.tags.map((tag) => (
+                        <span
+                          key={tag}
+                          className="px-4 py-2 bg-slate-50 text-slate-700 border border-slate-200 rounded-xl text-sm font-medium"
+                        >
+                          #{tag}
+                        </span>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="p-6 space-y-6">
+                {/* Error Alert in Modal */}
+                {modalError && (
+                  <div className="bg-red-50 border-2 border-red-200 rounded-xl p-4 flex items-start gap-3">
+                    <HiX className="w-6 h-6 text-red-600 flex-shrink-0 mt-0.5" />
+                    <div className="flex-1">
+                      <p className="font-semibold text-red-900 mb-1">Error</p>
+                      <p className="text-sm text-red-700">{modalError}</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setModalError(null)}
+                      className="text-red-400 hover:text-red-600 transition-colors"
+                    >
+                      <HiX className="w-5 h-5" />
+                    </button>
+                  </div>
+                )}
+
                 <div className="grid md:grid-cols-2 gap-6">
                   <div className="md:col-span-2">
                     <label className="block text-sm font-medium text-slate-700 mb-2">
@@ -534,16 +618,12 @@ export default function BlogsPage() {
                     <label className="block text-sm font-medium text-slate-700 mb-2">
                       Content *
                     </label>
-                    <textarea
-                      required
-                      rows={10}
-                      value={formData.content}
-                      onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all resize-none font-mono text-sm"
-                      placeholder="Blog content (HTML supported)..."
+                    <TipTapEditor
+                      content={formData.content}
+                      onChange={(html) => setFormData({ ...formData, content: html })}
                     />
-                    <p className="text-xs text-slate-500 mt-1">
-                      You can use HTML tags for formatting
+                    <p className="text-xs text-slate-500 mt-2">
+                      Use the rich text editor to format your blog content
                     </p>
                   </div>
 
@@ -667,15 +747,24 @@ export default function BlogsPage() {
                   <button
                     type="button"
                     onClick={handleCloseModal}
-                    className="flex-1 py-3 px-6 bg-white border-2 border-slate-200 text-slate-700 rounded-xl hover:bg-slate-50 transition-all duration-200 font-medium"
+                    disabled={submitLoading}
+                    className="flex-1 py-3 px-6 bg-white border-2 border-slate-200 text-slate-700 rounded-xl hover:bg-slate-50 transition-all duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="flex-1 py-3 px-6 bg-orange-500 text-white rounded-xl hover:bg-orange-600 transition-all duration-200 font-medium shadow-lg hover:shadow-xl"
+                    disabled={submitLoading}
+                    className="flex-1 py-3 px-6 bg-orange-500 text-white rounded-xl hover:bg-orange-600 transition-all duration-200 font-medium shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
-                    {editingBlog ? 'Update Post' : 'Create Post'}
+                    {submitLoading ? (
+                      <>
+                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        <span>Saving...</span>
+                      </>
+                    ) : (
+                      <span>{editingBlog ? 'Update Post' : 'Create Post'}</span>
+                    )}
                   </button>
                 </div>
               </form>

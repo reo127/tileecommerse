@@ -15,8 +15,18 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "res.cloudinary.com",
       },
+      {
+        protocol: "https",
+        hostname: "assets-news.housing.com",
+      },
+      {
+        protocol: "https",
+        hostname: "**.unsplash.com",
+      },
     ],
     formats: ['image/webp'],
+    // Allow all external images for blog posts
+    unoptimized: false,
   },
   reactStrictMode: true,
 };

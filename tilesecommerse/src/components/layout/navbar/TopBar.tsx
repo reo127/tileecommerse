@@ -40,7 +40,7 @@ export const TopBar = ({ editProfileManager }: { editProfileManager: Manager }) 
             <Link href="/" className="text-white hover:text-orange-400 transition-colors font-medium">
               Home
             </Link>
-            <Link href="/blog" className="text-white hover:text-orange-400 transition-colors">
+            <Link href="/blogs" className="text-white hover:text-orange-400 transition-colors">
               Blog
             </Link>
             <Link href="/inspiration" className="text-white hover:text-orange-400 transition-colors">
