@@ -1,46 +1,84 @@
+"use server";
+
 import Link from "next/link";
 import Image from "next/image";
 
-const collections = [
-  {
-    title: "Bathroom Tiles",
-    description: "Water-resistant & elegant designs",
-    image: "/product photos/bathroom-tiles.jpg",
-    href: "/ceramic",
-  },
-  {
-    title: "Kitchen Tiles",
-    description: "Heat-resistant & easy to clean",
-    image: "/product photos/kitchen-tile.jpg",
-    href: "/ceramic",
-  },
-  {
-    title: "Living Room",
-    description: "Modern & stylish floor tiles",
-    image: "/product photos/living-room-tiles.jpg",
-    href: "/porcelain",
-  },
-  {
-    title: "Outdoor Tiles",
-    description: "Weather-resistant & durable",
-    image: "/product photos/outdoor-tiles.jpg",
-    href: "/porcelain",
-  },
-  {
-    title: "Wall Tiles",
-    description: "Decorative & contemporary",
-    image: "/product photos/wall-tiles.jpg",
-    href: "/ceramic",
-  },
-  {
-    title: "Marble Look",
-    description: "Luxury marble finish tiles",
-    image: "/product photos/marble-look-tiles.jpg",
-    href: "/marble",
-  },
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000/api/v1';
+
+// Application tags we want to show
+const applicationTags = [
+  { tag: 'kitchen', title: 'Kitchen Tiles', description: 'Heat-resistant & easy to clean', icon: '🍳' },
+  { tag: 'bathroom', title: 'Bathroom Tiles', description: 'Water-resistant & elegant designs', icon: '🚿' },
+  { tag: 'living-room', title: 'Living Room', description: 'Modern & stylish floor tiles', icon: '🛋️' },
+  { tag: 'bedroom', title: 'Bedroom Tiles', description: 'Comfortable & cozy designs', icon: '🛏️' },
+  { tag: 'outdoor', title: 'Outdoor Tiles', description: 'Weather-resistant & durable', icon: '🌳' },
+  { tag: 'commercial', title: 'Commercial Tiles', description: 'Heavy-duty & professional', icon: '🏢' },
 ];
 
-export const CollectionGrid = () => {
+async function getProductsByTag() {
+  try {
+    const response = await fetch(`${API_BASE_URL}/products`, {
+      cache: 'no-store',
+    });
+
+    if (!response.ok) {
+      console.error('Failed to fetch products');
+      return [];
+    }
+
+    const result = await response.json();
+    const products = result.products || [];
+
+    // Get one product for each tag
+    const taggedProducts = applicationTags.map(({ tag, title, description, icon }) => {
+      const product = products.find((p: any) =>
+        p.tags && Array.isArray(p.tags) && p.tags.includes(tag)
+      );
+
+      if (!product) return null;
+
+      return {
+        tag,
+        title,
+        description,
+        icon,
+        product: {
+          id: product._id,
+          name: product.name,
+          image: product.images?.[0]?.url || '/placeholder.jpg',
+          price: product.price,
+        }
+      };
+    }).filter(Boolean); // Remove null entries
+
+    return taggedProducts;
+  } catch (error) {
+    console.error('Error fetching products by tag:', error);
+    return [];
+  }
+}
+
+export const CollectionGrid = async () => {
+  const collections = await getProductsByTag();
+
+  if (collections.length === 0) {
+    return (
+      <section className="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto bg-white">
+        <div className="mb-12">
+          <h2 className="text-3xl md:text-4xl font-bold text-slate-800 mb-3">
+            Shop by Room
+          </h2>
+          <p className="text-slate-600 text-lg">
+            Find the perfect tiles for every space in your home
+          </p>
+        </div>
+        <div className="text-center py-12 bg-slate-50 rounded-2xl">
+          <p className="text-slate-600">No products available yet. Add products with room tags to see them here.</p>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto bg-white">
       <div className="mb-12">
@@ -53,20 +91,25 @@ export const CollectionGrid = () => {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {collections.map((collection, index) => (
+        {collections.map((collection: any, index: number) => (
           <Link
             key={index}
-            href={collection.href}
+            href={`/search?tags=${collection.tag}`}
             className="group relative overflow-hidden rounded-2xl bg-white shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2"
           >
             <div className="relative h-64 overflow-hidden">
               <Image
-                src={collection.image}
+                src={collection.product.image}
                 alt={collection.title}
                 fill
                 className="object-cover group-hover:scale-110 transition-transform duration-500"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+
+              {/* Icon badge */}
+              <div className="absolute top-4 right-4 w-12 h-12 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center border-2 border-white/50">
+                <span className="text-2xl">{collection.icon}</span>
+              </div>
 
               {/* Icon overlay on hover */}
               <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">

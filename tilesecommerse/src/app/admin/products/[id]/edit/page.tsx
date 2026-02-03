@@ -176,6 +176,12 @@ export default function EditProductPage({ params }: EditProductPageProps) {
       const unit = formData.get('unit') as string;
       const dimensions = (length && width) ? JSON.stringify({ length: Number(length), width: Number(width), unit }) : undefined;
 
+      // Collect room types
+      const roomType = formData.getAll('roomType') as string[];
+
+      // Collect tags
+      const tags = formData.getAll('tags') as string[];
+
       const requestBody: any = {
         name: formData.get('name') as string,
         description: formData.get('description') as string,
@@ -194,7 +200,22 @@ export default function EditProductPage({ params }: EditProductPageProps) {
         color: formData.get('color') as string || undefined,
         thickness: formData.get('thickness') ? Number(formData.get('thickness')) : undefined,
         dimensions,
+        coverage: formData.get('coverage') ? Number(formData.get('coverage')) : undefined,
+        tilesPerBox: formData.get('tilesPerBox') ? Number(formData.get('tilesPerBox')) : undefined,
+        weight: formData.get('weight') ? Number(formData.get('weight')) : undefined,
+        waterAbsorption: formData.get('waterAbsorption') as string || undefined,
+        slipResistance: formData.get('slipResistance') as string || undefined,
       };
+
+      // Add roomType if selected
+      if (roomType.length > 0) {
+        requestBody.roomType = JSON.stringify(roomType);
+      }
+
+      // Add tags if selected
+      if (tags.length > 0) {
+        requestBody.tags = JSON.stringify(tags);
+      }
 
       // Handle new images if uploaded
       const newImageFiles = imagePreviews.filter(img => !img.isExisting && img.file);
@@ -322,7 +343,7 @@ export default function EditProductPage({ params }: EditProductPageProps) {
         )}
 
         {/* Form Content - Accordion Sections */}
-        <Accordion type="multiple" defaultValue={["basic"]} className="space-y-4">
+        <Accordion type="multiple" defaultValue={["basic", "images", "highlights", "specs", "roomtype", "tags"]} className="space-y-4">
 
           {/* 1. Basic Information */}
           <AccordionItem value="basic" className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
@@ -358,6 +379,7 @@ export default function EditProductPage({ params }: EditProductPageProps) {
                   <label className="block text-sm font-medium text-slate-700 mb-2">Short Description</label>
                   <input
                     name="shortDescription"
+                    required
                     defaultValue={product.shortDescription}
                     placeholder="Short description of the product"
                     className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
@@ -368,7 +390,6 @@ export default function EditProductPage({ params }: EditProductPageProps) {
                   <label className="block text-sm font-medium text-slate-700 mb-2">Category</label>
                   <select
                     name="category"
-                    required
                     value={selectedCategory}
                     onChange={(e) => setSelectedCategory(e.target.value)}
                     className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
@@ -635,13 +656,49 @@ export default function EditProductPage({ params }: EditProductPageProps) {
                   <input name="thickness" type="number" defaultValue={product.thickness} placeholder="8" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
                 </div>
 
+                {/* Coverage */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Coverage (sq.ft per box)</label>
+                  <input name="coverage" type="number" step="0.01" defaultValue={product.coverage} placeholder="32.5" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
+                </div>
+
+                {/* Tiles Per Box */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Tiles Per Box</label>
+                  <input name="tilesPerBox" type="number" defaultValue={product.tilesPerBox} placeholder="4" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
+                </div>
+
+                {/* Weight */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Weight (kg per box)</label>
+                  <input name="weight" type="number" step="0.01" defaultValue={product.weight} placeholder="25.5" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
+                </div>
+
+                {/* Water Absorption */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Water Absorption</label>
+                  <input name="waterAbsorption" defaultValue={product.waterAbsorption} placeholder="< 0.5%" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
+                </div>
+
+                {/* Slip Resistance */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Slip Resistance</label>
+                  <select name="slipResistance" defaultValue={product.slipResistance} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all">
+                    <option value="">Select slip resistance</option>
+                    <option value="R9">R9</option>
+                    <option value="R10">R10</option>
+                    <option value="R11">R11</option>
+                    <option value="R12">R12</option>
+                    <option value="R13">R13</option>
+                  </select>
+                </div>
+
                 {/* Price */}
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">Price (₹)</label>
                   <input
                     name="price"
                     type="number"
-                    required
                     defaultValue={product.price}
                     placeholder="999"
                     className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
@@ -654,7 +711,6 @@ export default function EditProductPage({ params }: EditProductPageProps) {
                   <input
                     name="cuttedPrice"
                     type="number"
-                    required
                     defaultValue={product.cuttedPrice}
                     placeholder="1499"
                     className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
@@ -667,7 +723,6 @@ export default function EditProductPage({ params }: EditProductPageProps) {
                   <input
                     name="stock"
                     type="number"
-                    required
                     defaultValue={product.stock}
                     className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
                   />
@@ -704,6 +759,154 @@ export default function EditProductPage({ params }: EditProductPageProps) {
                   </div>
                 </div>
 
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+
+          {/* 5. Room Type */}
+          <AccordionItem value="roomtype" className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
+            <AccordionTrigger className="px-8 py-6 hover:no-underline hover:bg-slate-50 transition-colors">
+              <h2 className="text-xl font-medium text-slate-900">5. Room Type</h2>
+            </AccordionTrigger>
+            <AccordionContent className="px-8 pb-8">
+              <div className="pt-4">
+                <label className="block text-sm font-medium text-slate-700 mb-4">
+                  Select applicable room types
+                </label>
+
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  {['kitchen', 'bathroom', 'living-room', 'bedroom', 'outdoor', 'commercial'].map((room) => (
+                    <label key={room} className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200 hover:bg-orange-50 hover:border-orange-300 transition-all cursor-pointer group">
+                      <input
+                        type="checkbox"
+                        name="roomType"
+                        value={room}
+                        defaultChecked={product.roomType?.includes(room)}
+                        className="w-4 h-4 text-orange-600 bg-white border-slate-300 rounded focus:ring-2 focus:ring-orange-500 cursor-pointer"
+                      />
+                      <span className="text-sm font-medium text-slate-700 group-hover:text-orange-700 capitalize">
+                        {room.replace('-', ' ')}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+
+          {/* 6. Product Tags */}
+          <AccordionItem value="tags" className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
+            <AccordionTrigger className="px-8 py-6 hover:no-underline hover:bg-slate-50 transition-colors">
+              <h2 className="text-xl font-medium text-slate-900">6. Product Tags</h2>
+            </AccordionTrigger>
+            <AccordionContent className="px-8 pb-8">
+              <div className="pt-4">
+                <label className="block text-sm font-medium text-slate-700 mb-4">
+                  Select tags to display on product cards
+                </label>
+
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {/* Popular */}
+                  <label className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200 hover:bg-blue-50 hover:border-blue-300 transition-all cursor-pointer group">
+                    <input type="checkbox" name="tags" value="popular" defaultChecked={product.tags?.includes('popular')} className="w-4 h-4 text-blue-600 bg-white border-slate-300 rounded focus:ring-2 focus:ring-blue-500 cursor-pointer" />
+                    <span className="text-sm font-medium text-slate-700 group-hover:text-blue-700">⭐ Popular</span>
+                  </label>
+
+                  {/* Trending */}
+                  <label className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200 hover:bg-yellow-50 hover:border-yellow-300 transition-all cursor-pointer group">
+                    <input type="checkbox" name="tags" value="trending" defaultChecked={product.tags?.includes('trending')} className="w-4 h-4 text-yellow-600 bg-white border-slate-300 rounded focus:ring-2 focus:ring-yellow-500 cursor-pointer" />
+                    <span className="text-sm font-medium text-slate-700 group-hover:text-yellow-700">🔥 Trending</span>
+                  </label>
+
+                  {/* New */}
+                  <label className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200 hover:bg-green-50 hover:border-green-300 transition-all cursor-pointer group">
+                    <input type="checkbox" name="tags" value="new" defaultChecked={product.tags?.includes('new')} className="w-4 h-4 text-green-600 bg-white border-slate-300 rounded focus:ring-2 focus:ring-green-500 cursor-pointer" />
+                    <span className="text-sm font-medium text-slate-700 group-hover:text-green-700">✨ New</span>
+                  </label>
+
+                  {/* Premium */}
+                  <label className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200 hover:bg-purple-50 hover:border-purple-300 transition-all cursor-pointer group">
+                    <input type="checkbox" name="tags" value="premium" defaultChecked={product.tags?.includes('premium')} className="w-4 h-4 text-purple-600 bg-white border-slate-300 rounded focus:ring-2 focus:ring-purple-500 cursor-pointer" />
+                    <span className="text-sm font-medium text-slate-700 group-hover:text-purple-700">💎 Premium</span>
+                  </label>
+
+                  {/* Exclusive */}
+                  <label className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200 hover:bg-pink-50 hover:border-pink-300 transition-all cursor-pointer group">
+                    <input type="checkbox" name="tags" value="exclusive" defaultChecked={product.tags?.includes('exclusive')} className="w-4 h-4 text-pink-600 bg-white border-slate-300 rounded focus:ring-2 focus:ring-pink-500 cursor-pointer" />
+                    <span className="text-sm font-medium text-slate-700 group-hover:text-pink-700">👑 Exclusive</span>
+                  </label>
+
+                  {/* Classic */}
+                  <label className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200 hover:bg-slate-100 hover:border-slate-400 transition-all cursor-pointer group">
+                    <input type="checkbox" name="tags" value="classic" defaultChecked={product.tags?.includes('classic')} className="w-4 h-4 text-slate-600 bg-white border-slate-300 rounded focus:ring-2 focus:ring-slate-500 cursor-pointer" />
+                    <span className="text-sm font-medium text-slate-700 group-hover:text-slate-900">🏛️ Classic</span>
+                  </label>
+
+                  {/* Best Seller */}
+                  <label className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200 hover:bg-orange-50 hover:border-orange-300 transition-all cursor-pointer group">
+                    <input type="checkbox" name="tags" value="bestseller" defaultChecked={product.tags?.includes('bestseller')} className="w-4 h-4 text-orange-600 bg-white border-slate-300 rounded focus:ring-2 focus:ring-orange-500 cursor-pointer" />
+                    <span className="text-sm font-medium text-slate-700 group-hover:text-orange-700">🏆 Best Seller</span>
+                  </label>
+
+                  {/* Limited Edition */}
+                  <label className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200 hover:bg-red-50 hover:border-red-300 transition-all cursor-pointer group">
+                    <input type="checkbox" name="tags" value="limited" defaultChecked={product.tags?.includes('limited')} className="w-4 h-4 text-red-600 bg-white border-slate-300 rounded focus:ring-2 focus:ring-red-500 cursor-pointer" />
+                    <span className="text-sm font-medium text-slate-700 group-hover:text-red-700">⏰ Limited Edition</span>
+                  </label>
+                </div>
+
+                <p className="text-xs text-slate-500 mt-4">
+                  Selected tags will appear as badges on the product card for better visibility
+                </p>
+
+                {/* Applications Section */}
+                <div className="mt-8 pt-8 border-t border-slate-200">
+                  <label className="block text-sm font-medium text-slate-700 mb-4">
+                    Applications (Room Types)
+                  </label>
+
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    {/* Kitchen */}
+                    <label className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200 hover:bg-amber-50 hover:border-amber-300 transition-all cursor-pointer group">
+                      <input type="checkbox" name="tags" value="kitchen" defaultChecked={product.tags?.includes('kitchen')} className="w-4 h-4 text-amber-600 bg-white border-slate-300 rounded focus:ring-2 focus:ring-amber-500 cursor-pointer" />
+                      <span className="text-sm font-medium text-slate-700 group-hover:text-amber-700">🍳 Kitchen</span>
+                    </label>
+
+                    {/* Bathroom */}
+                    <label className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200 hover:bg-cyan-50 hover:border-cyan-300 transition-all cursor-pointer group">
+                      <input type="checkbox" name="tags" value="bathroom" defaultChecked={product.tags?.includes('bathroom')} className="w-4 h-4 text-cyan-600 bg-white border-slate-300 rounded focus:ring-2 focus:ring-cyan-500 cursor-pointer" />
+                      <span className="text-sm font-medium text-slate-700 group-hover:text-cyan-700">🚿 Bathroom</span>
+                    </label>
+
+                    {/* Living Room */}
+                    <label className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200 hover:bg-indigo-50 hover:border-indigo-300 transition-all cursor-pointer group">
+                      <input type="checkbox" name="tags" value="living-room" defaultChecked={product.tags?.includes('living-room')} className="w-4 h-4 text-indigo-600 bg-white border-slate-300 rounded focus:ring-2 focus:ring-indigo-500 cursor-pointer" />
+                      <span className="text-sm font-medium text-slate-700 group-hover:text-indigo-700">🛋️ Living Room</span>
+                    </label>
+
+                    {/* Bedroom */}
+                    <label className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200 hover:bg-violet-50 hover:border-violet-300 transition-all cursor-pointer group">
+                      <input type="checkbox" name="tags" value="bedroom" defaultChecked={product.tags?.includes('bedroom')} className="w-4 h-4 text-violet-600 bg-white border-slate-300 rounded focus:ring-2 focus:ring-violet-500 cursor-pointer" />
+                      <span className="text-sm font-medium text-slate-700 group-hover:text-violet-700">🛏️ Bedroom</span>
+                    </label>
+
+                    {/* Outdoor */}
+                    <label className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200 hover:bg-emerald-50 hover:border-emerald-300 transition-all cursor-pointer group">
+                      <input type="checkbox" name="tags" value="outdoor" defaultChecked={product.tags?.includes('outdoor')} className="w-4 h-4 text-emerald-600 bg-white border-slate-300 rounded focus:ring-2 focus:ring-emerald-500 cursor-pointer" />
+                      <span className="text-sm font-medium text-slate-700 group-hover:text-emerald-700">🌳 Outdoor</span>
+                    </label>
+
+                    {/* Commercial */}
+                    <label className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200 hover:bg-gray-50 hover:border-gray-400 transition-all cursor-pointer group">
+                      <input type="checkbox" name="tags" value="commercial" defaultChecked={product.tags?.includes('commercial')} className="w-4 h-4 text-gray-600 bg-white border-slate-300 rounded focus:ring-2 focus:ring-gray-500 cursor-pointer" />
+                      <span className="text-sm font-medium text-slate-700 group-hover:text-gray-900">🏢 Commercial</span>
+                    </label>
+                  </div>
+
+                  <p className="text-xs text-slate-500 mt-4">
+                    Select room types where this product can be used
+                  </p>
+                </div>
               </div>
             </AccordionContent>
           </AccordionItem>

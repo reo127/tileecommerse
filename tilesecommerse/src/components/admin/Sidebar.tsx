@@ -10,6 +10,7 @@ import {
   HiShoppingBag,
   HiFolder,
   HiClipboardList,
+  HiMail,
   HiNewspaper,
   HiTag,
   HiUsers,
@@ -37,6 +38,11 @@ const sidebarItems = [
     title: "Orders",
     href: "/admin/orders",
     icon: HiClipboardList,
+  },
+  {
+    title: "Enquiries",
+    href: "/admin/enquiry",
+    icon: HiMail,
   },
   {
     title: "Blogs",

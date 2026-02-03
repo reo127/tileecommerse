@@ -1,84 +1,123 @@
+"use server";
+
 import Link from "next/link";
 import Image from "next/image";
 
-const categories = [
-  {
-    name: "Ceramic Tiles",
-    description: "Classic & versatile",
-    image: "/product photos/subway-metro-tiles.jpg",
-    href: "/ceramic",
-    tag: "Popular",
-    count: 45,
-  },
-  {
-    name: "Vitrified Tiles",
-    description: "High strength & low porosity",
-    image: "/product photos/marble-look-tiles.jpg",
-    href: "/porcelain",
-    tag: "Trending",
-    count: 38,
-  },
-  {
-    name: "Wooden Look",
-    description: "Natural wood finish",
-    image: "/product photos/wooden-finish-floor-tiles.jpg",
-    href: "/ceramic",
-    tag: "New",
-    count: 24,
-  },
-  {
-    name: "Marble Finish",
-    description: "Premium luxury tiles",
-    image: "/product photos/premium-marble-look-tiles.webp",
-    href: "/marble",
-    tag: "Premium",
-    count: 32,
-  },
-  {
-    name: "Moroccan Tiles",
-    description: "Artistic patterns",
-    image: "/product photos/moroccan-patterntiles.webp",
-    href: "/ceramic",
-    tag: "Exclusive",
-    count: 18,
-  },
-  {
-    name: "Subway Tiles",
-    description: "Modern metro style",
-    image: "/product photos/glossy-white-wall-tiles.jpg",
-    href: "/ceramic",
-    tag: "Classic",
-    count: 28,
-  },
-  {
-    name: "Hexagon Tiles",
-    description: "Contemporary geometric",
-    image: "/product photos/hexagon-designer-tiles.jpg",
-    href: "/porcelain",
-    tag: "Trending",
-    count: 22,
-  },
-  {
-    name: "Terrazzo Tiles",
-    description: "Vintage charm",
-    image: "/product photos/premium-marble-look-tiles.webp",
-    href: "/ceramic",
-    tag: "Retro",
-    count: 15,
-  },
-];
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000/api/v1';
 
 const tagColors: Record<string, string> = {
-  Popular: "bg-blue-500",
-  Trending: "bg-yellow-500",
-  New: "bg-green-500",
-  Premium: "bg-purple-500",
-  Exclusive: "bg-pink-500",
-  Classic: "bg-gray-700",
-  Retro: "bg-amber-500",
+  popular: "bg-blue-500",
+  trending: "bg-yellow-500",
+  new: "bg-green-500",
+  premium: "bg-purple-500",
+  exclusive: "bg-pink-500",
+  classic: "bg-gray-700",
+  bestseller: "bg-orange-500",
+  limited: "bg-red-500",
 };
 
-export const FeaturedCategories = () => {
+async function getFeaturedCategories() {
+  try {
+    const response = await fetch(`${API_BASE_URL}/categories`, {
+      cache: 'no-store',
+    });
+
+    if (!response.ok) {
+      console.error('Failed to fetch categories');
+      return [];
+    }
+
+    const result = await response.json();
+    const categories = result.categories || [];
+
+    // Get only top-level categories (no parent)
+    const topLevelCategories = categories.filter((cat: any) => !cat.parent);
+
+    // Get products count and first product image for each category
+    const categoriesWithData = await Promise.all(
+      topLevelCategories.map(async (category: any) => {
+        try {
+          const productsResponse = await fetch(
+            `${API_BASE_URL}/products?category=${category._id}`,
+            { cache: 'no-store' }
+          );
+
+          if (!productsResponse.ok) {
+            return {
+              ...category,
+              count: 0,
+              image: '/placeholder.jpg',
+              tag: 'popular',
+            };
+          }
+
+          const productsResult = await productsResponse.json();
+          const products = productsResult.products || [];
+
+          // Get the first product's image or use placeholder
+          const firstProductImage = products[0]?.images?.[0]?.url || '/placeholder.jpg';
+
+          // Determine tag based on product tags
+          let tag = 'popular';
+          if (products.length > 0 && products[0].tags && products[0].tags.length > 0) {
+            // Use the first style tag from the first product
+            const styleTags = ['trending', 'new', 'premium', 'exclusive', 'classic', 'bestseller', 'limited', 'popular'];
+            const foundTag = products[0].tags.find((t: string) => styleTags.includes(t));
+            if (foundTag) tag = foundTag;
+          }
+
+          return {
+            _id: category._id,
+            name: category.name,
+            description: category.description || 'Explore our collection',
+            slug: category.slug,
+            image: firstProductImage,
+            count: products.length,
+            tag,
+          };
+        } catch (error) {
+          console.error(`Error fetching products for category ${category.name}:`, error);
+          return {
+            ...category,
+            count: 0,
+            image: '/placeholder.jpg',
+            tag: 'popular',
+          };
+        }
+      })
+    );
+
+    // Sort by product count and take top 8
+    return categoriesWithData
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 8);
+  } catch (error) {
+    console.error('Error fetching categories:', error);
+    return [];
+  }
+}
+
+export const FeaturedCategories = async () => {
+  const categories = await getFeaturedCategories();
+
+  if (categories.length === 0) {
+    return (
+      <section className="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto bg-white">
+        <div className="mb-12">
+          <h2 className="text-3xl md:text-4xl font-bold text-slate-800 mb-3">
+            Popular Categories
+          </h2>
+          <p className="text-slate-600 text-lg">
+            Explore our best-selling tile collections
+          </p>
+        </div>
+        <div className="text-center py-12 bg-slate-50 rounded-2xl">
+          <p className="text-slate-600">No categories available yet.</p>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto bg-white">
       <div className="mb-12">
@@ -91,10 +130,10 @@ export const FeaturedCategories = () => {
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-        {categories.map((category, index) => (
+        {categories.map((category: any, index: number) => (
           <Link
-            key={index}
-            href={category.href}
+            key={category._id || index}
+            href={`/${category.slug}`}
             className="group relative overflow-hidden rounded-xl bg-white shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2"
           >
             {/* Tag with icon */}

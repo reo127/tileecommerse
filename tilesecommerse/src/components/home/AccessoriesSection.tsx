@@ -1,69 +1,76 @@
-"use client";
+"use server";
 
 import Link from "next/link";
 import Image from "next/image";
 
-const accessories = [
-  {
-    id: 1,
-    name: "Tile Adhesive & Grout",
-    description: "Premium quality adhesive for perfect installation",
-    image: "/product photos/Tile Adhesive & Grout.png",
-    price: "₹450/bag",
-    stock: "In Stock",
-    href: "/ceramic",
-  },
-  {
-    id: 2,
-    name: "Tile Spacers Set",
-    description: "Professional spacers for uniform joints",
-    image: "/product photos/Tile Spacers Set.jpg",
-    price: "₹120/pack",
-    stock: "In Stock",
-    href: "/ceramic",
-  },
-  {
-    id: 3,
-    name: "Tile Cutting Tools",
-    description: "Precision cutting for perfect edges",
-    image: "/product photos/Tile Cutting Tools.jpg",
-    price: "₹2,500",
-    stock: "Low Stock",
-    href: "/ceramic",
-  },
-  {
-    id: 4,
-    name: "Grout Sealer",
-    description: "Waterproof protection for tile joints",
-    image: "/product photos/Grout Sealer.png",
-    price: "₹350/bottle",
-    stock: "In Stock",
-    href: "/ceramic",
-  },
-  {
-    id: 5,
-    name: "Tile Leveling System",
-    description: "Achieve perfectly leveled tile surface",
-    image: "/product photos/Tile Leveling System.webp",
-    price: "₹850/set",
-    stock: "In Stock",
-    href: "/ceramic",
-  },
-  {
-    id: 6,
-    name: "Tile Cleaning Solution",
-    description: "Keep your tiles sparkling clean",
-    image: "/product photos/Tile Cleaning Solution.webp",
-    price: "₹280/liter",
-    stock: "In Stock",
-    href: "/ceramic",
-  },
-];
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000/api/v1';
 
-const AccessoryCard = ({ accessory }: { accessory: typeof accessories[0] }) => {
+// You can change this to any category slug from your database
+const CATEGORY_SLUG = 'accessories'; // Change this to match your category
+
+async function getCategoryProducts() {
+  try {
+    // First, get all categories to find the one we want
+    const categoriesResponse = await fetch(`${API_BASE_URL}/categories`, {
+      cache: 'no-store',
+    });
+
+    if (!categoriesResponse.ok) {
+      console.error('Failed to fetch categories');
+      return { products: [], categoryName: 'Accessories', categorySlug: CATEGORY_SLUG };
+    }
+
+    const categoriesResult = await categoriesResponse.json();
+    const categories = categoriesResult.categories || [];
+
+    // Find the category by slug
+    const category = categories.find((cat: any) => cat.slug === CATEGORY_SLUG);
+
+    if (!category) {
+      console.log(`Category with slug "${CATEGORY_SLUG}" not found`);
+      return { products: [], categoryName: 'Accessories', categorySlug: CATEGORY_SLUG };
+    }
+
+    // Now get products for this category
+    const productsResponse = await fetch(
+      `${API_BASE_URL}/products?category=${category._id}`,
+      { cache: 'no-store' }
+    );
+
+    if (!productsResponse.ok) {
+      console.error('Failed to fetch products');
+      return { products: [], categoryName: category.name, categorySlug: category.slug };
+    }
+
+    const productsResult = await productsResponse.json();
+    const products = productsResult.products || [];
+
+    // Take first 6 products
+    const limitedProducts = products.slice(0, 6).map((product: any) => ({
+      _id: product._id,
+      name: product.name,
+      description: product.shortDescription || product.description?.substring(0, 100) || 'Quality product',
+      image: product.images?.[0]?.url || '/placeholder.jpg',
+      price: product.price,
+      stock: product.stock > 0 ? 'In Stock' : 'Out of Stock',
+      slug: product.slug || product._id,
+    }));
+
+    return {
+      products: limitedProducts,
+      categoryName: category.name,
+      categorySlug: category.slug,
+    };
+  } catch (error) {
+    console.error('Error fetching category products:', error);
+    return { products: [], categoryName: 'Accessories', categorySlug: CATEGORY_SLUG };
+  }
+}
+
+const AccessoryCard = ({ accessory }: { accessory: any }) => {
   return (
     <Link
-      href={accessory.href}
+      href={`/product/${accessory.slug}`}
       className="group bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden flex hover:-translate-y-1"
     >
       {/* Image */}
@@ -91,33 +98,58 @@ const AccessoryCard = ({ accessory }: { accessory: typeof accessories[0] }) => {
           <p className="text-sm text-gray-600 mb-2 line-clamp-2">
             {accessory.description}
           </p>
-          <span className={`text-xs font-semibold ${accessory.stock === "In Stock" ? "text-green-600" : "text-yellow-600"}`}>
+          <span className={`text-xs font-semibold ${accessory.stock === "In Stock" ? "text-green-600" : "text-red-600"}`}>
             {accessory.stock}
           </span>
         </div>
         <p className="text-xl font-bold text-yellow-600 mt-2">
-          {accessory.price}
+          ₹{accessory.price}
         </p>
       </div>
     </Link>
   );
 };
 
-export const AccessoriesSection = () => {
+export const AccessoriesSection = async () => {
+  const { products, categoryName, categorySlug } = await getCategoryProducts();
+
+  if (products.length === 0) {
+    return (
+      <section className="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto bg-white">
+        <div className="flex justify-between items-end mb-12">
+          <div>
+            <h2 className="text-3xl md:text-4xl font-bold text-slate-800 mb-3">
+              {categoryName}
+            </h2>
+            <p className="text-slate-600 text-lg">
+              Everything you need for perfect tile installation
+            </p>
+          </div>
+        </div>
+        <div className="text-center py-12 bg-slate-50 rounded-2xl">
+          <p className="text-slate-600">No products available in this category yet.</p>
+          <p className="text-sm text-slate-500 mt-2">
+            Looking for category: <strong>{CATEGORY_SLUG}</strong>
+          </p>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto bg-white">
       {/* Header */}
       <div className="flex justify-between items-end mb-12">
         <div>
           <h2 className="text-3xl md:text-4xl font-bold text-slate-800 mb-3">
-            Accessories
+            {categoryName}
           </h2>
           <p className="text-slate-600 text-lg">
             Everything you need for perfect tile installation
           </p>
         </div>
         <Link
-          href="/search"
+          href={`/${categorySlug}`}
           className="hidden md:block text-yellow-500 hover:text-yellow-600 font-semibold transition-colors"
         >
           View All →
@@ -126,18 +158,18 @@ export const AccessoriesSection = () => {
 
       {/* Accessories Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {accessories.map((accessory) => (
-          <AccessoryCard key={accessory.id} accessory={accessory} />
+        {products.map((accessory: any) => (
+          <AccessoryCard key={accessory._id} accessory={accessory} />
         ))}
       </div>
 
       {/* View All Mobile */}
       <div className="mt-8 text-center md:hidden">
         <Link
-          href="/search"
+          href={`/${categorySlug}`}
           className="inline-block px-8 py-3 bg-yellow-500 hover:bg-yellow-600 text-white font-semibold rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105"
         >
-          View All Accessories
+          View All {categoryName}
         </Link>
       </div>
     </section>

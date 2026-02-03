@@ -348,7 +348,6 @@ export function SimpleProductForm() {
                   <label className="block text-sm font-medium text-slate-700 mb-2">Category</label>
                   <select
                     name="category"
-                    required
                     value={selectedCategory}
                     onChange={(e) => setSelectedCategory(e.target.value)}
                     className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
@@ -629,7 +628,6 @@ export function SimpleProductForm() {
                   <input
                     name="price"
                     type="number"
-                    required
                     placeholder="999"
                     className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
                   />
@@ -641,7 +639,6 @@ export function SimpleProductForm() {
                   <input
                     name="cuttedPrice"
                     type="number"
-                    required
                     placeholder="1499"
                     className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
                   />
@@ -653,7 +650,6 @@ export function SimpleProductForm() {
                   <input
                     name="stock"
                     type="number"
-                    required
                     defaultValue="100"
                     className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
                   />
