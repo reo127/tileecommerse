@@ -10,13 +10,23 @@ exports.createCategory = asyncErrorHandler(async (req, res, next) => {
         return next(new ErrorHandler("Please provide category name", 400));
     }
 
-    // Check if category with same name exists
-    const existingCategory = await Category.findOne({
-        name: { $regex: new RegExp(`^${name}$`, 'i') }
-    });
+    // Check if category with same name exists within the same parent
+    // This allows "Floor Tiles" to exist under both "Ceramic" and "Porcelain"
+    const duplicateQuery = {
+        name: { $regex: new RegExp(`^${name}$`, 'i') },
+        parent: parent || null  // Check within same parent (or both null for top-level)
+    };
+
+    const existingCategory = await Category.findOne(duplicateQuery);
 
     if (existingCategory) {
-        return next(new ErrorHandler("Category with this name already exists", 400));
+        const parentName = parent ?
+            (await Category.findById(parent))?.name :
+            'top level';
+        return next(new ErrorHandler(
+            `Category "${name}" already exists under ${parentName}`,
+            400
+        ));
     }
 
     const category = await Category.create({
@@ -91,15 +101,24 @@ exports.updateCategory = asyncErrorHandler(async (req, res, next) => {
         return next(new ErrorHandler("Category not found", 404));
     }
 
-    // If updating name, check for duplicates
+    // If updating name, check for duplicates within the same parent
     if (req.body.name && req.body.name !== category.name) {
+        const parentToCheck = req.body.parent !== undefined ? req.body.parent : category.parent;
+
         const existingCategory = await Category.findOne({
             name: { $regex: new RegExp(`^${req.body.name}$`, 'i') },
+            parent: parentToCheck || null,
             _id: { $ne: req.params.id }
         });
 
         if (existingCategory) {
-            return next(new ErrorHandler("Category with this name already exists", 400));
+            const parentName = parentToCheck ?
+                (await Category.findById(parentToCheck))?.name :
+                'top level';
+            return next(new ErrorHandler(
+                `Category "${req.body.name}" already exists under ${parentName}`,
+                400
+            ));
         }
     }
 

@@ -10,8 +10,8 @@ const categorySchema = new mongoose.Schema({
     slug: {
         type: String,
         required: true,
-        unique: true,
         lowercase: true
+        // Removed unique: true - will use compound index instead
     },
     description: {
         type: String,
@@ -64,8 +64,13 @@ const categorySchema = new mongoose.Schema({
     }
 });
 
+// Compound unique index: slug must be unique within the same parent
+// This allows "floor-tiles" to exist under multiple parent categories
+categorySchema.index({ slug: 1, parent: 1 }, { unique: true });
+
+
 // Create slug from name before validation (must run before validation)
-categorySchema.pre('validate', function(next) {
+categorySchema.pre('validate', function (next) {
     if (this.isModified('name') && !this.slug) {
         this.slug = this.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
     }
@@ -73,13 +78,13 @@ categorySchema.pre('validate', function(next) {
 });
 
 // Update the updatedAt field before saving
-categorySchema.pre('save', function(next) {
+categorySchema.pre('save', function (next) {
     this.updatedAt = Date.now();
     next();
 });
 
 // Validate parent-child relationship
-categorySchema.pre('save', async function(next) {
+categorySchema.pre('save', async function (next) {
     if (this.parent) {
         const parent = await mongoose.model('Category').findById(this.parent);
 
@@ -103,18 +108,18 @@ categorySchema.pre('save', async function(next) {
 });
 
 // Method to get all children
-categorySchema.methods.getChildren = async function() {
+categorySchema.methods.getChildren = async function () {
     return await mongoose.model('Category').find({ parent: this._id, isActive: true }).sort({ order: 1 });
 };
 
 // Method to check if category has children
-categorySchema.methods.hasChildren = async function() {
+categorySchema.methods.hasChildren = async function () {
     const count = await mongoose.model('Category').countDocuments({ parent: this._id });
     return count > 0;
 };
 
 // Static method to get category tree
-categorySchema.statics.getCategoryTree = async function(includeInactive = false) {
+categorySchema.statics.getCategoryTree = async function (includeInactive = false) {
     const query = includeInactive ? {} : { isActive: true };
 
     // Get all parent categories
