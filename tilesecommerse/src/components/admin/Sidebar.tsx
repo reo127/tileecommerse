@@ -9,7 +9,6 @@ import {
   HiHome,
   HiShoppingBag,
   HiFolder,
-  HiStar,
   HiClipboardList,
   HiNewspaper,
   HiTag,
@@ -33,11 +32,6 @@ const sidebarItems = [
     title: "Categories",
     href: "/admin/categories",
     icon: HiFolder,
-  },
-  {
-    title: "Brands",
-    href: "/admin/brand",
-    icon: HiStar,
   },
   {
     title: "Orders",

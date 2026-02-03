@@ -369,17 +369,17 @@ export function SimpleProductForm() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">Brand Name</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Sub category</label>
                   <input
                     name="brandname"
-                    placeholder="Premium Tiles Co."
+                    placeholder="If applicable"
                     className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
                   />
                 </div>
 
                 {/* Sub category */}
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">Sub Category</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Brand</label>
                   <select
                     name="subcategory"
                     disabled={!selectedCategory}
@@ -968,6 +968,97 @@ export function SimpleProductForm() {
                 <p className="text-xs text-slate-500 mt-4">
                   Selected tags will appear as badges on the product card for better visibility
                 </p>
+
+                {/* Applications Section */}
+                <div className="mt-8 pt-8 border-t border-slate-200">
+                  <label className="block text-sm font-medium text-slate-700 mb-4">
+                    Applications (Room Types)
+                  </label>
+
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    {/* Kitchen */}
+                    <label className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200 hover:bg-amber-50 hover:border-amber-300 transition-all cursor-pointer group">
+                      <input
+                        type="checkbox"
+                        name="tags"
+                        value="kitchen"
+                        className="w-4 h-4 text-amber-600 bg-white border-slate-300 rounded focus:ring-2 focus:ring-amber-500 cursor-pointer"
+                      />
+                      <span className="text-sm font-medium text-slate-700 group-hover:text-amber-700">
+                        🍳 Kitchen
+                      </span>
+                    </label>
+
+                    {/* Bathroom */}
+                    <label className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200 hover:bg-cyan-50 hover:border-cyan-300 transition-all cursor-pointer group">
+                      <input
+                        type="checkbox"
+                        name="tags"
+                        value="bathroom"
+                        className="w-4 h-4 text-cyan-600 bg-white border-slate-300 rounded focus:ring-2 focus:ring-cyan-500 cursor-pointer"
+                      />
+                      <span className="text-sm font-medium text-slate-700 group-hover:text-cyan-700">
+                        🚿 Bathroom
+                      </span>
+                    </label>
+
+                    {/* Living Room */}
+                    <label className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200 hover:bg-indigo-50 hover:border-indigo-300 transition-all cursor-pointer group">
+                      <input
+                        type="checkbox"
+                        name="tags"
+                        value="living-room"
+                        className="w-4 h-4 text-indigo-600 bg-white border-slate-300 rounded focus:ring-2 focus:ring-indigo-500 cursor-pointer"
+                      />
+                      <span className="text-sm font-medium text-slate-700 group-hover:text-indigo-700">
+                        🛋️ Living Room
+                      </span>
+                    </label>
+
+                    {/* Bedroom */}
+                    <label className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200 hover:bg-violet-50 hover:border-violet-300 transition-all cursor-pointer group">
+                      <input
+                        type="checkbox"
+                        name="tags"
+                        value="bedroom"
+                        className="w-4 h-4 text-violet-600 bg-white border-slate-300 rounded focus:ring-2 focus:ring-violet-500 cursor-pointer"
+                      />
+                      <span className="text-sm font-medium text-slate-700 group-hover:text-violet-700">
+                        🛏️ Bedroom
+                      </span>
+                    </label>
+
+                    {/* Outdoor */}
+                    <label className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200 hover:bg-emerald-50 hover:border-emerald-300 transition-all cursor-pointer group">
+                      <input
+                        type="checkbox"
+                        name="tags"
+                        value="outdoor"
+                        className="w-4 h-4 text-emerald-600 bg-white border-slate-300 rounded focus:ring-2 focus:ring-emerald-500 cursor-pointer"
+                      />
+                      <span className="text-sm font-medium text-slate-700 group-hover:text-emerald-700">
+                        🌳 Outdoor
+                      </span>
+                    </label>
+
+                    {/* Commercial */}
+                    <label className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200 hover:bg-gray-50 hover:border-gray-400 transition-all cursor-pointer group">
+                      <input
+                        type="checkbox"
+                        name="tags"
+                        value="commercial"
+                        className="w-4 h-4 text-gray-600 bg-white border-slate-300 rounded focus:ring-2 focus:ring-gray-500 cursor-pointer"
+                      />
+                      <span className="text-sm font-medium text-slate-700 group-hover:text-gray-900">
+                        🏢 Commercial
+                      </span>
+                    </label>
+                  </div>
+
+                  <p className="text-xs text-slate-500 mt-4">
+                    Select room types where this product can be used
+                  </p>
+                </div>
               </div>
             </AccordionContent>
           </AccordionItem>
