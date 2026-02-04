@@ -9,6 +9,13 @@ import LoadingButton from "@/components/ui/loadingButton";
 import { useValidateCoupon } from "@/hooks/coupon/mutations/useValidateCoupon";
 import { HiLocationMarker, HiUser, HiPhone, HiMail, HiTag, HiX, HiCheckCircle, HiShieldCheck } from "react-icons/hi";
 
+// Declare Razorpay on window object
+declare global {
+  interface Window {
+    Razorpay: any;
+  }
+}
+
 const INDIAN_STATES = [
   "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh",
   "Goa", "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand", "Karnataka",
@@ -26,7 +33,7 @@ export const CheckoutForm = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { validateAsync, isValidating } = useValidateCoupon();
 
-  const [paymentMethod, setPaymentMethod] = useState("cod");
+  const [paymentMethod, setPaymentMethod] = useState("razorpay");
   const [upiId, setUpiId] = useState("");
 
   const [couponCode, setCouponCode] = useState("");
@@ -112,16 +119,64 @@ export const CheckoutForm = () => {
     toast.info("Coupon removed");
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // Function to create order in database after successful payment
+  const createOrderInDatabase = async (paymentInfo: { id: string; status: string }) => {
+    const allProducts = await getAllProducts();
+    const orderItems = items.map(item => {
+      const product = allProducts.find((p: any) => p.id === item.productId);
+      return {
+        product: item.productId,
+        name: product?.name || "Unknown Product",
+        price: product?.price || 0,
+        quantity: item.quantity,
+        image: product?.img || "",
+      };
+    });
 
-    if (paymentMethod === 'upi' && !upiId.trim()) {
-      toast.error("Please enter your UPI ID");
-      return;
+    const totalPrice = orderItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const taxPrice = totalPrice * 0.18;
+    const shippingPrice = totalPrice > 5000 ? 0 : 200;
+    const totalAmount = totalPrice + taxPrice + shippingPrice;
+    const finalAmount = appliedCoupon ? appliedCoupon.finalAmount : totalAmount;
+
+    const token = localStorage.getItem('auth_token');
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000/api/v1'}/order/new`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      credentials: 'include',
+      body: JSON.stringify({
+        shippingInfo: {
+          address: `${formData.addressLine1}, ${formData.addressLine2 ? formData.addressLine2 + ', ' : ''}${formData.landmark ? 'Near ' + formData.landmark : ''}`.trim(),
+          city: formData.city,
+          state: formData.state,
+          country: "India",
+          pincode: parseInt(formData.pinCode),
+          phoneNo: parseInt(formData.phoneNo),
+        },
+        orderItems,
+        paymentInfo,
+        itemsPrice: totalPrice,
+        taxPrice,
+        shippingPrice,
+        totalPrice: finalAmount,
+        couponCode: appliedCoupon?.code || null,
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok || !data.success) {
+      throw new Error(data.message || 'Failed to place order');
     }
 
-    setIsLoading(true);
+    return data;
+  };
 
+  // Handle Razorpay Payment
+  const handleRazorpayPayment = async () => {
     try {
       const allProducts = await getAllProducts();
       const orderItems = items.map(item => {
@@ -141,8 +196,9 @@ export const CheckoutForm = () => {
       const totalAmount = totalPrice + taxPrice + shippingPrice;
       const finalAmount = appliedCoupon ? appliedCoupon.finalAmount : totalAmount;
 
+      // Step 1: Create Razorpay Order
       const token = localStorage.getItem('auth_token');
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000/api/v1'}/order/new`, {
+      const orderResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000/api/v1'}/payment/razorpay/order`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -150,32 +206,102 @@ export const CheckoutForm = () => {
         },
         credentials: 'include',
         body: JSON.stringify({
-          shippingInfo: {
-            address: `${formData.addressLine1}, ${formData.addressLine2 ? formData.addressLine2 + ', ' : ''}${formData.landmark ? 'Near ' + formData.landmark : ''}`.trim(),
-            city: formData.city,
-            state: formData.state,
-            country: "India",
-            pincode: parseInt(formData.pinCode),
-            phoneNo: parseInt(formData.phoneNo),
+          amount: finalAmount,
+          currency: 'INR',
+          receipt: `receipt_${Date.now()}`,
+          notes: {
+            customer_name: formData.fullName,
+            customer_email: formData.email,
+            customer_phone: formData.phoneNo,
           },
-          orderItems,
-          paymentInfo: {
-            id: paymentMethod === 'upi' ? `upi_${Date.now()}` : `cash_${Date.now()}`,
-            status: paymentMethod === 'upi' ? `UPI Payment (${upiId})` : "Cash on Delivery",
-          },
-          itemsPrice: totalPrice,
-          taxPrice,
-          shippingPrice,
-          totalPrice: finalAmount,
-          couponCode: appliedCoupon?.code || null,
         }),
       });
 
-      const data = await response.json();
+      const orderData = await orderResponse.json();
 
-      if (!response.ok || !data.success) {
-        throw new Error(data.message || 'Failed to place order');
+      if (!orderResponse.ok || !orderData.success) {
+        throw new Error(orderData.message || 'Failed to create payment order');
       }
+
+      // Step 2: Open Razorpay Checkout
+      const options = {
+        key: orderData.key_id,
+        amount: orderData.order.amount,
+        currency: orderData.order.currency,
+        name: 'SLN TILES SHOWROOM',
+        description: 'Order Payment',
+        order_id: orderData.order.id,
+        prefill: {
+          name: formData.fullName,
+          email: formData.email,
+          contact: formData.phoneNo,
+        },
+        theme: {
+          color: '#f97316', // Orange color
+        },
+        handler: async function (response: any) {
+          try {
+            // Step 3: Verify Payment
+            const verifyResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000/api/v1'}/payment/razorpay/verify`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+              },
+              credentials: 'include',
+              body: JSON.stringify({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+              }),
+            });
+
+            const verifyData = await verifyResponse.json();
+
+            if (!verifyResponse.ok || !verifyData.success) {
+              throw new Error(verifyData.message || 'Payment verification failed');
+            }
+
+            // Step 4: Create Order in Database
+            await createOrderInDatabase({
+              id: response.razorpay_payment_id,
+              status: `Razorpay Payment - ${verifyData.payment.method}`,
+            });
+
+            clearCart();
+            toast.success('Payment successful! Order placed.');
+            router.push(`/orders?success=true`);
+          } catch (error) {
+            console.error('Error verifying payment:', error);
+            toast.error(error instanceof Error ? error.message : 'Payment verification failed');
+          } finally {
+            setIsLoading(false);
+          }
+        },
+        modal: {
+          ondismiss: function () {
+            setIsLoading(false);
+            toast.error('Payment cancelled');
+          },
+        },
+      };
+
+      const razorpay = new window.Razorpay(options);
+      razorpay.open();
+    } catch (error) {
+      console.error('Error initiating Razorpay payment:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to initiate payment');
+      setIsLoading(false);
+    }
+  };
+
+  // Handle COD/UPI Payment (Direct Order)
+  const handleDirectPayment = async () => {
+    try {
+      await createOrderInDatabase({
+        id: paymentMethod === 'upi' ? `upi_${Date.now()}` : `cash_${Date.now()}`,
+        status: paymentMethod === 'upi' ? `UPI Payment (${upiId})` : "Cash on Delivery",
+      });
 
       clearCart();
       toast.success('Order placed successfully!');
@@ -184,6 +310,29 @@ export const CheckoutForm = () => {
       console.error('Error placing order:', error);
       toast.error(error instanceof Error ? error.message : 'Failed to place order');
     } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (paymentMethod === 'upi' && !upiId.trim()) {
+      toast.error("Please enter your UPI ID");
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      if (paymentMethod === 'razorpay') {
+        await handleRazorpayPayment();
+      } else {
+        await handleDirectPayment();
+      }
+    } catch (error) {
+      console.error('Error processing payment:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to process payment');
       setIsLoading(false);
     }
   };
@@ -505,6 +654,33 @@ export const CheckoutForm = () => {
                 </div>
 
                 <div className="space-y-3">
+                  {/* Razorpay Option */}
+                  <label className={`block p-4 border-2 rounded-xl cursor-pointer transition-all ${paymentMethod === 'razorpay'
+                      ? 'border-orange-500 bg-orange-50'
+                      : 'border-slate-200 hover:border-slate-300'
+                    }`}>
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="radio"
+                        name="paymentMethod"
+                        value="razorpay"
+                        checked={paymentMethod === 'razorpay'}
+                        onChange={(e) => setPaymentMethod(e.target.value)}
+                        className="w-4 h-4 text-orange-500"
+                      />
+                      <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                        <span className="text-xl">💳</span>
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-semibold text-slate-900">Card / UPI / Net Banking</p>
+                        <p className="text-xs text-slate-600">Secure payment via Razorpay</p>
+                      </div>
+                      <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded font-medium">
+                        Recommended
+                      </span>
+                    </div>
+                  </label>
+
                   {/* UPI Option */}
                   <label className={`block p-4 border-2 rounded-xl cursor-pointer transition-all ${paymentMethod === 'upi'
                       ? 'border-orange-500 bg-orange-50'
@@ -524,7 +700,7 @@ export const CheckoutForm = () => {
                       </div>
                       <div className="flex-1">
                         <p className="font-semibold text-slate-900">UPI Payment</p>
-                        <p className="text-xs text-slate-600">GPay, PhonePe, Paytm</p>
+                        <p className="text-xs text-slate-600">Manual UPI transfer</p>
                       </div>
                     </div>
 

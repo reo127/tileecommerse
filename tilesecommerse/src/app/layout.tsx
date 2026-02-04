@@ -25,6 +25,9 @@ export default async function RootLayout({
 }) {
   return (
     <html lang="en">
+      <head>
+        <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+      </head>
       <body className={GeistSans.className}>
         <Providers>
           <LayoutWrapper>
