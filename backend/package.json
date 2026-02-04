@@ -24,6 +24,7 @@
     "mongoose": "^6.1.7",
     "nodemailer": "^6.7.2",
     "paytmchecksum": "^1.5.0",
+    "razorpay": "^2.9.6",
     "stripe": "^8.200.0",
     "uuid": "^8.3.2",
     "validator": "^13.7.0"

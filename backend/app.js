@@ -51,6 +51,7 @@ const coupon = require('./routes/couponRoute');
 const category = require('./routes/categoryRoute');
 const blog = require('./routes/blogRoute');
 const enquiry = require('./routes/enquiryRoutes');
+const razorpay = require('./routes/razorpayRoute');
 
 app.use('/api/v1', user);
 app.use('/api/v1', product);
@@ -60,6 +61,7 @@ app.use('/api/v1', coupon);
 app.use('/api/v1', category);
 app.use('/api/v1', blog);
 app.use('/api/v1/enquiries', enquiry);
+app.use('/api/v1', razorpay);
 
 // error middleware
 app.use(errorMiddleware);
