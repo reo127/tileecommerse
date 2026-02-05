@@ -806,7 +806,7 @@ export function SimpleProductForm() {
                                 />
                               </div>
 
-                             {/* Product ID */}
+                              {/* Product ID */}
                               <div>
                                 <label className="block text-xs font-medium text-slate-600 mb-1">Product ID</label>
                                 <input
@@ -834,16 +834,13 @@ export function SimpleProductForm() {
                               {/* Finish */}
                               <div>
                                 <label className="block text-xs font-medium text-slate-600 mb-1">Finish</label>
-                                <select
-                                  value={variant.finish}
-                                  onChange={(e) => updateVariant(variant.id, 'finish', e.target.value)}
-                                  className="w-full px-3 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
-                                >
+                                <select name="finish" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all">
                                   <option value="">Select finish</option>
-                                  <option value="glossy">Glossy</option>
-                                  <option value="matte">Matte</option>
-                                  <option value="polished">Polished</option>
-                                  <option value="anti-skid">Anti-Skid</option>
+                                  {FINISH_TYPES.map((finish) => (
+                                    <option key={finish} value={finish}>
+                                      {finish}
+                                    </option>
+                                  ))}
                                 </select>
                               </div>
 

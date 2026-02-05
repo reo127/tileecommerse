@@ -118,6 +118,14 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
           {product.name}
         </h1>
         <p className="text-slate-600">{product.shortDescription || product.description}</p>
+
+        {/* Product ID - Display variant ID if available, otherwise main product ID */}
+        {(selectedVariant?.productId || product.productId) && (
+          <div className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 bg-slate-100 border border-slate-300 rounded-lg">
+            <span className="text-xs font-medium text-slate-600">Product ID:</span>
+            <span className="text-sm font-semibold text-slate-900">{selectedVariant?.productId || product.productId}</span>
+          </div>
+        )}
       </div>
 
       {/* Price with MRP and Discount */}
@@ -267,7 +275,7 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
       <div className="bg-slate-900 text-white rounded-lg p-4">
         <div className="flex justify-between items-center mb-1">
           <span className="text-sm">Total Price:</span>
-          <span className="text-2xl font-bold">₹{(product.price * quantity * 12).toFixed(0)}</span>
+          <span className="text-2xl font-bold">₹{(currentPrice * quantity).toFixed(0)}</span>
         </div>
 
       </div>
