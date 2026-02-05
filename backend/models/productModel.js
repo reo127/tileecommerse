@@ -110,7 +110,6 @@ const productSchema = new mongoose.Schema({
 
     material: {
         type: String,
-        enum: ['Ceramic', 'Glazed Ceramic', 'Porcelain', 'Vitrified', 'Double Charge Vitrified', 'Full Body Vitrified', 'GVT (Glazed Vitrified Tiles)', 'PGVT (Polished Glazed Vitrified Tiles)', 'Marble', 'Marble Look', 'Granite', 'Granite Look', 'Stone', 'Slate', 'Travertine', 'Quartz', 'Wood Look', 'Cement Finish', 'Concrete Look', 'Mosaic', '3D Tiles', 'Digital Wall Tiles', 'Elevation Tiles', 'Glass Tiles', 'Metallic Finish', 'Outdoor Tiles', 'Parking Tiles', 'Anti-Skid Tiles', 'Paver Tiles', 'Vitreous China', 'Stainless Steel', 'Mild Steel', 'Cast Iron', 'Brass', 'Copper', 'Aluminium', 'Galvanized Iron (GI)', 'PVC', 'CPVC', 'UPVC', 'HDPE', 'Plastic', 'ABS Plastic', 'FRP (Fibre Reinforced Plastic)', 'Glass', 'Toughened Glass', 'Acrylic', 'Cement', 'Concrete', 'Wood', 'Engineered Wood', 'Plywood', 'MDF', 'HDF', 'Laminated Board', 'Solar Glass', 'Silicon (Solar Grade)', 'Rubber'],
         required: false
     },
 
@@ -121,7 +120,6 @@ const productSchema = new mongoose.Schema({
 
     finish: {
         type: String,
-        enum: ['Glossy', 'High Gloss', 'Super Gloss', 'Matte', 'Satin', 'Polished', 'Semi-Polished', 'Lappato', 'Mirror Finish', 'Brushed Finish', 'Chrome Finish', 'Powder Coated', 'Painted', 'Enamel Coated', 'Textured', 'Structured', 'Rustic', 'Anti-Skid', 'Sugar Finish', 'Carving', '3D Finish', 'Wooden Finish', 'Marble Finish', 'Granite Finish', 'Stone Finish', 'Cement Finish', 'Concrete Finish', 'Metallic Finish', 'Digital Printed', 'Frosted', 'Transparent', 'Opaque', 'White Finish', 'Black Finish', 'Silver Finish', 'Gold Finish', 'Rose Gold Finish'],
         required: false
     },
 
