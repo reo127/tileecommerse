@@ -13,6 +13,35 @@ import { useCategories } from "@/hooks/category/queries/useCategories";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000/api/v1';
 
+// Finish types for tiles and products
+const FINISH_TYPES = [
+  'Glossy', 'High Gloss', 'Super Gloss', 'Matte', 'Satin', 'Polished',
+  'Semi-Polished', 'Lappato', 'Mirror Finish', 'Brushed Finish',
+  'Chrome Finish', 'Powder Coated', 'Painted', 'Enamel Coated',
+  'Textured', 'Structured', 'Rustic', 'Anti-Skid', 'Sugar Finish',
+  'Carving', '3D Finish', 'Wooden Finish', 'Marble Finish',
+  'Granite Finish', 'Stone Finish', 'Cement Finish', 'Concrete Finish',
+  'Metallic Finish', 'Digital Printed', 'Frosted', 'Transparent',
+  'Opaque', 'White Finish', 'Black Finish', 'Silver Finish',
+  'Gold Finish', 'Rose Gold Finish'
+];
+
+// Material types for tiles and products
+const MATERIAL_TYPES = [
+  'Ceramic', 'Glazed Ceramic', 'Porcelain', 'Vitrified', 'Double Charge Vitrified',
+  'Full Body Vitrified', 'GVT (Glazed Vitrified Tiles)', 'PGVT (Polished Glazed Vitrified Tiles)',
+  'Marble', 'Marble Look', 'Granite', 'Granite Look', 'Stone', 'Slate', 'Travertine',
+  'Quartz', 'Wood Look', 'Cement Finish', 'Concrete Look', 'Mosaic', '3D Tiles',
+  'Digital Wall Tiles', 'Elevation Tiles', 'Glass Tiles', 'Metallic Finish',
+  'Outdoor Tiles', 'Parking Tiles', 'Anti-Skid Tiles', 'Paver Tiles',
+  'Vitreous China', 'Stainless Steel', 'Mild Steel', 'Cast Iron', 'Brass',
+  'Copper', 'Aluminium', 'Galvanized Iron (GI)', 'PVC', 'CPVC', 'UPVC',
+  'HDPE', 'Plastic', 'ABS Plastic', 'FRP (Fibre Reinforced Plastic)',
+  'Glass', 'Toughened Glass', 'Acrylic', 'Cement', 'Concrete', 'Wood',
+  'Engineered Wood', 'Plywood', 'MDF', 'HDF', 'Laminated Board',
+  'Solar Glass', 'Silicon (Solar Grade)', 'Rubber'
+];
+
 const fileToBase64 = (file: File): Promise<string> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -43,6 +72,7 @@ export function SimpleProductForm() {
     id: string;
     color: string;
     size: string;
+    productId: string;
     finish: string;
     price: string;
     stock: string;
@@ -99,6 +129,7 @@ export function SimpleProductForm() {
       id: Math.random().toString(36).substr(2, 9),
       color: '',
       size: '',
+      productId: '',
       finish: '',
       price: '',
       stock: ''
@@ -550,6 +581,8 @@ export function SimpleProductForm() {
                   <input name="highlight2" placeholder="Highlight 2" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
                   <input name="highlight3" placeholder="Highlight 3" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
                   <input name="highlight4" placeholder="Highlight 4" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
+                  <input name="highlight5" placeholder="Highlight 5" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
+                  <input name="highlight6" placeholder="Highlight 6" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
                 </div>
               </div>
             </AccordionContent>
@@ -562,16 +595,23 @@ export function SimpleProductForm() {
             </AccordionTrigger>
             <AccordionContent className="px-8 pb-8">
               <div className="grid md:grid-cols-2 gap-6 pt-4">
+
+                {/* Product ID */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Product ID</label>
+                  <input name="productId" type="text" placeholder="SKU-12345 or any unique ID" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
+                </div>
+
                 {/* Material */}
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">Material</label>
                   <select name="material" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all">
                     <option value="">Select material</option>
-                    <option value="ceramic">Ceramic</option>
-                    <option value="porcelain">Porcelain</option>
-                    <option value="marble">Marble</option>
-                    <option value="vitrified">Vitrified</option>
-                    <option value="granite">Granite</option>
+                    {MATERIAL_TYPES.map((material) => (
+                      <option key={material} value={material}>
+                        {material}
+                      </option>
+                    ))}
                   </select>
                 </div>
 
@@ -580,10 +620,11 @@ export function SimpleProductForm() {
                   <label className="block text-sm font-medium text-slate-700 mb-2">Finish</label>
                   <select name="finish" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all">
                     <option value="">Select finish</option>
-                    <option value="glossy">Glossy</option>
-                    <option value="matte">Matte</option>
-                    <option value="polished">Polished</option>
-                    <option value="anti-skid">Anti-Skid</option>
+                    {FINISH_TYPES.map((finish) => (
+                      <option key={finish} value={finish}>
+                        {finish}
+                      </option>
+                    ))}
                   </select>
                 </div>
 
@@ -593,16 +634,10 @@ export function SimpleProductForm() {
                   <input name="color" placeholder="White, Beige, Gray..." className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
                 </div>
 
-                {/* Length */}
+                {/* Size */}
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">Length</label>
-                  <input name="length" type="number" placeholder="24" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
-                </div>
-
-                {/* Width */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">Width</label>
-                  <input name="width" type="number" placeholder="24" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Size</label>
+                  <input name="size" type="text" placeholder="24x24, 1200x600mm, etc." className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
                 </div>
 
                 {/* Unit */}
@@ -770,6 +805,19 @@ export function SimpleProductForm() {
                                   className="w-full px-3 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
                                 />
                               </div>
+
+                             {/* Product ID */}
+                              <div>
+                                <label className="block text-xs font-medium text-slate-600 mb-1">Product ID</label>
+                                <input
+                                  type="text"
+                                  value={variant.productId || ''}
+                                  onChange={(e) => updateVariant(variant.id, 'productId', e.target.value)}
+                                  placeholder="SKU-001"
+                                  className="w-full px-3 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
+                                />
+                              </div>
+
 
                               {/* Size */}
                               <div>

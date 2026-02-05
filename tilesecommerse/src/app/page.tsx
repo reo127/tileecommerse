@@ -9,7 +9,6 @@ import {
 import {
   HeroSlider,
   CollectionGrid,
-  BrowseByColor,
   Testimonials,
   FeaturedCategories,
   FeaturedProductsSection,
@@ -34,10 +33,7 @@ const Home = async () => {
       {/* Featured Products Section */}
       <FeaturedProductsSection />
 
-      {/* Browse by Color */}
-      <div className="bg-gray-50 py-1">
-        <BrowseByColor />
-      </div>
+
 
       {/* Accessories Section */}
       <AccessoriesSection />
