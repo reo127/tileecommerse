@@ -124,16 +124,25 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
       <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
         <div className="flex items-baseline gap-3 mb-1">
           <span className="text-sm text-slate-600">Price:</span>
-          <span className="text-3xl font-bold text-orange-500">₹{currentPrice.toFixed(0)}</span>
-          {currentMRP && currentMRP > currentPrice && (
+          {currentPrice > 0 ? (
             <>
-              <span className="text-lg text-slate-400 line-through">₹{currentMRP.toFixed(0)}</span>
-              <span className="text-sm font-semibold text-green-600 bg-green-100 px-2 py-1 rounded">
-                {Math.round(((currentMRP - currentPrice) / currentMRP) * 100)}% OFF
-              </span>
+              <span className="text-3xl font-bold text-orange-500">₹{currentPrice.toFixed(0)}</span>
+              {currentMRP && currentMRP > currentPrice && (
+                <>
+                  <span className="text-lg text-slate-400 line-through">₹{currentMRP.toFixed(0)}</span>
+                  <span className="text-sm font-semibold text-green-600 bg-green-100 px-2 py-1 rounded">
+                    {Math.round(((currentMRP - currentPrice) / currentMRP) * 100)}% OFF
+                  </span>
+                </>
+              )}
+              <span className="text-sm text-slate-600">/ unit</span>
+            </>
+          ) : (
+            <>
+              <span className="text-2xl font-bold text-blue-600">Get Price</span>
+              <span className="text-sm text-slate-600">Contact us for pricing</span>
             </>
           )}
-          <span className="text-sm text-slate-600">/ sq.ft</span>
         </div>
         {/* Stock Count */}
         {currentStock !== undefined && (
@@ -249,7 +258,7 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
                 +
               </button>
             </div>
-            <span className="text-sm text-slate-600">Box (12 sq.ft)</span>
+
           </div>
         </div>
       </div>
@@ -260,7 +269,7 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
           <span className="text-sm">Total Price:</span>
           <span className="text-2xl font-bold">₹{(product.price * quantity * 12).toFixed(0)}</span>
         </div>
-        <p className="text-xs text-gray-400">For {quantity} box(es) - {quantity * 12} sq.ft</p>
+
       </div>
 
       {/* Action Buttons */}

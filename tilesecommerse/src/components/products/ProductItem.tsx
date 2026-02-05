@@ -52,8 +52,17 @@ export const ProductItem = ({ product }: ProductItemProps) => {
         {/* Price and Size */}
         <div className="flex items-center justify-between mt-3">
           <div>
-            <p className="text-xl font-bold text-orange-500">₹{price.toFixed(0)}</p>
-            <p className="text-xs text-gray-500">per sq.ft</p>
+            {price > 0 ? (
+              <>
+                <p className="text-xl font-bold text-orange-500">₹{price.toFixed(0)}</p>
+                <p className="text-xs text-gray-500">per unit</p>
+              </>
+            ) : (
+              <>
+                <p className="text-base font-semibold text-blue-600">Get Price</p>
+                <p className="text-xs text-gray-500">Contact us</p>
+              </>
+            )}
           </div>
 
           {/* @ts-ignore - dummy data uses 'size', real schema uses 'sizes' */}
@@ -69,23 +78,26 @@ export const ProductItem = ({ product }: ProductItemProps) => {
         {/* Color Variants */}
         {variants.length > 0 && (
           <div className="mt-3 pt-3 border-t border-gray-100">
-            <p className="text-xs text-gray-600 mb-2">{variants.length} Color{variants.length > 1 ? 's' : ''} Available</p>
-            <div className="flex gap-1.5">
-              {variants.slice(0, 4).map((variant: any, idx: number) => (
-                <div
+            <p className="text-xs text-gray-600 mb-2">{variants.length} Variant{variants.length > 1 ? 's' : ''} Available</p>
+            <div className="flex flex-wrap gap-1.5">
+              {variants.slice(0, 3).map((variant: any, idx: number) => (
+                <span
                   key={idx}
-                  className="w-6 h-6 rounded-full border-2 border-gray-300 bg-gradient-to-br from-gray-100 to-gray-300"
+                  className="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-700 rounded border border-gray-200"
                   title={variant.color}
-                />
+                >
+                  {variant.color}
+                </span>
               ))}
-              {variants.length > 4 && (
-                <div className="w-6 h-6 rounded-full border-2 border-gray-300 bg-white flex items-center justify-center text-[10px] text-gray-600 font-medium">
-                  +{variants.length - 4}
-                </div>
+              {variants.length > 3 && (
+                <span className="px-2 py-1 text-xs font-medium bg-orange-50 text-orange-600 rounded border border-orange-200">
+                  +{variants.length - 3} more
+                </span>
               )}
             </div>
           </div>
         )}
+
 
         {/* View Details Button */}
         <Link href={productLink}>

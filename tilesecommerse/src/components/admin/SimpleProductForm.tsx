@@ -530,7 +530,6 @@ export function SimpleProductForm() {
                     name="logo"
                     type="file"
                     accept="image/*"
-                    required
                     className="w-full px-4 py-4 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-slate-900 file:text-white file:text-sm hover:file:bg-slate-800"
                   />
                 </div>

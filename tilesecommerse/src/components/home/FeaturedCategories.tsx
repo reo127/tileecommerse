@@ -133,7 +133,7 @@ export const FeaturedCategories = async () => {
         {categories.map((category: any, index: number) => (
           <Link
             key={category._id || index}
-            href={`/${category.slug}`}
+            href={`/search?category=${category.slug}`}
             className="group relative overflow-hidden rounded-xl bg-white shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2"
           >
             {/* Tag with icon */}
