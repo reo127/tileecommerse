@@ -248,7 +248,7 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
                 type="number"
                 value={quantity}
                 onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
-                className="w-20 text-center py-2 font-semibold text-slate-800 focus:outline-none"
+                className="w-20 text-center py-2 font-semibold text-slate-800 focus:outline-none bg-white"
                 min="1"
               />
               <button
