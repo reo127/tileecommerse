@@ -84,6 +84,13 @@ const productSchema = new mongoose.Schema({
         required: false
     },
 
+    // Product ID (SKU or custom identifier)
+    productId: {
+        type: String,
+        required: false,
+        trim: true
+    },
+
     // Tiles-specific fields
     dimensions: {
         length: {
@@ -176,6 +183,11 @@ const productSchema = new mongoose.Schema({
         default: false
     },
     variants: [{
+        productId: {
+            type: String,
+            required: false,
+            trim: true
+        },
         color: {
             type: String,
             required: false
