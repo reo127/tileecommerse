@@ -167,6 +167,7 @@ export function SimpleProductForm() {
       const name = formData.get('name') as string;
       const description = formData.get('description') as string;
       const shortDescription = formData.get('shortDescription') as string;
+      const productId = formData.get('productId') as string;
       const price = formData.get('price') as string;
       const cuttedPrice = formData.get('cuttedPrice') as string;
       const category = formData.get('category') as string;
@@ -177,8 +178,7 @@ export function SimpleProductForm() {
       const material = formData.get('material') as string;
       const finish = formData.get('finish') as string;
       const color = formData.get('color') as string;
-      const length = formData.get('length') as string;
-      const width = formData.get('width') as string;
+      const size = formData.get('size') as string;
       const unit = formData.get('unit') as string;
       const thickness = formData.get('thickness') as string;
       const coverage = formData.get('coverage') as string;
@@ -192,7 +192,9 @@ export function SimpleProductForm() {
       const highlight2 = formData.get('highlight2') as string;
       const highlight3 = formData.get('highlight3') as string;
       const highlight4 = formData.get('highlight4') as string;
-      const highlights = [highlight1, highlight2, highlight3, highlight4].filter(h => h);
+      const highlight5 = formData.get('highlight5') as string;
+      const highlight6 = formData.get('highlight6') as string;
+      const highlights = [highlight1, highlight2, highlight3, highlight4, highlight5, highlight6].filter(h => h);
 
       // Collect selected tags
       const tags = formData.getAll('tags') as string[];
@@ -222,15 +224,12 @@ export function SimpleProductForm() {
         logo = await fileToBase64(logoFile);
       }
 
-      // Build dimensions object only if length or width is provided
-      const dimensionsObj: any = { unit };
-      if (length) dimensionsObj.length = Number(length);
-      if (width) dimensionsObj.width = Number(width);
 
       const requestBody: any = {
         name,
         description,
         shortDescription,
+        productId: productId || undefined,
         price: Number(price),
         cuttedPrice: Number(cuttedPrice),
         category,
@@ -248,7 +247,7 @@ export function SimpleProductForm() {
       if (material) requestBody.material = material;
       if (finish) requestBody.finish = finish;
       if (color) requestBody.color = color;
-      if (length || width) requestBody.dimensions = JSON.stringify(dimensionsObj);
+      if (size) requestBody.size = size;
       if (roomType.length > 0) requestBody.roomType = JSON.stringify(roomType);
       if (thickness) requestBody.thickness = Number(thickness);
       if (coverage) requestBody.coverage = Number(coverage);
@@ -257,11 +256,43 @@ export function SimpleProductForm() {
       if (waterAbsorption) requestBody.waterAbsorption = waterAbsorption;
       if (slipResistance) requestBody.slipResistance = slipResistance;
 
-      // Always add variants data (even if empty)
+      // Handle variants - if hasVariants is true, ensure main product data is included as a variant
       requestBody.hasVariants = hasVariants;
-      if (variants.length > 0) {
-        requestBody.variants = JSON.stringify(variants);
+      if (hasVariants) {
+        const variantsToSend = [...variants];
+
+        // If user filled main product specs but didn't add them as a variant, create a default variant
+        if (variantsToSend.length === 0 || (color || finish || formData.get('size'))) {
+          const mainProductVariant = {
+            id: 'main-product',
+            productId: formData.get('productId') as string || '',
+            color: color || '',
+            size: formData.get('size') as string || '',
+            finish: finish || '',
+            price: price || '',
+            stock: stock || ''
+          };
+
+          // Only add if it has meaningful data
+          if (mainProductVariant.color || mainProductVariant.size || mainProductVariant.finish) {
+            // Check if this variant doesn't already exist
+            const exists = variantsToSend.some(v =>
+              v.color === mainProductVariant.color &&
+              v.size === mainProductVariant.size &&
+              v.finish === mainProductVariant.finish
+            );
+
+            if (!exists) {
+              variantsToSend.unshift(mainProductVariant); // Add as first variant
+            }
+          }
+        }
+
+        if (variantsToSend.length > 0) {
+          requestBody.variants = JSON.stringify(variantsToSend);
+        }
       }
+
 
       // Add tags if selected
       if (tags.length > 0) {
