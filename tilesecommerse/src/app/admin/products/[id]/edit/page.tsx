@@ -59,7 +59,6 @@ const fileToBase64 = (file: File): Promise<string> => {
 
 export default function EditProductPage({ params }: EditProductPageProps) {
   const router = useRouter();
-  const [productId, setProductId] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -71,6 +70,18 @@ export default function EditProductPage({ params }: EditProductPageProps) {
   const [featuredImageIndex, setFeaturedImageIndex] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [specCount, setSpecCount] = useState(2);
+
+  // Variants state
+  const [hasVariants, setHasVariants] = useState(false);
+  const [variants, setVariants] = useState<Array<{
+    id: string;
+    color: string;
+    size: string;
+    productId: string;
+    finish: string;
+    price: string;
+    stock: string;
+  }>>([]);
 
   const { categories, isLoading: categoriesLoading } = useCategories();
 
@@ -126,6 +137,29 @@ export default function EditProductPage({ params }: EditProductPageProps) {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Variant management functions
+  const addVariant = () => {
+    setVariants([...variants, {
+      id: Math.random().toString(36).substr(2, 9),
+      color: '',
+      size: '',
+      productId: '',
+      finish: '',
+      price: '',
+      stock: ''
+    }]);
+  };
+
+  const updateVariant = (id: string, field: string, value: string) => {
+    setVariants(variants.map(v =>
+      v.id === id ? { ...v, [field]: value } : v
+    ));
+  };
+
+  const removeVariant = (id: string) => {
+    setVariants(variants.filter(v => v.id !== id));
   };
 
   const handleImageSelect = (files: FileList | null) => {
@@ -621,30 +655,30 @@ export default function EditProductPage({ params }: EditProductPageProps) {
             </AccordionContent>
           </AccordionItem>
 
-        {/* 4. Specifications */}
-        <AccordionItem value="specs" className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
-          <AccordionTrigger className="px-8 py-6 hover:no-underline hover:bg-slate-50 transition-colors">
-            <h2 className="text-xl font-medium text-slate-900">4. Specifications</h2>
-          </AccordionTrigger>
-          <AccordionContent className="px-8 pb-8">
-            <div className="grid md:grid-cols-2 gap-6 pt-4">
-              {/* Material */}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Material</label>
-                <select name="material" defaultValue={product.material} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all">
-                  <option value="">Select material</option>
-                  {MATERIAL_TYPES.map((material) => (
-                    <option key={material} value={material}>
-                      {material}
-                    </option>
-                  ))}
-                </select>
-              </div>
+          {/* 4. Specifications */}
+          <AccordionItem value="specs" className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
+            <AccordionTrigger className="px-8 py-6 hover:no-underline hover:bg-slate-50 transition-colors">
+              <h2 className="text-xl font-medium text-slate-900">4. Specifications</h2>
+            </AccordionTrigger>
+            <AccordionContent className="px-8 pb-8">
+              <div className="grid md:grid-cols-2 gap-6 pt-4">
+                {/* Material */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Material</label>
+                  <select name="material" defaultValue={product.material} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all">
+                    <option value="">Select material</option>
+                    {MATERIAL_TYPES.map((material) => (
+                      <option key={material} value={material}>
+                        {material}
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-              {/* Finish */}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Finish</label>
-                                  <select name="finish" defaultValue={product.finish} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all">
+                {/* Finish */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Finish</label>
+                  <select name="finish" defaultValue={product.finish} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all">
                     <option value="">Select finish</option>
                     {FINISH_TYPES.map((finish) => (
                       <option key={finish} value={finish}>
@@ -652,319 +686,371 @@ export default function EditProductPage({ params }: EditProductPageProps) {
                       </option>
                     ))}
                   </select>
-              </div>
+                </div>
 
-              {/* Color */}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Color</label>
-                <input name="color" defaultValue={product.color} placeholder="White, Beige, Gray..." className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
-              </div>
+                {/* Color */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Color</label>
+                  <input name="color" defaultValue={product.color} placeholder="White, Beige, Gray..." className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
+                </div>
 
-              {/* Product ID */}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Product ID</label>
-                <input name="productId" defaultValue={product.productId} placeholder="SKU-001" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
-              </div>
+                {/* Product ID */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Product ID</label>
+                  <input name="productId" defaultValue={product.productId} placeholder="SKU-001" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
+                </div>
 
-              {/* Size */}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Size</label>
-                <input name="size" defaultValue={product.size} placeholder="24x24, 1200x600mm, etc." className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
-              </div>
+                {/* Size */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Size</label>
+                  <input name="size" defaultValue={product.size} placeholder="24x24, 1200x600mm, etc." className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
+                </div>
 
-              {/* Thickness */}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Thickness (mm)</label>
-                <input name="thickness" type="number" defaultValue={product.thickness} placeholder="8" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
-              </div>
+                {/* Thickness */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Thickness (mm)</label>
+                  <input name="thickness" type="number" defaultValue={product.thickness} placeholder="8" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
+                </div>
 
-              {/* Coverage */}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Coverage (sq.ft per box)</label>
-                <input name="coverage" type="number" step="0.01" defaultValue={product.coverage} placeholder="32.5" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
-              </div>
+                {/* Coverage */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Coverage (sq.ft per box)</label>
+                  <input name="coverage" type="number" step="0.01" defaultValue={product.coverage} placeholder="32.5" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
+                </div>
 
-              {/* Tiles Per Box */}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Tiles Per Box</label>
-                <input name="tilesPerBox" type="number" defaultValue={product.tilesPerBox} placeholder="4" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
-              </div>
+                {/* Tiles Per Box */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Tiles Per Box</label>
+                  <input name="tilesPerBox" type="number" defaultValue={product.tilesPerBox} placeholder="4" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
+                </div>
 
-              {/* Weight */}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Weight (kg per box)</label>
-                <input name="weight" type="number" step="0.01" defaultValue={product.weight} placeholder="25.5" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
-              </div>
+                {/* Weight */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Weight (kg per box)</label>
+                  <input name="weight" type="number" step="0.01" defaultValue={product.weight} placeholder="25.5" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
+                </div>
 
-              {/* Water Absorption */}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Water Absorption</label>
-                <input name="waterAbsorption" defaultValue={product.waterAbsorption} placeholder="< 0.5%" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
-              </div>
+                {/* Water Absorption */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Water Absorption</label>
+                  <input name="waterAbsorption" defaultValue={product.waterAbsorption} placeholder="< 0.5%" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
+                </div>
 
-              {/* Slip Resistance */}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Slip Resistance</label>
-                <select name="slipResistance" defaultValue={product.slipResistance} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all">
-                  <option value="">Select slip resistance</option>
-                  <option value="R9">R9</option>
-                  <option value="R10">R10</option>
-                  <option value="R11">R11</option>
-                  <option value="R12">R12</option>
-                  <option value="R13">R13</option>
-                </select>
-              </div>
+                {/* Slip Resistance */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Slip Resistance</label>
+                  <select name="slipResistance" defaultValue={product.slipResistance} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all">
+                    <option value="">Select slip resistance</option>
+                    <option value="R9">R9</option>
+                    <option value="R10">R10</option>
+                    <option value="R11">R11</option>
+                    <option value="R12">R12</option>
+                    <option value="R13">R13</option>
+                  </select>
+                </div>
 
-              {/* Price */}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Price (₹)</label>
-                <input
-                  name="price"
-                  type="number"
-                  defaultValue={product.price}
-                  placeholder="999"
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
-                />
-              </div>
+                {/* Price */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Price (₹)</label>
+                  <input
+                    name="price"
+                    type="number"
+                    defaultValue={product.price}
+                    placeholder="999"
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
+                  />
+                </div>
 
-              {/* MRP */}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">MRP (₹)</label>
-                <input
-                  name="cuttedPrice"
-                  type="number"
-                  defaultValue={product.cuttedPrice}
-                  placeholder="1499"
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
-                />
-              </div>
+                {/* MRP */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">MRP (₹)</label>
+                  <input
+                    name="cuttedPrice"
+                    type="number"
+                    defaultValue={product.cuttedPrice}
+                    placeholder="1499"
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
+                  />
+                </div>
 
-              {/* Stock */}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Stock</label>
-                <input
-                  name="stock"
-                  type="number"
-                  defaultValue={product.stock}
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
-                />
-              </div>
+                {/* Stock */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Stock</label>
+                  <input
+                    name="stock"
+                    type="number"
+                    defaultValue={product.stock}
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
+                  />
+                </div>
 
-              <div className="md:col-span-2 pt-4">
-                <label className="block text-sm font-medium text-slate-700 mb-3">Technical Specifications</label>
-                <div className="space-y-3">
-                  {Array.from({ length: specCount }, (_, index) => (
-                    <div key={index} className="grid grid-cols-2 gap-4">
-                      <input
-                        name={`specTitle${index + 1}`}
-                        defaultValue={product.specifications?.[index]?.title}
-                        placeholder={`Specification Title ${index + 1}`}
-                        className="px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
-                      />
-                      <input
-                        name={`specDesc${index + 1}`}
-                        defaultValue={product.specifications?.[index]?.description}
-                        placeholder={`Specification Description ${index + 1}`}
-                        className="px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
-                      />
-                    </div>
-                  ))}
+                <div className="md:col-span-2 pt-4">
+                  <label className="block text-sm font-medium text-slate-700 mb-3">Technical Specifications</label>
+                  <div className="space-y-3">
+                    {Array.from({ length: specCount }, (_, index) => (
+                      <div key={index} className="grid grid-cols-2 gap-4">
+                        <input
+                          name={`specTitle${index + 1}`}
+                          defaultValue={product.specifications?.[index]?.title}
+                          placeholder={`Specification Title ${index + 1}`}
+                          className="px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
+                        />
+                        <input
+                          name={`specDesc${index + 1}`}
+                          defaultValue={product.specifications?.[index]?.description}
+                          placeholder={`Specification Description ${index + 1}`}
+                          className="px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
+                        />
+                      </div>
+                    ))}
 
+                    <button
+                      type="button"
+                      onClick={() => setSpecCount(specCount + 1)}
+                      className="w-full py-3 px-4 border-2 border-dashed border-slate-300 text-slate-600 rounded-xl hover:border-slate-400 hover:bg-slate-50 transition-all flex items-center justify-center gap-2 group"
+                    >
+                      <FiPlus className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                      <span className="text-sm font-medium">Add Specification</span>
+                    </button>
+                  </div>
+                </div>
+                {/* Enable Variants Toggle */}
+                <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
+                  <div>
+                    <h3 className="text-sm font-medium text-slate-900">Enable Product Variants</h3>
+                    <p className="text-xs text-slate-500 mt-1">Add variations like different colors, sizes, or finishes</p>
+                  </div>
                   <button
                     type="button"
-                    onClick={() => setSpecCount(specCount + 1)}
-                    className="w-full py-3 px-4 border-2 border-dashed border-slate-300 text-slate-600 rounded-xl hover:border-slate-400 hover:bg-slate-50 transition-all flex items-center justify-center gap-2 group"
+                    onClick={() => {
+                      setHasVariants(!hasVariants);
+                      if (!hasVariants && variants.length === 0) {
+                        addVariant();
+                      }
+                    }}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${hasVariants ? 'bg-slate-900' : 'bg-slate-300'}`}
                   >
-                    <FiPlus className="w-4 h-4 group-hover:scale-110 transition-transform" />
-                    <span className="text-sm font-medium">Add Specification</span>
+                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${hasVariants ? 'translate-x-6' : 'translate-x-1'}`} />
                   </button>
                 </div>
+
+                {/* Variants List */}
+                {hasVariants && (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <label className="block text-sm font-medium text-slate-700">Variant Combinations</label>
+                      <span className="text-xs text-slate-500">{variants.length} variant{variants.length !== 1 ? 's' : ''}</span>
+                    </div>
+
+                    {variants.length === 0 ? (
+                      <div className="text-center py-8 bg-slate-50 rounded-xl border-2 border-dashed border-slate-200">
+                        <p className="text-sm text-slate-500 mb-3">No variants added yet</p>
+                        <button type="button" onClick={addVariant} className="px-4 py-2 bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors text-sm font-medium">
+                          Add First Variant
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {variants.map((variant, index) => (
+                          <div key={variant.id} className="p-4 bg-slate-50 rounded-xl border border-slate-200">
+                            <div className="flex items-center justify-between mb-3">
+                              <span className="text-sm font-medium text-slate-700">Variant {index + 1}</span>
+                              <button type="button" onClick={() => removeVariant(variant.id)} className="text-red-600 hover:text-red-700 text-sm font-medium">Remove</button>
+                            </div>
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                              <div>
+                                <label className="block text-xs font-medium text-slate-600 mb-1">Color</label>
+                                <input type="text" value={variant.color} onChange={(e) => updateVariant(variant.id, 'color', e.target.value)} placeholder="White, Beige..." className="w-full px-3 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
+                              </div>
+                              <div>
+                                <label className="block text-xs font-medium text-slate-600 mb-1">Product ID</label>
+                                <input type="text" value={variant.productId || ''} onChange={(e) => updateVariant(variant.id, 'productId', e.target.value)} placeholder="SKU-001" className="w-full px-3 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
+                              </div>
+                              <div>
+                                <label className="block text-xs font-medium text-slate-600 mb-1">Size</label>
+                                <input type="text" value={variant.size} onChange={(e) => updateVariant(variant.id, 'size', e.target.value)} placeholder="24x24, 12x12..." className="w-full px-3 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
+                              </div>
+                              <div>
+                                <label className="block text-xs font-medium text-slate-600 mb-1">Finish</label>
+                                <select value={variant.finish} onChange={(e) => updateVariant(variant.id, 'finish', e.target.value)} className="w-full px-3 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all">
+                                  <option value="">Select finish</option>
+                                  {FINISH_TYPES.map((finish) => (
+                                    <option key={finish} value={finish}>{finish}</option>
+                                  ))}
+                                </select>
+                              </div>
+                              <div>
+                                <label className="block text-xs font-medium text-slate-600 mb-1">Price (₹)</label>
+                                <input type="number" value={variant.price} onChange={(e) => updateVariant(variant.id, 'price', e.target.value)} placeholder="999" className="w-full px-3 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
+                              </div>
+                              <div>
+                                <label className="block text-xs font-medium text-slate-600 mb-1">Stock</label>
+                                <input type="number" value={variant.stock} onChange={(e) => updateVariant(variant.id, 'stock', e.target.value)} placeholder="100" className="w-full px-3 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                        <button type="button" onClick={addVariant} className="w-full py-3 px-4 border-2 border-dashed border-slate-300 text-slate-600 rounded-xl hover:border-slate-400 hover:bg-slate-50 transition-all flex items-center justify-center gap-2 group">
+                          <FiPlus className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                          <span className="text-sm font-medium">Add Another Variant</span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
+            </AccordionContent>
+          </AccordionItem>
 
-            </div>
-          </AccordionContent>
-        </AccordionItem>
-
-        {/* 5. Room Type */}
-        <AccordionItem value="roomtype" className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
-          <AccordionTrigger className="px-8 py-6 hover:no-underline hover:bg-slate-50 transition-colors">
-            <h2 className="text-xl font-medium text-slate-900">5. Room Type</h2>
-          </AccordionTrigger>
-          <AccordionContent className="px-8 pb-8">
-            <div className="pt-4">
-              <label className="block text-sm font-medium text-slate-700 mb-4">
-                Select applicable room types
-              </label>
-
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {['kitchen', 'bathroom', 'living-room', 'bedroom', 'outdoor', 'commercial'].map((room) => (
-                  <label key={room} className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200 hover:bg-orange-50 hover:border-orange-300 transition-all cursor-pointer group">
-                    <input
-                      type="checkbox"
-                      name="roomType"
-                      value={room}
-                      defaultChecked={product.roomType?.includes(room)}
-                      className="w-4 h-4 text-orange-600 bg-white border-slate-300 rounded focus:ring-2 focus:ring-orange-500 cursor-pointer"
-                    />
-                    <span className="text-sm font-medium text-slate-700 group-hover:text-orange-700 capitalize">
-                      {room.replace('-', ' ')}
-                    </span>
-                  </label>
-                ))}
-              </div>
-            </div>
-          </AccordionContent>
-        </AccordionItem>
-
-        {/* 6. Product Tags */}
-        <AccordionItem value="tags" className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
-          <AccordionTrigger className="px-8 py-6 hover:no-underline hover:bg-slate-50 transition-colors">
-            <h2 className="text-xl font-medium text-slate-900">6. Product Tags</h2>
-          </AccordionTrigger>
-          <AccordionContent className="px-8 pb-8">
-            <div className="pt-4">
-              <label className="block text-sm font-medium text-slate-700 mb-4">
-                Select tags to display on product cards
-              </label>
-
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {/* Popular */}
-                <label className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200 hover:bg-blue-50 hover:border-blue-300 transition-all cursor-pointer group">
-                  <input type="checkbox" name="tags" value="popular" defaultChecked={product.tags?.includes('popular')} className="w-4 h-4 text-blue-600 bg-white border-slate-300 rounded focus:ring-2 focus:ring-blue-500 cursor-pointer" />
-                  <span className="text-sm font-medium text-slate-700 group-hover:text-blue-700">⭐ Popular</span>
-                </label>
-
-                {/* Trending */}
-                <label className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200 hover:bg-yellow-50 hover:border-yellow-300 transition-all cursor-pointer group">
-                  <input type="checkbox" name="tags" value="trending" defaultChecked={product.tags?.includes('trending')} className="w-4 h-4 text-yellow-600 bg-white border-slate-300 rounded focus:ring-2 focus:ring-yellow-500 cursor-pointer" />
-                  <span className="text-sm font-medium text-slate-700 group-hover:text-yellow-700">🔥 Trending</span>
-                </label>
-
-                {/* New */}
-                <label className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200 hover:bg-green-50 hover:border-green-300 transition-all cursor-pointer group">
-                  <input type="checkbox" name="tags" value="new" defaultChecked={product.tags?.includes('new')} className="w-4 h-4 text-green-600 bg-white border-slate-300 rounded focus:ring-2 focus:ring-green-500 cursor-pointer" />
-                  <span className="text-sm font-medium text-slate-700 group-hover:text-green-700">✨ New</span>
-                </label>
-
-                {/* Premium */}
-                <label className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200 hover:bg-purple-50 hover:border-purple-300 transition-all cursor-pointer group">
-                  <input type="checkbox" name="tags" value="premium" defaultChecked={product.tags?.includes('premium')} className="w-4 h-4 text-purple-600 bg-white border-slate-300 rounded focus:ring-2 focus:ring-purple-500 cursor-pointer" />
-                  <span className="text-sm font-medium text-slate-700 group-hover:text-purple-700">💎 Premium</span>
-                </label>
-
-                {/* Exclusive */}
-                <label className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200 hover:bg-pink-50 hover:border-pink-300 transition-all cursor-pointer group">
-                  <input type="checkbox" name="tags" value="exclusive" defaultChecked={product.tags?.includes('exclusive')} className="w-4 h-4 text-pink-600 bg-white border-slate-300 rounded focus:ring-2 focus:ring-pink-500 cursor-pointer" />
-                  <span className="text-sm font-medium text-slate-700 group-hover:text-pink-700">👑 Exclusive</span>
-                </label>
-
-                {/* Classic */}
-                <label className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200 hover:bg-slate-100 hover:border-slate-400 transition-all cursor-pointer group">
-                  <input type="checkbox" name="tags" value="classic" defaultChecked={product.tags?.includes('classic')} className="w-4 h-4 text-slate-600 bg-white border-slate-300 rounded focus:ring-2 focus:ring-slate-500 cursor-pointer" />
-                  <span className="text-sm font-medium text-slate-700 group-hover:text-slate-900">🏛️ Classic</span>
-                </label>
-
-                {/* Best Seller */}
-                <label className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200 hover:bg-orange-50 hover:border-orange-300 transition-all cursor-pointer group">
-                  <input type="checkbox" name="tags" value="bestseller" defaultChecked={product.tags?.includes('bestseller')} className="w-4 h-4 text-orange-600 bg-white border-slate-300 rounded focus:ring-2 focus:ring-orange-500 cursor-pointer" />
-                  <span className="text-sm font-medium text-slate-700 group-hover:text-orange-700">🏆 Best Seller</span>
-                </label>
-
-                {/* Limited Edition */}
-                <label className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200 hover:bg-red-50 hover:border-red-300 transition-all cursor-pointer group">
-                  <input type="checkbox" name="tags" value="limited" defaultChecked={product.tags?.includes('limited')} className="w-4 h-4 text-red-600 bg-white border-slate-300 rounded focus:ring-2 focus:ring-red-500 cursor-pointer" />
-                  <span className="text-sm font-medium text-slate-700 group-hover:text-red-700">⏰ Limited Edition</span>
-                </label>
-              </div>
-
-              <p className="text-xs text-slate-500 mt-4">
-                Selected tags will appear as badges on the product card for better visibility
-              </p>
-
-              {/* Applications Section */}
-              <div className="mt-8 pt-8 border-t border-slate-200">
+          {/* 6. Product Tags */}
+          <AccordionItem value="tags" className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
+            <AccordionTrigger className="px-8 py-6 hover:no-underline hover:bg-slate-50 transition-colors">
+              <h2 className="text-xl font-medium text-slate-900">6. Product Tags</h2>
+            </AccordionTrigger>
+            <AccordionContent className="px-8 pb-8">
+              <div className="pt-4">
                 <label className="block text-sm font-medium text-slate-700 mb-4">
-                  Applications (Room Types)
+                  Select tags to display on product cards
                 </label>
 
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                  {/* Kitchen */}
-                  <label className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200 hover:bg-amber-50 hover:border-amber-300 transition-all cursor-pointer group">
-                    <input type="checkbox" name="tags" value="kitchen" defaultChecked={product.tags?.includes('kitchen')} className="w-4 h-4 text-amber-600 bg-white border-slate-300 rounded focus:ring-2 focus:ring-amber-500 cursor-pointer" />
-                    <span className="text-sm font-medium text-slate-700 group-hover:text-amber-700">🍳 Kitchen</span>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {/* Popular */}
+                  <label className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200 hover:bg-blue-50 hover:border-blue-300 transition-all cursor-pointer group">
+                    <input type="checkbox" name="tags" value="popular" defaultChecked={product.tags?.includes('popular')} className="w-4 h-4 text-blue-600 bg-white border-slate-300 rounded focus:ring-2 focus:ring-blue-500 cursor-pointer" />
+                    <span className="text-sm font-medium text-slate-700 group-hover:text-blue-700">⭐ Popular</span>
                   </label>
 
-                  {/* Bathroom */}
-                  <label className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200 hover:bg-cyan-50 hover:border-cyan-300 transition-all cursor-pointer group">
-                    <input type="checkbox" name="tags" value="bathroom" defaultChecked={product.tags?.includes('bathroom')} className="w-4 h-4 text-cyan-600 bg-white border-slate-300 rounded focus:ring-2 focus:ring-cyan-500 cursor-pointer" />
-                    <span className="text-sm font-medium text-slate-700 group-hover:text-cyan-700">🚿 Bathroom</span>
+                  {/* Trending */}
+                  <label className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200 hover:bg-yellow-50 hover:border-yellow-300 transition-all cursor-pointer group">
+                    <input type="checkbox" name="tags" value="trending" defaultChecked={product.tags?.includes('trending')} className="w-4 h-4 text-yellow-600 bg-white border-slate-300 rounded focus:ring-2 focus:ring-yellow-500 cursor-pointer" />
+                    <span className="text-sm font-medium text-slate-700 group-hover:text-yellow-700">🔥 Trending</span>
                   </label>
 
-                  {/* Living Room */}
-                  <label className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200 hover:bg-indigo-50 hover:border-indigo-300 transition-all cursor-pointer group">
-                    <input type="checkbox" name="tags" value="living-room" defaultChecked={product.tags?.includes('living-room')} className="w-4 h-4 text-indigo-600 bg-white border-slate-300 rounded focus:ring-2 focus:ring-indigo-500 cursor-pointer" />
-                    <span className="text-sm font-medium text-slate-700 group-hover:text-indigo-700">🛋️ Living Room</span>
+                  {/* New */}
+                  <label className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200 hover:bg-green-50 hover:border-green-300 transition-all cursor-pointer group">
+                    <input type="checkbox" name="tags" value="new" defaultChecked={product.tags?.includes('new')} className="w-4 h-4 text-green-600 bg-white border-slate-300 rounded focus:ring-2 focus:ring-green-500 cursor-pointer" />
+                    <span className="text-sm font-medium text-slate-700 group-hover:text-green-700">✨ New</span>
                   </label>
 
-                  {/* Bedroom */}
-                  <label className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200 hover:bg-violet-50 hover:border-violet-300 transition-all cursor-pointer group">
-                    <input type="checkbox" name="tags" value="bedroom" defaultChecked={product.tags?.includes('bedroom')} className="w-4 h-4 text-violet-600 bg-white border-slate-300 rounded focus:ring-2 focus:ring-violet-500 cursor-pointer" />
-                    <span className="text-sm font-medium text-slate-700 group-hover:text-violet-700">🛏️ Bedroom</span>
+                  {/* Premium */}
+                  <label className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200 hover:bg-purple-50 hover:border-purple-300 transition-all cursor-pointer group">
+                    <input type="checkbox" name="tags" value="premium" defaultChecked={product.tags?.includes('premium')} className="w-4 h-4 text-purple-600 bg-white border-slate-300 rounded focus:ring-2 focus:ring-purple-500 cursor-pointer" />
+                    <span className="text-sm font-medium text-slate-700 group-hover:text-purple-700">💎 Premium</span>
                   </label>
 
-                  {/* Outdoor */}
-                  <label className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200 hover:bg-emerald-50 hover:border-emerald-300 transition-all cursor-pointer group">
-                    <input type="checkbox" name="tags" value="outdoor" defaultChecked={product.tags?.includes('outdoor')} className="w-4 h-4 text-emerald-600 bg-white border-slate-300 rounded focus:ring-2 focus:ring-emerald-500 cursor-pointer" />
-                    <span className="text-sm font-medium text-slate-700 group-hover:text-emerald-700">🌳 Outdoor</span>
+                  {/* Exclusive */}
+                  <label className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200 hover:bg-pink-50 hover:border-pink-300 transition-all cursor-pointer group">
+                    <input type="checkbox" name="tags" value="exclusive" defaultChecked={product.tags?.includes('exclusive')} className="w-4 h-4 text-pink-600 bg-white border-slate-300 rounded focus:ring-2 focus:ring-pink-500 cursor-pointer" />
+                    <span className="text-sm font-medium text-slate-700 group-hover:text-pink-700">👑 Exclusive</span>
                   </label>
 
-                  {/* Commercial */}
-                  <label className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200 hover:bg-gray-50 hover:border-gray-400 transition-all cursor-pointer group">
-                    <input type="checkbox" name="tags" value="commercial" defaultChecked={product.tags?.includes('commercial')} className="w-4 h-4 text-gray-600 bg-white border-slate-300 rounded focus:ring-2 focus:ring-gray-500 cursor-pointer" />
-                    <span className="text-sm font-medium text-slate-700 group-hover:text-gray-900">🏢 Commercial</span>
+                  {/* Classic */}
+                  <label className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200 hover:bg-slate-100 hover:border-slate-400 transition-all cursor-pointer group">
+                    <input type="checkbox" name="tags" value="classic" defaultChecked={product.tags?.includes('classic')} className="w-4 h-4 text-slate-600 bg-white border-slate-300 rounded focus:ring-2 focus:ring-slate-500 cursor-pointer" />
+                    <span className="text-sm font-medium text-slate-700 group-hover:text-slate-900">🏛️ Classic</span>
+                  </label>
+
+                  {/* Best Seller */}
+                  <label className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200 hover:bg-orange-50 hover:border-orange-300 transition-all cursor-pointer group">
+                    <input type="checkbox" name="tags" value="bestseller" defaultChecked={product.tags?.includes('bestseller')} className="w-4 h-4 text-orange-600 bg-white border-slate-300 rounded focus:ring-2 focus:ring-orange-500 cursor-pointer" />
+                    <span className="text-sm font-medium text-slate-700 group-hover:text-orange-700">🏆 Best Seller</span>
+                  </label>
+
+                  {/* Limited Edition */}
+                  <label className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200 hover:bg-red-50 hover:border-red-300 transition-all cursor-pointer group">
+                    <input type="checkbox" name="tags" value="limited" defaultChecked={product.tags?.includes('limited')} className="w-4 h-4 text-red-600 bg-white border-slate-300 rounded focus:ring-2 focus:ring-red-500 cursor-pointer" />
+                    <span className="text-sm font-medium text-slate-700 group-hover:text-red-700">⏰ Limited Edition</span>
                   </label>
                 </div>
 
                 <p className="text-xs text-slate-500 mt-4">
-                  Select room types where this product can be used
+                  Selected tags will appear as badges on the product card for better visibility
                 </p>
+
+                {/* Applications Section */}
+                <div className="mt-8 pt-8 border-t border-slate-200">
+                  <label className="block text-sm font-medium text-slate-700 mb-4">
+                    Applications (Room Types)
+                  </label>
+
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    {/* Kitchen */}
+                    <label className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200 hover:bg-amber-50 hover:border-amber-300 transition-all cursor-pointer group">
+                      <input type="checkbox" name="tags" value="kitchen" defaultChecked={product.tags?.includes('kitchen')} className="w-4 h-4 text-amber-600 bg-white border-slate-300 rounded focus:ring-2 focus:ring-amber-500 cursor-pointer" />
+                      <span className="text-sm font-medium text-slate-700 group-hover:text-amber-700">🍳 Kitchen</span>
+                    </label>
+
+                    {/* Bathroom */}
+                    <label className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200 hover:bg-cyan-50 hover:border-cyan-300 transition-all cursor-pointer group">
+                      <input type="checkbox" name="tags" value="bathroom" defaultChecked={product.tags?.includes('bathroom')} className="w-4 h-4 text-cyan-600 bg-white border-slate-300 rounded focus:ring-2 focus:ring-cyan-500 cursor-pointer" />
+                      <span className="text-sm font-medium text-slate-700 group-hover:text-cyan-700">🚿 Bathroom</span>
+                    </label>
+
+                    {/* Living Room */}
+                    <label className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200 hover:bg-indigo-50 hover:border-indigo-300 transition-all cursor-pointer group">
+                      <input type="checkbox" name="tags" value="living-room" defaultChecked={product.tags?.includes('living-room')} className="w-4 h-4 text-indigo-600 bg-white border-slate-300 rounded focus:ring-2 focus:ring-indigo-500 cursor-pointer" />
+                      <span className="text-sm font-medium text-slate-700 group-hover:text-indigo-700">🛋️ Living Room</span>
+                    </label>
+
+                    {/* Bedroom */}
+                    <label className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200 hover:bg-violet-50 hover:border-violet-300 transition-all cursor-pointer group">
+                      <input type="checkbox" name="tags" value="bedroom" defaultChecked={product.tags?.includes('bedroom')} className="w-4 h-4 text-violet-600 bg-white border-slate-300 rounded focus:ring-2 focus:ring-violet-500 cursor-pointer" />
+                      <span className="text-sm font-medium text-slate-700 group-hover:text-violet-700">🛏️ Bedroom</span>
+                    </label>
+
+                    {/* Outdoor */}
+                    <label className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200 hover:bg-emerald-50 hover:border-emerald-300 transition-all cursor-pointer group">
+                      <input type="checkbox" name="tags" value="outdoor" defaultChecked={product.tags?.includes('outdoor')} className="w-4 h-4 text-emerald-600 bg-white border-slate-300 rounded focus:ring-2 focus:ring-emerald-500 cursor-pointer" />
+                      <span className="text-sm font-medium text-slate-700 group-hover:text-emerald-700">🌳 Outdoor</span>
+                    </label>
+
+                    {/* Commercial */}
+                    <label className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200 hover:bg-gray-50 hover:border-gray-400 transition-all cursor-pointer group">
+                      <input type="checkbox" name="tags" value="commercial" defaultChecked={product.tags?.includes('commercial')} className="w-4 h-4 text-gray-600 bg-white border-slate-300 rounded focus:ring-2 focus:ring-gray-500 cursor-pointer" />
+                      <span className="text-sm font-medium text-slate-700 group-hover:text-gray-900">🏢 Commercial</span>
+                    </label>
+                  </div>
+
+                  <p className="text-xs text-slate-500 mt-4">
+                    Select room types where this product can be used
+                  </p>
+                </div>
               </div>
-            </div>
-          </AccordionContent>
-        </AccordionItem>
+            </AccordionContent>
+          </AccordionItem>
 
-      </Accordion>
+        </Accordion>
 
-      {/* Submit Button */}
-      <div className="flex gap-4 pt-8">
-        <Link
-          href="/admin/products"
-          className="flex-1 py-4 px-6 bg-white border-2 border-slate-200 text-slate-700 rounded-2xl hover:bg-slate-50 transition-all duration-200 font-medium text-center"
-        >
-          Cancel
-        </Link>
-        <button
-          type="submit"
-          disabled={saving}
-          className="flex-1 py-4 px-6 bg-slate-900 text-white rounded-2xl hover:bg-slate-800 transition-all duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-        >
-          {saving ? (
-            <>
-              <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-              </svg>
-              <span>Updating...</span>
-            </>
-          ) : (
-            <>
-              <FiCheck className="w-5 h-5" />
-              <span>Update Product</span>
-            </>
-          )}
-        </button>
-      </div>
-    </form>
+        {/* Submit Button */}
+        <div className="flex gap-4 pt-8">
+          <Link
+            href="/admin/products"
+            className="flex-1 py-4 px-6 bg-white border-2 border-slate-200 text-slate-700 rounded-2xl hover:bg-slate-50 transition-all duration-200 font-medium text-center"
+          >
+            Cancel
+          </Link>
+          <button
+            type="submit"
+            disabled={saving}
+            className="flex-1 py-4 px-6 bg-slate-900 text-white rounded-2xl hover:bg-slate-800 transition-all duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          >
+            {saving ? (
+              <>
+                <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                </svg>
+                <span>Updating...</span>
+              </>
+            ) : (
+              <>
+                <FiCheck className="w-5 h-5" />
+                <span>Update Product</span>
+              </>
+            )}
+          </button>
+        </div>
+      </form>
     </div >
   );
 }
