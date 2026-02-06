@@ -8,7 +8,7 @@ export default function AdminCategoriesPage() {
             {/* Header */}
             <div>
                 <h1 className="text-3xl font-bold text-slate-900">Categories</h1>
-                <p className="text-slate-600 mt-1">Manage your product categories and subcategories</p>
+                <p className="text-slate-600 mt-1">Manage your product categories (3 levels: Category → Subcategory → Sub-subcategory)</p>
             </div>
 
             {/* Category Management Component */}

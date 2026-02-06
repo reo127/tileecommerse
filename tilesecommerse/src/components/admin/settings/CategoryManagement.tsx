@@ -80,6 +80,23 @@ export default function CategoryManagement() {
     toggle(id);
   };
 
+  // Helper function to get parent category name
+  const getParentName = (parentId: string | null): string => {
+    if (!parentId) return "";
+    const findCategory = (cats: Category[]): Category | undefined => {
+      for (const cat of cats) {
+        if (cat._id === parentId) return cat;
+        if (cat.children) {
+          const found = findCategory(cat.children);
+          if (found) return found;
+        }
+      }
+      return undefined;
+    };
+    const parent = findCategory(categories);
+    return parent?.name || "";
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -95,7 +112,7 @@ export default function CategoryManagement() {
         <div>
           <h2 className="text-xl font-bold text-slate-900">Category Management</h2>
           <p className="text-sm text-slate-600 mt-1">
-            Manage your product categories and subcategories ({categories.length} total)
+            Manage your product categories (3 levels: Category → Subcategory → Sub-subcategory)
           </p>
         </div>
         <button
@@ -135,6 +152,7 @@ export default function CategoryManagement() {
               onAddChild={handleOpenModal}
               isDeleting={isDeleting}
               isToggling={isToggling}
+              expandedCategories={expandedCategories}
             />
           ))}
         </div>
@@ -146,7 +164,11 @@ export default function CategoryManagement() {
           <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
             <div className="sticky top-0 bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between">
               <h2 className="text-xl font-bold text-slate-900">
-                {editingCategory ? "Edit Category" : formData.parent ? "Add Subcategory" : "Add Category"}
+                {editingCategory
+                  ? "Edit Category"
+                  : formData.parent
+                    ? "Add Subcategory"
+                    : "Add Category"}
               </h2>
               <button
                 onClick={handleCloseModal}
@@ -160,7 +182,7 @@ export default function CategoryManagement() {
               {formData.parent && (
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                   <p className="text-sm text-blue-800">
-                    <span className="font-medium">Adding subcategory to:</span> {categories.find(c => c._id === formData.parent)?.name}
+                    <span className="font-medium">Adding to:</span> {getParentName(formData.parent)}
                   </p>
                 </div>
               )}
@@ -175,17 +197,20 @@ export default function CategoryManagement() {
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-                  placeholder={formData.parent ? "e.g., Living Room Tiles" : "e.g., Floor Tiles"}
+                  placeholder={formData.parent ? "e.g., Ceramic Tiles" : "e.g., Floor Tiles"}
                 />
                 <p className="text-xs text-slate-500 mt-1">
-                  {formData.parent ? "Enter the name of the subcategory" : "Enter the name of the main category"}
+                  {formData.parent ? "Enter the subcategory name" : "Enter the main category name"}
                 </p>
               </div>
 
               {!formData.parent && !editingCategory && (
                 <div className="bg-slate-50 border border-slate-200 rounded-lg p-4">
                   <p className="text-sm text-slate-700 mb-2">
-                    💡 <span className="font-medium">Tip:</span> After creating a main category, you can add subcategories to it by clicking the <HiPlus className="inline w-4 h-4" /> icon next to the category name.
+                    💡 <span className="font-medium">Tip:</span> After creating a category, you can add subcategories and sub-subcategories by clicking the <HiPlus className="inline w-4 h-4" /> icon.
+                  </p>
+                  <p className="text-xs text-slate-500 mt-2">
+                    Example: Floor Tiles → Living Room Tiles → Ceramic Living Room Tiles
                   </p>
                 </div>
               )}
@@ -228,7 +253,7 @@ export default function CategoryManagement() {
                   disabled={isCreating || isUpdating}
                   className="flex-1 py-2 px-4 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors font-medium disabled:opacity-50"
                 >
-                  {isCreating || isUpdating ? "Saving..." : editingCategory ? "Update Category" : formData.parent ? "Add Subcategory" : "Add Category"}
+                  {isCreating || isUpdating ? "Saving..." : editingCategory ? "Update" : formData.parent ? "Add Subcategory" : "Add Category"}
                 </button>
               </div>
             </form>
@@ -239,7 +264,7 @@ export default function CategoryManagement() {
   );
 }
 
-// Category Tree Item Component
+// Category Tree Item Component (Recursive for 3 levels)
 function CategoryTreeItem({
   category,
   isExpanded,
@@ -250,6 +275,8 @@ function CategoryTreeItem({
   onAddChild,
   isDeleting,
   isToggling,
+  expandedCategories,
+  depth = 0,
 }: {
   category: Category;
   isExpanded: boolean;
@@ -260,12 +287,34 @@ function CategoryTreeItem({
   onAddChild: (category: undefined, parentId: string) => void;
   isDeleting: boolean;
   isToggling: boolean;
+  expandedCategories: Set<string>;
+  depth?: number;
 }) {
   const hasChildren = category.children && category.children.length > 0;
+  const canAddChildren = category.level < 2; // Can add children if level is 0 or 1
+
+  // Level labels
+  const getLevelLabel = (level: number) => {
+    switch (level) {
+      case 0: return "Category";
+      case 1: return "Subcategory";
+      case 2: return "Sub-subcategory";
+      default: return "";
+    }
+  };
+
+  const getLevelColor = (level: number) => {
+    switch (level) {
+      case 0: return "bg-purple-100 text-purple-700";
+      case 1: return "bg-blue-100 text-blue-700";
+      case 2: return "bg-green-100 text-green-700";
+      default: return "bg-gray-100 text-gray-700";
+    }
+  };
 
   return (
     <div>
-      <div className="flex items-center gap-3 p-4 hover:bg-white transition-colors">
+      <div className={`flex items-center gap-3 p-4 hover:bg-white transition-colors ${depth > 0 ? 'pl-' + (4 + depth * 8) : ''}`}>
         {/* Expand/Collapse Button */}
         <button
           onClick={() => onToggleExpand(category._id)}
@@ -280,16 +329,14 @@ function CategoryTreeItem({
 
         {/* Category Info */}
         <div className="flex-1">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <span className="font-medium text-slate-900">{category.name}</span>
             <span className={`px-2 py-0.5 text-xs rounded-full ${category.isActive ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-700"}`}>
               {category.isActive ? "Active" : "Inactive"}
             </span>
-            {category.level === 1 && (
-              <span className="px-2 py-0.5 text-xs bg-blue-100 text-blue-700 rounded-full">
-                Subcategory
-              </span>
-            )}
+            <span className={`px-2 py-0.5 text-xs rounded-full ${getLevelColor(category.level)}`}>
+              {getLevelLabel(category.level)}
+            </span>
           </div>
           {category.description && (
             <p className="text-sm text-slate-600 mt-1">{category.description}</p>
@@ -298,11 +345,11 @@ function CategoryTreeItem({
 
         {/* Actions */}
         <div className="flex items-center gap-1">
-          {category.level === 0 && (
+          {canAddChildren && (
             <button
               onClick={() => onAddChild(undefined, category._id)}
               className="p-2 text-slate-600 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-colors"
-              title="Add subcategory"
+              title={`Add ${category.level === 0 ? 'subcategory' : 'sub-subcategory'}`}
             >
               <HiPlus className="w-4 h-4" />
             </button>
@@ -333,14 +380,14 @@ function CategoryTreeItem({
         </div>
       </div>
 
-      {/* Children */}
+      {/* Children (Recursive) */}
       {hasChildren && isExpanded && (
-        <div className="pl-8 border-l-2 border-slate-300 ml-6">
+        <div className={`border-l-2 border-slate-300 ${depth === 0 ? 'ml-6' : 'ml-4'}`}>
           {category.children!.map((child: any) => (
             <CategoryTreeItem
               key={child._id}
               category={child}
-              isExpanded={false}
+              isExpanded={expandedCategories.has(child._id)}
               onToggleExpand={onToggleExpand}
               onEdit={onEdit}
               onDelete={onDelete}
@@ -348,6 +395,8 @@ function CategoryTreeItem({
               onAddChild={onAddChild}
               isDeleting={isDeleting}
               isToggling={isToggling}
+              expandedCategories={expandedCategories}
+              depth={depth + 1}
             />
           ))}
         </div>
