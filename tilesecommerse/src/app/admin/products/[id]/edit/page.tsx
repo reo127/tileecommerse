@@ -43,7 +43,6 @@ const MATERIAL_TYPES = [
   'Solar Glass', 'Silicon (Solar Grade)', 'Rubber'
 ];
 
-
 interface EditProductPageProps {
   params: Promise<{ id: string }>;
 }
@@ -59,6 +58,7 @@ const fileToBase64 = (file: File): Promise<string> => {
 
 export default function EditProductPage({ params }: EditProductPageProps) {
   const router = useRouter();
+  const [productId, setProductId] = useState<string>(''); // FIX: Added missing state
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -127,6 +127,21 @@ export default function EditProductPage({ params }: EditProductPageProps) {
         // Set spec count based on existing specs
         if (result.product.specifications && result.product.specifications.length > 0) {
           setSpecCount(Math.max(2, result.product.specifications.length));
+        }
+
+        // FIX: Load existing variants
+        if (result.product.hasVariants && result.product.variants && result.product.variants.length > 0) {
+          setHasVariants(true);
+          const loadedVariants = result.product.variants.map((v: any, index: number) => ({
+            id: `variant-${index}`,
+            color: v.color || '',
+            size: v.size || '',
+            productId: v.productId || '',
+            finish: v.finish || '',
+            price: v.price?.toString() || '',
+            stock: v.stock?.toString() || ''
+          }));
+          setVariants(loadedVariants);
         }
       } else {
         setError(result.message || 'Failed to fetch product');
@@ -234,13 +249,6 @@ export default function EditProductPage({ params }: EditProductPageProps) {
         }
       }
 
-      // Collect productId and size
-      const productId = formData.get('productId') as string;
-      const size = formData.get('size') as string;
-
-      // Collect room types
-      const roomType = formData.getAll('roomType') as string[];
-
       // Collect tags
       const tags = formData.getAll('tags') as string[];
 
@@ -260,24 +268,20 @@ export default function EditProductPage({ params }: EditProductPageProps) {
         material: formData.get('material') as string || undefined,
         finish: formData.get('finish') as string || undefined,
         color: formData.get('color') as string || undefined,
-        productId: productId || undefined,
-        size: size || undefined,
+        productId: formData.get('productId') as string || undefined,
+        size: formData.get('size') as string || undefined,
         thickness: formData.get('thickness') ? Number(formData.get('thickness')) : undefined,
-        coverage: formData.get('coverage') ? Number(formData.get('coverage')) : undefined,
-        tilesPerBox: formData.get('tilesPerBox') ? Number(formData.get('tilesPerBox')) : undefined,
-        weight: formData.get('weight') ? Number(formData.get('weight')) : undefined,
-        waterAbsorption: formData.get('waterAbsorption') as string || undefined,
-        slipResistance: formData.get('slipResistance') as string || undefined,
       };
-
-      // Add roomType if selected
-      if (roomType.length > 0) {
-        requestBody.roomType = JSON.stringify(roomType);
-      }
 
       // Add tags if selected
       if (tags.length > 0) {
         requestBody.tags = JSON.stringify(tags);
+      }
+
+      // FIX: Handle variants properly
+      requestBody.hasVariants = hasVariants;
+      if (hasVariants && variants.length > 0) {
+        requestBody.variants = JSON.stringify(variants);
       }
 
       // Handle new images if uploaded
@@ -405,8 +409,8 @@ export default function EditProductPage({ params }: EditProductPageProps) {
           </div>
         )}
 
-        {/* Form Content - Accordion Sections */}
-        <Accordion type="multiple" defaultValue={["basic", "images", "highlights", "specs", "roomtype", "tags"]} className="space-y-4">
+        {/* FIX: Changed defaultValue to match Create form - only "basic" open */}
+        <Accordion type="multiple" defaultValue={["basic"]} className="space-y-4">
 
           {/* 1. Basic Information */}
           <AccordionItem value="basic" className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
@@ -662,6 +666,12 @@ export default function EditProductPage({ params }: EditProductPageProps) {
             </AccordionTrigger>
             <AccordionContent className="px-8 pb-8">
               <div className="grid md:grid-cols-2 gap-6 pt-4">
+                {/* FIX: Product ID moved to top like Create form */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Product ID</label>
+                  <input name="productId" defaultValue={product.productId} placeholder="SKU-001" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
+                </div>
+
                 {/* Material */}
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">Material</label>
@@ -694,12 +704,6 @@ export default function EditProductPage({ params }: EditProductPageProps) {
                   <input name="color" defaultValue={product.color} placeholder="White, Beige, Gray..." className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
                 </div>
 
-                {/* Product ID */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">Product ID</label>
-                  <input name="productId" defaultValue={product.productId} placeholder="SKU-001" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
-                </div>
-
                 {/* Size */}
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">Size</label>
@@ -710,43 +714,6 @@ export default function EditProductPage({ params }: EditProductPageProps) {
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">Thickness (mm)</label>
                   <input name="thickness" type="number" defaultValue={product.thickness} placeholder="8" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
-                </div>
-
-                {/* Coverage */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">Coverage (sq.ft per box)</label>
-                  <input name="coverage" type="number" step="0.01" defaultValue={product.coverage} placeholder="32.5" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
-                </div>
-
-                {/* Tiles Per Box */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">Tiles Per Box</label>
-                  <input name="tilesPerBox" type="number" defaultValue={product.tilesPerBox} placeholder="4" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
-                </div>
-
-                {/* Weight */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">Weight (kg per box)</label>
-                  <input name="weight" type="number" step="0.01" defaultValue={product.weight} placeholder="25.5" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
-                </div>
-
-                {/* Water Absorption */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">Water Absorption</label>
-                  <input name="waterAbsorption" defaultValue={product.waterAbsorption} placeholder="< 0.5%" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
-                </div>
-
-                {/* Slip Resistance */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">Slip Resistance</label>
-                  <select name="slipResistance" defaultValue={product.slipResistance} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all">
-                    <option value="">Select slip resistance</option>
-                    <option value="R9">R9</option>
-                    <option value="R10">R10</option>
-                    <option value="R11">R11</option>
-                    <option value="R12">R12</option>
-                    <option value="R13">R13</option>
-                  </select>
                 </div>
 
                 {/* Price */}
@@ -814,6 +781,18 @@ export default function EditProductPage({ params }: EditProductPageProps) {
                     </button>
                   </div>
                 </div>
+
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+
+          {/* FIX: 5. Product Variants - moved to separate accordion like Create form */}
+          <AccordionItem value="variants" className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
+            <AccordionTrigger className="px-8 py-6 hover:no-underline hover:bg-slate-50 transition-colors">
+              <h2 className="text-xl font-medium text-slate-900">5. Product Variants (Optional)</h2>
+            </AccordionTrigger>
+            <AccordionContent className="px-8 pb-8">
+              <div className="space-y-6 pt-4">
                 {/* Enable Variants Toggle */}
                 <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
                   <div>
@@ -1051,6 +1030,6 @@ export default function EditProductPage({ params }: EditProductPageProps) {
           </button>
         </div>
       </form>
-    </div >
+    </div>
   );
 }
