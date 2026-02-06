@@ -157,6 +157,11 @@ exports.createProduct = asyncErrorHandler(async (req, res, next) => {
 // Update Product ---ADMIN
 exports.updateProduct = asyncErrorHandler(async (req, res, next) => {
 
+    console.log('=== UPDATE PRODUCT DEBUG ===');
+    console.log('Product ID:', req.params.id);
+    console.log('Request Body Keys:', Object.keys(req.body));
+    console.log('Request Body:', JSON.stringify(req.body, null, 2));
+
     let product = await Product.findById(req.params.id);
 
     if (!product) {
@@ -193,6 +198,22 @@ exports.updateProduct = asyncErrorHandler(async (req, res, next) => {
             }
             req.body.images = imagesLink;
         }
+    }
+
+    // FIX: Handle featured image index update (when user changes featured image without uploading new ones)
+    if (req.body.featuredImageIndex !== undefined && product.images && product.images.length > 0) {
+        const featuredIndex = parseInt(req.body.featuredImageIndex);
+        if (featuredIndex >= 0 && featuredIndex < product.images.length) {
+            // Update all images to set only the selected one as featured
+            product.images.forEach((img, index) => {
+                img.isFeatured = index === featuredIndex;
+            });
+            // Mark the images field as modified so Mongoose saves it
+            product.markModified('images');
+            await product.save();
+        }
+        // Remove featuredImageIndex from req.body so it doesn't get saved as a field
+        delete req.body.featuredImageIndex;
     }
 
     // Handle brand logo update
@@ -259,11 +280,19 @@ exports.updateProduct = asyncErrorHandler(async (req, res, next) => {
 
     req.body.user = req.user.id;
 
+    console.log('=== ABOUT TO UPDATE ===');
+    console.log('Update Data:', JSON.stringify(req.body, null, 2));
+
     product = await Product.findByIdAndUpdate(req.params.id, req.body, {
         new: true,
         runValidators: true,
         useFindAndModify: false,
     });
+
+    console.log('=== UPDATED PRODUCT ===');
+    console.log('Updated Product Name:', product.name);
+    console.log('Updated Product Description:', product.description?.substring(0, 100));
+    console.log('Updated Product Price:', product.price);
 
     res.status(201).json({
         success: true,
