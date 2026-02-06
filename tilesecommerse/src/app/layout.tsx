@@ -14,6 +14,11 @@ export const metadata: Metadata = {
   title: "SLN TILES SHOWROOM - Premium Tiles Showroom Bengaluru",
   description: "Premium quality tiles showroom in Bengaluru. Wide range of ceramic, vitrified, marble finish tiles for home and commercial spaces.",
   keywords: "tiles, ceramic tiles, vitrified tiles, marble tiles, bengaluru, showroom",
+  icons: {
+    icon: '/favicon.png',
+    shortcut: '/favicon.png',
+    apple: '/favicon.png',
+  },
 };
 
 const isDevelopment = process.env.NODE_ENV === 'development';
