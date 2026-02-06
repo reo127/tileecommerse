@@ -36,7 +36,7 @@ const categorySchema = new mongoose.Schema({
         type: Number,
         default: 0,
         min: [0, "Level cannot be negative"],
-        max: [1, "Maximum 2 levels allowed (0 for parent, 1 for child)"]
+        max: [2, "Maximum 3 levels allowed (0 for category, 1 for subcategory, 2 for sub-subcategory)"]
     },
     order: {
         type: Number,
@@ -92,15 +92,15 @@ categorySchema.pre('save', async function (next) {
             return next(new Error('Parent category not found'));
         }
 
-        // Check if parent is already a child (prevent 3rd level)
-        if (parent.parent) {
-            return next(new Error('Cannot create more than 2 levels of categories'));
+        // Check if parent is already at level 2 (prevent 4th level)
+        if (parent.level >= 2) {
+            return next(new Error('Cannot create more than 3 levels of categories'));
         }
 
-        // Set level to 1 (child)
-        this.level = 1;
+        // Set level based on parent's level
+        this.level = parent.level + 1;
     } else {
-        // Set level to 0 (parent)
+        // Set level to 0 (parent category)
         this.level = 0;
     }
 
@@ -118,20 +118,33 @@ categorySchema.methods.hasChildren = async function () {
     return count > 0;
 };
 
-// Static method to get category tree
+// Static method to get category tree (now supports 3 levels)
 categorySchema.statics.getCategoryTree = async function (includeInactive = false) {
     const query = includeInactive ? {} : { isActive: true };
 
-    // Get all parent categories
+    // Get all parent categories (level 0)
     const parents = await this.find({ ...query, parent: null }).sort({ order: 1 });
 
-    // Get all children for each parent
+    // Get all children for each parent (recursively for 3 levels)
     const tree = await Promise.all(
         parents.map(async (parent) => {
-            const children = await this.find({ ...query, parent: parent._id }).sort({ order: 1 });
+            // Get level 1 children (subcategories)
+            const level1Children = await this.find({ ...query, parent: parent._id }).sort({ order: 1 });
+
+            // For each level 1 child, get level 2 children (sub-subcategories)
+            const level1WithChildren = await Promise.all(
+                level1Children.map(async (level1Child) => {
+                    const level2Children = await this.find({ ...query, parent: level1Child._id }).sort({ order: 1 });
+                    return {
+                        ...level1Child.toObject(),
+                        children: level2Children
+                    };
+                })
+            );
+
             return {
                 ...parent.toObject(),
-                children
+                children: level1WithChildren
             };
         })
     );
