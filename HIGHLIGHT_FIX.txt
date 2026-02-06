@@ -1,0 +1,11 @@
+// SimpleProductForm.tsx - Line 194-195 Changes
+
+// FIND THIS (lines 194-195):
+const highlight4 = formData.get('highlight4') as string;
+const highlights = [highlight1, highlight2, highlight3, highlight4].filter(h => h);
+
+// REPLACE WITH THIS:
+const highlight4 = formData.get('highlight4') as string;
+const highlight5 = formData.get('highlight5') as string;
+const highlight6 = formData.get('highlight6') as string;
+const highlights = [highlight1, highlight2, highlight3, highlight4, highlight5, highlight6].filter(h => h);
