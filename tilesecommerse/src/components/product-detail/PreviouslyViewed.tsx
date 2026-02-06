@@ -106,8 +106,17 @@ export const PreviouslyViewed = ({ currentProductId }: PreviouslyViewedProps) =>
               </div>
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xl font-bold text-orange-500">₹{product.price}</p>
-                  <p className="text-xs text-gray-500">per sq.ft</p>
+                  {product.price > 0 ? (
+                    <>
+                      <p className="text-xl font-bold text-orange-500">₹{product.price}</p>
+                      <p className="text-xs text-gray-500">per sq.ft</p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-lg font-bold text-blue-600">Get Price</p>
+                      <p className="text-xs text-gray-500">Contact us</p>
+                    </>
+                  )}
                 </div>
                 <Link href={`/${product.category}/${product.id}`}>
                   <button className="px-4 py-2 bg-slate-900 text-white rounded-lg hover:bg-orange-500 transition-colors text-sm font-medium">

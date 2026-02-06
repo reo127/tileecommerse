@@ -7,8 +7,7 @@ import {
   ProductSpecifications,
   ProductDetailsTabs,
   FAQSection,
-  PreviouslyViewed,
-  ShopByReels,
+  PreviouslyViewed
 } from "@/components/product-detail";
 
 interface ProductDetailClientProps {
@@ -32,14 +31,14 @@ export const ProductDetailClient = ({ product, productImages }: ProductDetailCli
           <ProductInfo product={product} />
         </div>
 
-        {/* Product Details Tabs */}
-        <div className="mb-8">
-          <ProductDetailsTabs product={product} />
-        </div>
-
         {/* Product Specifications */}
         <div className="mb-8">
           <ProductSpecifications product={product} />
+        </div>
+
+        {/* Product Details Tabs */}
+        <div className="mb-8">
+          <ProductDetailsTabs product={product} />
         </div>
 
         {/* FAQ Section */}
@@ -50,11 +49,6 @@ export const ProductDetailClient = ({ product, productImages }: ProductDetailCli
         {/* Previously Viewed */}
         <div className="mb-8">
           <PreviouslyViewed currentProductId={product.id} />
-        </div>
-
-        {/* Shop by Reels */}
-        <div className="mb-8">
-          <ShopByReels />
         </div>
       </div>
     </div>
