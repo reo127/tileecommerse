@@ -22,6 +22,7 @@ import { FiTrash2, FiHelpCircle, FiChevronUp, FiChevronDown } from "react-icons/
 import { VariantSizes, type VariantSizesRef } from "./VariantSizes";
 import { VariantImages, type VariantImagesRef } from "./VariantImages";
 import type { VariantFormData, VariantSubmitData } from "@/types/admin";
+import { colorMapping } from "@/constants/colors";
 
 export type VariantFormRef = {
   getData: () => VariantSubmitData;
@@ -40,7 +41,7 @@ interface VariantFormProps {
 
 export const VariantForm = forwardRef<VariantFormRef, VariantFormProps>(
   ({ index, onRemove, canRemove = true, initialData, onMoveUp, onMoveDown }, ref) => {
-    const colorRef = useRef<HTMLInputElement>(null);
+    const colorRef = useRef<HTMLSelectElement>(null);
     const stripeIdRef = useRef<HTMLInputElement>(null);
     const sizesRef = useRef<VariantSizesRef>(null!);
     const imagesRef = useRef<VariantImagesRef>(null!);
@@ -152,12 +153,19 @@ export const VariantForm = forwardRef<VariantFormRef, VariantFormProps>(
               <Label htmlFor={`color-${index}`} className="text-sm font-medium text-color-secondary">
                 Color
               </Label>
-              <Input
+              <select
                 id={`color-${index}`}
                 ref={colorRef}
-                placeholder="e.g., Black, White, Red"
-                className="h-10"
-              />
+                defaultValue={initialData?.color || ""}
+                className="h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <option value="" disabled>Select a color</option>
+                {Object.keys(colorMapping).map((color) => (
+                  <option key={color} value={color}>
+                    {color.charAt(0).toUpperCase() + color.slice(1)}
+                  </option>
+                ))}
+              </select>
             </div>
             <div className="space-y-2">
               <div className="flex items-center gap-1">
