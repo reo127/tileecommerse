@@ -95,6 +95,11 @@ export function SimpleProductForm() {
 
   const { categories, isLoading: categoriesLoading } = useCategories();
 
+  // Get selected category object for subcategory dropdown
+  const selectedCategoryObj = categories.find((cat: any) => cat._id === selectedCategory);
+
+
+
   const [hasVariants, setHasVariants] = useState(false);
   const [variants, setVariants] = useState<Variant[]>([]);
 
