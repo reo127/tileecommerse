@@ -7,12 +7,12 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4
 
 // Application tags we want to show
 const applicationTags = [
-  { tag: 'kitchen', title: 'Kitchen Tiles', description: 'Heat-resistant & easy to clean', icon: '🍳' },
-  { tag: 'bathroom', title: 'Bathroom Tiles', description: 'Water-resistant & elegant designs', icon: '🚿' },
+  { tag: 'kitchen', title: 'Kitchen', description: 'Heat-resistant & easy to clean', icon: '🍳' },
+  { tag: 'bathroom', title: 'Bathroom', description: 'Water-resistant & elegant designs', icon: '🚿' },
   { tag: 'living-room', title: 'Living Room', description: 'Modern & stylish floor tiles', icon: '🛋️' },
-  { tag: 'bedroom', title: 'Bedroom Tiles', description: 'Comfortable & cozy designs', icon: '🛏️' },
-  { tag: 'outdoor', title: 'Outdoor Tiles', description: 'Weather-resistant & durable', icon: '🌳' },
-  { tag: 'commercial', title: 'Commercial Tiles', description: 'Heavy-duty & professional', icon: '🏢' },
+  { tag: 'bedroom', title: 'Bedroom', description: 'Comfortable & cozy designs', icon: '🛏️' },
+  { tag: 'outdoor', title: 'Outdoor', description: 'Weather-resistant & durable', icon: '🌳' },
+  { tag: 'commercial', title: 'Commercial', description: 'Heavy-duty & professional', icon: '🏢' },
 ];
 
 async function getProductsByTag() {

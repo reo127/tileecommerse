@@ -119,13 +119,13 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
         </h1>
         <p className="text-slate-600">{product.shortDescription || product.description}</p>
 
-        {/* Product ID - Display variant ID if available, otherwise main product ID */}
-        {(selectedVariant?.productId || product.productId) && (
-          <div className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 bg-slate-100 border border-slate-300 rounded-lg">
-            <span className="text-xs font-medium text-slate-600">Product ID:</span>
-            <span className="text-sm font-semibold text-slate-900">{selectedVariant?.productId || product.productId}</span>
-          </div>
-        )}
+        {/* Product ID - Display variant ID if available, otherwise main product ID, fallback to _id */}
+        <div className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 bg-slate-100 border border-slate-300 rounded-lg">
+          <span className="text-xs font-medium text-slate-600">Product ID:</span>
+          <span className="text-sm font-semibold text-slate-900">
+            {selectedVariant?.productId || product.productId || product._id}
+          </span>
+        </div>
       </div>
 
       {/* Price with MRP and Discount */}

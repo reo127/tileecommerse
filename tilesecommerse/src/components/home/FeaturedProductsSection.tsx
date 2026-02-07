@@ -97,7 +97,9 @@ const ProductCard = ({ product }: { product: any }) => {
           {product.name}
         </h3>
 
-        <p className="text-xl font-bold text-yellow-600">₹{product.price}</p>
+        <p className="text-xl font-bold text-yellow-600">
+          {product.price === 0 ? 'Get Price' : `₹${product.price}`}
+        </p>
       </div>
     </Link>
   );

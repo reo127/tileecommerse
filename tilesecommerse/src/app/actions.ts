@@ -15,6 +15,7 @@ function transformProduct(backendProduct: any) {
   let variants = [];
   if (backendProduct.hasVariants && backendProduct.variants && backendProduct.variants.length > 0) {
     variants = backendProduct.variants.map((variant: any) => ({
+      productId: variant.productId || backendProduct.productId,
       color: variant.color || backendProduct.color || 'Default',
       size: variant.size || (backendProduct.dimensions ?
         `${backendProduct.dimensions.length}x${backendProduct.dimensions.width} ${backendProduct.dimensions.unit}` :
@@ -30,6 +31,7 @@ function transformProduct(backendProduct: any) {
   } else {
     // Create default variant from product data
     variants = [{
+      productId: backendProduct.productId,
       color: backendProduct.color || 'Default',
       size: backendProduct.dimensions ?
         `${backendProduct.dimensions.length}x${backendProduct.dimensions.width} ${backendProduct.dimensions.unit}` :
@@ -63,6 +65,7 @@ function transformProduct(backendProduct: any) {
     ratings: backendProduct.ratings || 0,
     numOfReviews: backendProduct.numOfReviews || 0,
     // Tiles-specific fields
+    productId: backendProduct.productId,
     material: backendProduct.material,
     finish: backendProduct.finish,
     color: backendProduct.color,

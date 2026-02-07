@@ -942,6 +942,15 @@ export function SimpleProductForm() {
                           <FiPlus className="w-4 h-4 group-hover:scale-110 transition-transform" />
                           <span className="text-sm font-medium">Add Another Variant</span>
                         </button>
+
+                        {/* Helpful Note */}
+                        <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                          <p className="text-xs text-blue-800 leading-relaxed">
+                            <strong>💡 Tip:</strong> Each variant should have at least one unique attribute (Color, Size, or Finish).
+                            For example: If you have different colors, fill in the Color field for each variant.
+                            If you have different sizes, fill in the Size field. You can leave other fields empty if not applicable.
+                          </p>
+                        </div>
                       </div>
                     )}
                   </div>

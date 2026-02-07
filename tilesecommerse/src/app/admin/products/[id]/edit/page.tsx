@@ -299,6 +299,9 @@ export default function EditProductPage({ params }: EditProductPageProps) {
         requestBody.images = images;
       }
 
+      // FIX: Send featured image index to update which image is featured
+      requestBody.featuredImageIndex = featuredImageIndex;
+
       // Handle new logo if uploaded
       const logoFile = formData.get('logo') as File;
       if (logoFile && logoFile.size > 0) {
@@ -308,6 +311,10 @@ export default function EditProductPage({ params }: EditProductPageProps) {
 
       setUploadProgress('Updating product...');
       const token = localStorage.getItem('auth_token');
+
+      console.log('=== FRONTEND: SENDING UPDATE ===');
+      console.log('Product ID:', productId);
+      console.log('Request Body:', requestBody);
 
       const response = await fetch(`${API_BASE_URL}/admin/product/${productId}`, {
         method: 'PUT',
@@ -321,7 +328,14 @@ export default function EditProductPage({ params }: EditProductPageProps) {
 
       const result = await response.json();
 
+      console.log('=== FRONTEND: RECEIVED RESPONSE ===');
+      console.log('Response Status:', response.status);
+      console.log('Response OK:', response.ok);
+      console.log('Result:', result);
+
       if (!response.ok || !result.success) {
+        console.error('=== UPDATE FAILED ===');
+        console.error('Error:', result.message);
         setError(result.message || 'Error updating product');
         setUploadProgress('');
         return;
@@ -873,6 +887,15 @@ export default function EditProductPage({ params }: EditProductPageProps) {
                           <FiPlus className="w-4 h-4 group-hover:scale-110 transition-transform" />
                           <span className="text-sm font-medium">Add Another Variant</span>
                         </button>
+
+                        {/* Helpful Note */}
+                        <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                          <p className="text-xs text-blue-800 leading-relaxed">
+                            <strong>💡 Tip:</strong> Each variant should have at least one unique attribute (Color, Size, or Finish).
+                            For example: If you have different colors, fill in the Color field for each variant.
+                            If you have different sizes, fill in the Size field. You can leave other fields empty if not applicable.
+                          </p>
+                        </div>
                       </div>
                     )}
                   </div>
