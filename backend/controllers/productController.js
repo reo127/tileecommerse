@@ -7,7 +7,8 @@ const cloudinary = require('cloudinary');
 // Get All Products
 exports.getAllProducts = asyncErrorHandler(async (req, res, next) => {
 
-    const resultPerPage = 12;
+    // Use limit from query params, default to 12
+    const resultPerPage = Number(req.query.limit) || 12;
     const productsCount = await Product.countDocuments();
     // console.log(req.query);
 

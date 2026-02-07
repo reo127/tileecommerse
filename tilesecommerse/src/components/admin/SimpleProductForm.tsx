@@ -91,6 +91,7 @@ export function SimpleProductForm() {
   const [isDragging, setIsDragging] = useState(false);
   const [specCount, setSpecCount] = useState(2);
   const [selectedCategory, setSelectedCategory] = useState('');
+  const [selectedSubcategory, setSelectedSubcategory] = useState('');
 
   const { categories, isLoading: categoriesLoading } = useCategories();
 
@@ -445,12 +446,17 @@ export function SimpleProductForm() {
                   />
                 </div>
 
+                {/* Category */}
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">Category</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Category *</label>
                   <select
                     name="category"
+                    required
                     value={selectedCategory}
-                    onChange={(e) => setSelectedCategory(e.target.value)}
+                    onChange={(e) => {
+                      setSelectedCategory(e.target.value);
+                      setSelectedSubcategory(''); // Reset subcategory when category changes
+                    }}
                     className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
                   >
                     <option value="">Select category</option>
@@ -468,23 +474,22 @@ export function SimpleProductForm() {
                   </select>
                 </div>
 
+                {/* Subcategory */}
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">Brand</label>
                   <select
                     name="subcategory"
+                    value={selectedSubcategory}
+                    onChange={(e) => setSelectedSubcategory(e.target.value)}
                     disabled={!selectedCategory}
                     className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <option value="">{selectedCategory ? 'Select subcategory' : 'Select category first'}</option>
-                    {selectedCategory && Array.isArray(categories) && categories.length > 0 && (
-                      categories
-                        .find((cat: any) => cat._id === selectedCategory)
-                        ?.children?.map((subcat: any) => (
-                          <option key={subcat._id} value={subcat._id}>
-                            {subcat.name}
-                          </option>
-                        ))
-                    )}
+                    {selectedCategoryObj?.children?.map((subcat: any) => (
+                      <option key={subcat._id} value={subcat._id}>
+                        {subcat.name}
+                      </option>
+                    ))}
                   </select>
                 </div>
               </div>

@@ -1,5 +1,5 @@
-import { getAllProducts } from "@/app/actions";
-import { pickFirst, searchProducts } from "@/utils";
+import { getProductsWithPagination, getAllProducts } from "@/app/actions";
+import { pickFirst } from "@/utils";
 import { FilterSidebar, ProductGrid, Breadcrumb } from "@/components/search";
 import type { Metadata } from "next";
 
@@ -19,12 +19,18 @@ interface SearchProps {
     minPrice?: string;
     maxPrice?: string;
     roomType?: string | string[];
+    page?: string;
+    limit?: string;
   }>;
 }
 
 const Search = async ({ searchParams }: SearchProps) => {
   const params = await searchParams;
   const q = pickFirst(params, "q");
+
+  // Get pagination params
+  const page = parseInt(params.page || '1');
+  const limit = parseInt(params.limit || '12');
 
   // Get filter params
   const categories = params.category ? (Array.isArray(params.category) ? params.category : [params.category]) : [];
@@ -36,69 +42,19 @@ const Search = async ({ searchParams }: SearchProps) => {
   const minPrice = params.minPrice ? parseFloat(params.minPrice) : undefined;
   const maxPrice = params.maxPrice ? parseFloat(params.maxPrice) : undefined;
 
-  // Fetch products from backend
-  const products = await getAllProducts();
+  // Fetch products with server-side pagination
+  const paginationData = await getProductsWithPagination({
+    page,
+    limit,
+    keyword: q,
+    category: categories[0], // Backend supports single category
+    minPrice,
+    maxPrice
+  });
 
-  // Apply search query filter
-  let filteredProducts = searchProducts(products, q);
-
-  // Apply category filter
-  if (categories.length > 0) {
-    filteredProducts = filteredProducts.filter(p =>
-      categories.includes(p.category)
-    );
-  }
-
-  // Apply material filter
-  if (materials.length > 0) {
-    filteredProducts = filteredProducts.filter(p =>
-      p.material && materials.includes(p.material)
-    );
-  }
-
-  // Apply finish filter
-  if (finishes.length > 0) {
-    filteredProducts = filteredProducts.filter(p =>
-      p.finish && finishes.includes(p.finish)
-    );
-  }
-
-  // Apply color filter
-  if (colors.length > 0) {
-    filteredProducts = filteredProducts.filter(p =>
-      p.color && colors.some(color => p.color?.toLowerCase().includes(color.toLowerCase()))
-    );
-  }
-
-  // Apply size filter (check variants)
-  if (sizes.length > 0) {
-    filteredProducts = filteredProducts.filter(p => {
-      if (!p.variants || p.variants.length === 0) return false;
-      return p.variants.some((variant: any) => {
-        if (variant.size && sizes.includes(variant.size)) return true;
-        if (variant.sizes && Array.isArray(variant.sizes)) {
-          return variant.sizes.some((s: string) => sizes.includes(s));
-        }
-        return false;
-      });
-    });
-  }
-
-  // Apply room type filter
-  if (roomTypes.length > 0) {
-    filteredProducts = filteredProducts.filter(p =>
-      p.roomType && p.roomType.some((rt: string) => roomTypes.includes(rt))
-    );
-  }
-
-  // Apply price range filter
-  if (minPrice !== undefined || maxPrice !== undefined) {
-    filteredProducts = filteredProducts.filter(p => {
-      if (minPrice !== undefined && p.price < minPrice) return false;
-      if (maxPrice !== undefined && p.price > maxPrice) return false;
-      return true;
-    });
-  }
+  // For filters sidebar, we still need all products to show available options
+  // This is a one-time fetch for filter options only
+  const allProducts = await getAllProducts();
 
   const breadcrumbItems = [
     { label: "Products", href: "/search" },
@@ -115,7 +71,7 @@ const Search = async ({ searchParams }: SearchProps) => {
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Filter Sidebar */}
           <FilterSidebar
-            allProducts={products}
+            allProducts={allProducts}
             selectedCategories={categories}
             selectedMaterials={materials}
             selectedFinishes={finishes}
@@ -126,8 +82,14 @@ const Search = async ({ searchParams }: SearchProps) => {
             maxPrice={maxPrice}
           />
 
-          {/* Product Grid */}
-          <ProductGrid products={filteredProducts} searchQuery={q} />
+          {/* Product Grid with Server-Side Pagination */}
+          <ProductGrid
+            products={paginationData.products}
+            totalProducts={paginationData.totalProducts}
+            totalPages={paginationData.totalPages}
+            currentPage={paginationData.currentPage}
+            searchQuery={q}
+          />
         </div>
       </div>
     </div>
