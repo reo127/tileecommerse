@@ -66,6 +66,8 @@ export default function EditProductPage({ params }: EditProductPageProps) {
   const [uploadProgress, setUploadProgress] = useState('');
   const [product, setProduct] = useState<any>(null);
   const [selectedCategory, setSelectedCategory] = useState('');
+  const [selectedSubcategory, setSelectedSubcategory] = useState('');
+  const [selectedSubSubcategory, setSelectedSubSubcategory] = useState('');
   const [imagePreviews, setImagePreviews] = useState<Array<{ file?: File; preview: string; id: string; isExisting?: boolean }>>([]);
   const [featuredImageIndex, setFeaturedImageIndex] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
@@ -84,6 +86,18 @@ export default function EditProductPage({ params }: EditProductPageProps) {
   }>>([]);
 
   const { categories, isLoading: categoriesLoading } = useCategories();
+
+  // Get selected category object
+  const selectedCategoryObj = categories.find((cat: any) => cat._id === selectedCategory);
+
+  // Get subcategories based on selected parent
+  const subcategories = selectedCategoryObj?.children || [];
+
+  // Get selected subcategory object
+  const selectedSubcategoryObj = subcategories.find((sub: any) => sub._id === selectedSubcategory);
+
+  // Get sub-subcategories based on selected subcategory
+  const subSubcategories = selectedSubcategoryObj?.children || [];
 
   useEffect(() => {
     params.then(({ id }) => {
@@ -106,7 +120,46 @@ export default function EditProductPage({ params }: EditProductPageProps) {
 
       if (result.success) {
         setProduct(result.product);
-        setSelectedCategory(result.product.category?._id || result.product.category || '');
+
+        // Initialize category selections based on product's category
+        const productCategoryId = result.product.category?._id || result.product.category || '';
+
+        // Find which level this category belongs to and set all parent levels
+        if (productCategoryId && categories.length > 0) {
+          for (const parent of categories) {
+            // Level 0 - Parent category
+            if (parent._id === productCategoryId) {
+              setSelectedCategory(parent._id);
+              break;
+            }
+
+            // Level 1 - Subcategory
+            if (parent.children) {
+              for (const child of parent.children) {
+                if (child._id === productCategoryId) {
+                  setSelectedCategory(parent._id);
+                  setSelectedSubcategory(child._id);
+                  break;
+                }
+
+                // Level 2 - Sub-subcategory
+                if (child.children) {
+                  for (const subChild of child.children) {
+                    if (subChild._id === productCategoryId) {
+                      setSelectedCategory(parent._id);
+                      setSelectedSubcategory(child._id);
+                      setSelectedSubSubcategory(subChild._id);
+                      break;
+                    }
+                  }
+                }
+              }
+            }
+          }
+        } else {
+          // Fallback if categories not loaded yet
+          setSelectedCategory(productCategoryId);
+        }
 
         // Set existing images
         if (result.product.images && result.product.images.length > 0) {
@@ -252,14 +305,22 @@ export default function EditProductPage({ params }: EditProductPageProps) {
       // Collect tags
       const tags = formData.getAll('tags') as string[];
 
+      // Get form values
+      const categoryValue = formData.get('category') as string;
+      const subcategoryValue = formData.get('subcategory') as string;
+      const subSubcategoryValue = formData.get('subSubcategory') as string;
+
+      // Use the deepest selected category level
+      const finalCategory = subSubcategoryValue || subcategoryValue || categoryValue;
+
       const requestBody: any = {
         name: formData.get('name') as string,
         description: formData.get('description') as string,
         shortDescription: formData.get('shortDescription') as string,
         price: Number(formData.get('price')),
         cuttedPrice: Number(formData.get('cuttedPrice')),
-        category: formData.get('category') as string,
-        subcategory: formData.get('subcategory') as string || undefined,
+        category: finalCategory,
+        subcategory: subcategoryValue || undefined,
         brandname: formData.get('brandname') as string,
         stock: Number(formData.get('stock')),
         warranty: Number(formData.get('warranty')),
@@ -467,12 +528,18 @@ export default function EditProductPage({ params }: EditProductPageProps) {
                   />
                 </div>
 
+                {/* Category (Level 0) */}
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">Category</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Category *</label>
                   <select
                     name="category"
+                    required
                     value={selectedCategory}
-                    onChange={(e) => setSelectedCategory(e.target.value)}
+                    onChange={(e) => {
+                      setSelectedCategory(e.target.value);
+                      setSelectedSubcategory('');
+                      setSelectedSubSubcategory('');
+                    }}
                     className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
                   >
                     <option value="">Select category</option>
@@ -490,6 +557,47 @@ export default function EditProductPage({ params }: EditProductPageProps) {
                   </select>
                 </div>
 
+                {/* Subcategory / Brand (Level 1) */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Brand</label>
+                  <select
+                    name="subcategory"
+                    value={selectedSubcategory}
+                    onChange={(e) => {
+                      setSelectedSubcategory(e.target.value);
+                      setSelectedSubSubcategory('');
+                    }}
+                    disabled={!selectedCategory || subcategories.length === 0}
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <option value="">{!selectedCategory ? 'Select category first' : 'Select brand'}</option>
+                    {subcategories.map((subcat: any) => (
+                      <option key={subcat._id} value={subcat._id}>
+                        {subcat.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Sub-subcategory (Level 2) */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Sub-category</label>
+                  <select
+                    name="subSubcategory"
+                    value={selectedSubSubcategory}
+                    onChange={(e) => setSelectedSubSubcategory(e.target.value)}
+                    disabled={!selectedSubcategory || subSubcategories.length === 0}
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <option value="">{!selectedSubcategory ? 'Select brand first' : (subSubcategories.length > 0 ? 'Select sub-category' : 'No sub-categories')}</option>
+                    {subSubcategories.map((subSubcat: any) => (
+                      <option key={subSubcat._id} value={subSubcat._id}>
+                        {subSubcat.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">Brand Name</label>
                   <input
@@ -498,27 +606,6 @@ export default function EditProductPage({ params }: EditProductPageProps) {
                     placeholder="Premium Tiles Co."
                     className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
                   />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">Sub Category</label>
-                  <select
-                    name="subcategory"
-                    disabled={!selectedCategory}
-                    defaultValue={product.subcategory?._id || product.subcategory}
-                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <option value="">{selectedCategory ? 'Select subcategory' : 'Select category first'}</option>
-                    {selectedCategory && Array.isArray(categories) && categories.length > 0 && (
-                      categories
-                        .find((cat: any) => cat._id === selectedCategory)
-                        ?.children?.map((subcat: any) => (
-                          <option key={subcat._id} value={subcat._id}>
-                            {subcat.name}
-                          </option>
-                        ))
-                    )}
-                  </select>
                 </div>
 
                 <div>

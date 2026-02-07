@@ -48,8 +48,8 @@ export const ValidateCouponSchema = z.object({
   orderAmount: z.number(),
 });
 
-// Category schemas
-export const CategorySchema = z.object({
+// Category schemas - Define base schema first
+const CategoryBaseSchema = z.object({
   _id: z.string(),
   name: z.string(),
   slug: z.string(),
@@ -62,7 +62,11 @@ export const CategorySchema = z.object({
   createdBy: z.string().optional(),
   createdAt: z.string(),
   updatedAt: z.string(),
-  children: z.array(z.any()).optional(),
+});
+
+// Define with recursive children for 3-level hierarchy
+export const CategorySchema: z.ZodType<any> = CategoryBaseSchema.extend({
+  children: z.lazy(() => z.array(CategorySchema)).optional(),
 });
 
 export const CreateCategorySchema = z.object({

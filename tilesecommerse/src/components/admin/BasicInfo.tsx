@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { forwardRef, useImperativeHandle, useState } from "react";
+import { forwardRef, useImperativeHandle, useState, useEffect, Fragment } from "react";
 import { cn } from "@/lib/utils";
 import { useCategories } from "@/hooks/category/queries/useCategories";
 import type { ProductCategory } from "@/schemas";
@@ -42,9 +42,78 @@ export const BasicInfo = forwardRef<BasicInfoRef, BasicInfoProps>(
     const [name, setName] = useState(initialData?.name || "");
     const [description, setDescription] = useState(initialData?.description || "");
     const [price, setPrice] = useState(initialData?.price?.toString() || "");
+
+    // Three-level category selection
+    const [selectedParentId, setSelectedParentId] = useState<string>("");
+    const [selectedSubcategoryId, setSelectedSubcategoryId] = useState<string>("");
+    const [selectedSubSubcategoryId, setSelectedSubSubcategoryId] = useState<string>("");
+
+    // Final category value (the deepest selected level)
     const [category, setCategory] = useState<ProductCategory | "">(initialData?.category || "");
 
     const { categories, isLoading: categoriesLoading } = useCategories();
+
+    // Get subcategories based on selected parent
+    const subcategories = categories.find((c: any) => c._id === selectedParentId)?.children || [];
+
+    // Get sub-subcategories based on selected subcategory
+    const subSubcategories = subcategories.find((c: any) => c._id === selectedSubcategoryId)?.children || [];
+
+    // Initialize selections if editing existing product
+    useEffect(() => {
+      if (initialData?.category && categories.length > 0 && !selectedParentId) {
+        // Find which level the category belongs to
+        for (const parent of categories) {
+          if (parent._id === initialData.category) {
+            setSelectedParentId(parent._id);
+            setCategory(parent._id);
+            return;
+          }
+          if (parent.children) {
+            for (const child of parent.children) {
+              if (child._id === initialData.category) {
+                setSelectedParentId(parent._id);
+                setSelectedSubcategoryId(child._id);
+                setCategory(child._id);
+                return;
+              }
+              if (child.children) {
+                for (const subChild of child.children) {
+                  if (subChild._id === initialData.category) {
+                    setSelectedParentId(parent._id);
+                    setSelectedSubcategoryId(child._id);
+                    setSelectedSubSubcategoryId(subChild._id);
+                    setCategory(subChild._id);
+                    return;
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }, [initialData?.category, categories, selectedParentId]);
+
+    // Handle parent category change
+    const handleParentChange = (value: string) => {
+      setSelectedParentId(value);
+      setSelectedSubcategoryId("");
+      setSelectedSubSubcategoryId("");
+      setCategory(value);
+    };
+
+    // Handle subcategory change
+    const handleSubcategoryChange = (value: string) => {
+      setSelectedSubcategoryId(value);
+      setSelectedSubSubcategoryId("");
+      setCategory(value);
+    };
+
+    // Handle sub-subcategory change
+    const handleSubSubcategoryChange = (value: string) => {
+      setSelectedSubSubcategoryId(value);
+      setCategory(value);
+    };
 
     useImperativeHandle(ref, () => ({
       name,
@@ -56,6 +125,9 @@ export const BasicInfo = forwardRef<BasicInfoRef, BasicInfoProps>(
         setDescription("");
         setPrice("");
         setCategory("");
+        setSelectedParentId("");
+        setSelectedSubcategoryId("");
+        setSelectedSubSubcategoryId("");
       },
     }));
 
@@ -101,82 +173,136 @@ export const BasicInfo = forwardRef<BasicInfoRef, BasicInfoProps>(
           )}
         </div>
 
-        {/* Price and Category Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-          {/* Price */}
-          <div className="space-y-2">
-            <Label htmlFor="price" className="text-sm font-medium text-color-secondary">
-              Price (€) <span className="text-red-400">*</span>
-            </Label>
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-color-tertiary">
-                €
-              </span>
-              <Input
-                id="price"
-                type="number"
-                step="0.01"
-                min="0"
-                value={price}
-                onChange={(e) => setPrice(e.target.value)}
-                placeholder="0.00"
-                className={cn(
-                  "h-11 pl-8",
-                  errors?.price && "border-red-500 focus-visible:ring-red-500"
-                )}
-              />
-            </div>
-            {errors?.price && (
-              <p className="text-sm text-red-400 font-medium">{errors.price[0]}</p>
-            )}
+        {/* Price */}
+        <div className="space-y-2">
+          <Label htmlFor="price" className="text-sm font-medium text-color-secondary">
+            Price (€) <span className="text-red-400">*</span>
+          </Label>
+          <div className="relative">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-color-tertiary">
+              €
+            </span>
+            <Input
+              id="price"
+              type="number"
+              step="0.01"
+              min="0"
+              value={price}
+              onChange={(e) => setPrice(e.target.value)}
+              placeholder="0.00"
+              className={cn(
+                "h-11 pl-8",
+                errors?.price && "border-red-500 focus-visible:ring-red-500"
+              )}
+            />
           </div>
+          {errors?.price && (
+            <p className="text-sm text-red-400 font-medium">{errors.price[0]}</p>
+          )}
+        </div>
 
-          {/* Category */}
+        {/* Three-Level Category Selection */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+          {/* Level 0: Parent Category */}
           <div className="space-y-2">
-            <Label htmlFor="category" className="text-sm font-medium text-color-secondary">
+            <Label htmlFor="parent-category" className="text-sm font-medium text-color-secondary">
               Category <span className="text-red-400">*</span>
             </Label>
-            <Select value={category} onValueChange={(v) => setCategory(v as ProductCategory)}>
+            <Select value={selectedParentId} onValueChange={handleParentChange}>
               <SelectTrigger
-                id="category"
+                id="parent-category"
                 className={cn(
                   "h-11",
                   errors?.category && "border-red-500 focus-visible:ring-red-500"
                 )}
               >
-                <SelectValue placeholder="Select a category" />
+                <SelectValue placeholder="Select category" />
               </SelectTrigger>
               <SelectContent>
                 {categoriesLoading ? (
                   <SelectItem value="" disabled>
-                    Loading categories...
+                    Loading...
                   </SelectItem>
                 ) : Array.isArray(categories) && categories.length > 0 ? (
                   categories.map((parent: any) => (
-                    <SelectGroup key={parent._id}>
-                      <SelectLabel>{parent.name}</SelectLabel>
-                      <SelectItem value={parent._id}>
-                        {parent.name}
-                      </SelectItem>
-                      {parent.children && parent.children.length > 0 && (
-                        parent.children.map((child: any) => (
-                          <SelectItem key={child._id} value={child._id} className="pl-6">
-                            {child.name}
-                          </SelectItem>
-                        ))
-                      )}
-                    </SelectGroup>
+                    <SelectItem key={parent._id} value={parent._id}>
+                      {parent.name}
+                    </SelectItem>
                   ))
                 ) : (
                   <SelectItem value="" disabled>
-                    No categories available
+                    No categories
                   </SelectItem>
                 )}
               </SelectContent>
             </Select>
-            {errors?.category && (
+            {errors?.category && !selectedSubcategoryId && !selectedSubSubcategoryId && (
               <p className="text-sm text-red-400 font-medium">{errors.category[0]}</p>
             )}
+          </div>
+
+          {/* Level 1: Subcategory (Brand) */}
+          <div className="space-y-2">
+            <Label htmlFor="subcategory" className="text-sm font-medium text-color-secondary">
+              Brand / Subcategory
+            </Label>
+            <Select
+              value={selectedSubcategoryId}
+              onValueChange={handleSubcategoryChange}
+              disabled={!selectedParentId || subcategories.length === 0}
+            >
+              <SelectTrigger
+                id="subcategory"
+                className="h-11"
+              >
+                <SelectValue placeholder={!selectedParentId ? "Select category first" : "Select brand"} />
+              </SelectTrigger>
+              <SelectContent>
+                {subcategories.length > 0 ? (
+                  subcategories.map((sub: any) => (
+                    <SelectItem key={sub._id} value={sub._id}>
+                      {sub.name}
+                    </SelectItem>
+                  ))
+                ) : (
+                  <SelectItem value="" disabled>
+                    No subcategories
+                  </SelectItem>
+                )}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Level 2: Sub-subcategory */}
+          <div className="space-y-2">
+            <Label htmlFor="sub-subcategory" className="text-sm font-medium text-color-secondary">
+              Sub-category
+            </Label>
+            <Select
+              value={selectedSubSubcategoryId}
+              onValueChange={handleSubSubcategoryChange}
+              disabled={!selectedSubcategoryId || subSubcategories.length === 0}
+            >
+              <SelectTrigger
+                id="sub-subcategory"
+                className="h-11"
+              >
+                <SelectValue placeholder={!selectedSubcategoryId ? "Select brand first" : "Select sub-category"} />
+              </SelectTrigger>
+              <SelectContent>
+                {subSubcategories.length > 0 ? (
+                  subSubcategories.map((subSub: any) => (
+                    <SelectItem key={subSub._id} value={subSub._id}>
+                      {subSub.name}
+                    </SelectItem>
+                  ))
+                ) : (
+                  <SelectItem value="" disabled>
+                    No sub-categories
+                  </SelectItem>
+                )}
+              </SelectContent>
+            </Select>
           </div>
         </div>
       </div>

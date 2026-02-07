@@ -68,7 +68,7 @@ export const MainNav = () => {
                 {category.subcategories.length > 0 && activeDropdown === category.name && (
                   <div className="absolute left-0 top-full bg-white text-slate-800 shadow-2xl rounded-b-lg min-w-[240px] border border-gray-200" style={{ zIndex: 9999 }}>
                     <ul className="py-2 max-h-[500px] overflow-y-auto overflow-x-visible">
-                      {category.subcategories.map((sub) => (
+                      {category.subcategories.map((sub: any) => (
                         <li
                           key={sub.name}
                           className="relative"
@@ -100,7 +100,7 @@ export const MainNav = () => {
                     </ul>
 
                     {/* Second Level Dropdown (Sub-subcategories) - Rendered outside UL */}
-                    {category.subcategories.map((sub) => (
+                    {category.subcategories.map((sub: any) => (
                       sub.children && sub.children.length > 0 && activeSubDropdown === sub.slug && (
                         <div
                           key={`nested-${sub.slug}`}
@@ -108,7 +108,7 @@ export const MainNav = () => {
                           className="absolute left-full top-0 bg-white text-slate-800 shadow-2xl rounded-lg min-w-[240px] max-h-[500px] overflow-y-auto border border-gray-200"
                           style={{
                             zIndex: 10000,
-                            marginTop: `${category.subcategories.findIndex(s => s.slug === sub.slug) * 40 + 8}px`
+                            marginTop: `${category.subcategories.findIndex((s: any) => s.slug === sub.slug) * 40 + 8}px`
                           }}
                           onMouseEnter={() => setActiveSubDropdown(sub.slug)}
                           onMouseLeave={() => setActiveSubDropdown(null)}

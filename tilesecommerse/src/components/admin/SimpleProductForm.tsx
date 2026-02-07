@@ -92,11 +92,15 @@ export function SimpleProductForm() {
   const [specCount, setSpecCount] = useState(2);
   const [selectedCategory, setSelectedCategory] = useState('');
   const [selectedSubcategory, setSelectedSubcategory] = useState('');
+  const [selectedSubSubcategory, setSelectedSubSubcategory] = useState('');
 
   const { categories, isLoading: categoriesLoading } = useCategories();
 
   // Get selected category object for subcategory dropdown
   const selectedCategoryObj = categories.find((cat: any) => cat._id === selectedCategory);
+
+  // Get selected subcategory object for sub-subcategory dropdown
+  const selectedSubcategoryObj = selectedCategoryObj?.children?.find((subcat: any) => subcat._id === selectedSubcategory);
 
 
 
@@ -247,6 +251,7 @@ export function SimpleProductForm() {
       const cuttedPrice = formData.get('cuttedPrice') as string;
       const category = formData.get('category') as string;
       const subcategory = formData.get('subcategory') as string;
+      const subSubcategory = formData.get('subSubcategory') as string;
       const stock = formData.get('stock') as string;
       const material = formData.get('material') as string;
       const finish = formData.get('finish') as string;
@@ -282,6 +287,9 @@ export function SimpleProductForm() {
         images.push(base64);
       }
 
+      // Use the deepest selected category level
+      const finalCategory = subSubcategory || subcategory || category;
+
       const requestBody: any = {
         name,
         description,
@@ -289,7 +297,7 @@ export function SimpleProductForm() {
         productId: productId || undefined,
         price: Number(price),
         cuttedPrice: Number(cuttedPrice),
-        category,
+        category: finalCategory,
         subcategory: subcategory || undefined,
         images,
         highlights,
@@ -363,6 +371,9 @@ export function SimpleProductForm() {
       (e.target as HTMLFormElement).reset();
       setImagePreviews([]);
       setVariants([]);
+      setSelectedCategory('');
+      setSelectedSubcategory('');
+      setSelectedSubSubcategory('');
       setMainFormValues({
         productId: '',
         material: '',
@@ -461,6 +472,7 @@ export function SimpleProductForm() {
                     onChange={(e) => {
                       setSelectedCategory(e.target.value);
                       setSelectedSubcategory(''); // Reset subcategory when category changes
+                      setSelectedSubSubcategory(''); // Reset sub-subcategory as well
                     }}
                     className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
                   >
@@ -479,20 +491,42 @@ export function SimpleProductForm() {
                   </select>
                 </div>
 
-                {/* Subcategory */}
+                {/* Subcategory (Brand) */}
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">Brand</label>
                   <select
                     name="subcategory"
                     value={selectedSubcategory}
-                    onChange={(e) => setSelectedSubcategory(e.target.value)}
+                    onChange={(e) => {
+                      setSelectedSubcategory(e.target.value);
+                      setSelectedSubSubcategory(''); // Reset sub-subcategory when subcategory changes
+                    }}
                     disabled={!selectedCategory}
                     className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <option value="">{selectedCategory ? 'Select subcategory' : 'Select category first'}</option>
+                    <option value="">{selectedCategory ? 'Select brand' : 'Select category first'}</option>
                     {selectedCategoryObj?.children?.map((subcat: any) => (
                       <option key={subcat._id} value={subcat._id}>
                         {subcat.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Sub-subcategory */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Sub-category</label>
+                  <select
+                    name="subSubcategory"
+                    value={selectedSubSubcategory}
+                    onChange={(e) => setSelectedSubSubcategory(e.target.value)}
+                    disabled={!selectedSubcategory || !selectedSubcategoryObj?.children || selectedSubcategoryObj.children.length === 0}
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <option value="">{!selectedSubcategory ? 'Select brand first' : (selectedSubcategoryObj?.children?.length > 0 ? 'Select sub-category' : 'No sub-categories')}</option>
+                    {selectedSubcategoryObj?.children?.map((subSubcat: any) => (
+                      <option key={subSubcat._id} value={subSubcat._id}>
+                        {subSubcat.name}
                       </option>
                     ))}
                   </select>
