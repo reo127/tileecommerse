@@ -104,6 +104,98 @@ export async function getAllProducts() {
   }
 }
 
+// Fetch products with server-side pagination
+export async function getProductsWithPagination(params: {
+  page?: number;
+  limit?: number;
+  keyword?: string;
+  category?: string;
+  subcategory?: string;
+  minPrice?: number;
+  maxPrice?: number;
+}) {
+  try {
+    const {
+      page = 1,
+      limit = 12,
+      keyword,
+      category,
+      subcategory,
+      minPrice,
+      maxPrice
+    } = params;
+
+    // Build query string
+    const queryParams = new URLSearchParams();
+    queryParams.append('page', page.toString());
+    queryParams.append('limit', limit.toString());
+    if (keyword) queryParams.append('keyword', keyword);
+    if (category) queryParams.append('category', category);
+    if (subcategory) queryParams.append('subcategory', subcategory);
+    if (minPrice !== undefined) queryParams.append('price[gte]', minPrice.toString());
+    if (maxPrice !== undefined) queryParams.append('price[lte]', maxPrice.toString());
+
+    const url = `${API_BASE_URL}/products?${queryParams.toString()}`;
+    console.log('🔍 Fetching products:', url);
+    console.log('📊 Params - Page:', page, 'Limit:', limit);
+
+    const response = await fetch(url, {
+      cache: 'no-store', // Disable cache for debugging
+    });
+
+    if (!response.ok) {
+      console.error('Failed to fetch products:', response.statusText);
+      return {
+        products: [],
+        totalProducts: 0,
+        totalPages: 0,
+        currentPage: page,
+        productsPerPage: limit
+      };
+    }
+
+    const data = await response.json();
+
+    if (!data.success) {
+      return {
+        products: [],
+        totalProducts: 0,
+        totalPages: 0,
+        currentPage: page,
+        productsPerPage: limit
+      };
+    }
+
+    const products = data.products.map(transformProduct);
+    const totalProducts = data.filteredProductsCount || data.productsCount || 0;
+    const totalPages = Math.ceil(totalProducts / limit);
+
+    console.log('✅ Backend Response:', {
+      receivedProducts: data.products.length,
+      totalProducts,
+      totalPages,
+      resultPerPage: data.resultPerPage
+    });
+
+    return {
+      products,
+      totalProducts,
+      totalPages,
+      currentPage: page,
+      productsPerPage: limit
+    };
+  } catch (error) {
+    console.error('Error fetching products with pagination:', error);
+    return {
+      products: [],
+      totalProducts: 0,
+      totalPages: 0,
+      currentPage: params.page || 1,
+      productsPerPage: params.limit || 12
+    };
+  }
+}
+
 export async function getCategoryProducts(category: ProductCategory) {
   try {
     const response = await fetch(`${API_BASE_URL}/products?category=${category}`, {

@@ -62,9 +62,16 @@ export function SimpleProductForm() {
   const [isDragging, setIsDragging] = useState(false);
   const [specCount, setSpecCount] = useState(2); // Start with 2 specifications
   const [selectedCategory, setSelectedCategory] = useState('');
+  const [selectedSubcategory, setSelectedSubcategory] = useState('');
 
   // Fetch categories from backend
   const { categories, isLoading: categoriesLoading } = useCategories();
+
+  // Get selected category object
+  const selectedCategoryObj = categories.find((cat: any) => cat._id === selectedCategory);
+
+  // Get selected subcategory object
+  const selectedSubcategoryObj = selectedCategoryObj?.children?.find((sub: any) => sub._id === selectedSubcategory);
 
   // Variants state
   const [hasVariants, setHasVariants] = useState(false);
@@ -172,6 +179,7 @@ export function SimpleProductForm() {
       const cuttedPrice = formData.get('cuttedPrice') as string;
       const category = formData.get('category') as string;
       const subcategory = formData.get('subcategory') as string;
+      const subsubcategory = formData.get('subsubcategory') as string;
       const brandname = formData.get('brandname') as string;
       const stock = formData.get('stock') as string;
       const warranty = formData.get('warranty') as string;
@@ -234,6 +242,7 @@ export function SimpleProductForm() {
         cuttedPrice: Number(cuttedPrice),
         category,
         subcategory: subcategory || undefined,
+        subsubcategory: subsubcategory || undefined,
         brandname,
         logo,
         images,
@@ -406,12 +415,17 @@ export function SimpleProductForm() {
                   />
                 </div>
 
+                {/* Category */}
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">Category</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Category *</label>
                   <select
                     name="category"
+                    required
                     value={selectedCategory}
-                    onChange={(e) => setSelectedCategory(e.target.value)}
+                    onChange={(e) => {
+                      setSelectedCategory(e.target.value);
+                      setSelectedSubcategory(''); // Reset subcategory when category changes
+                    }}
                     className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
                   >
                     <option value="">Select category</option>
@@ -429,34 +443,51 @@ export function SimpleProductForm() {
                   </select>
                 </div>
 
+                {/* Subcategory */}
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">Sub category</label>
-                  <input
-                    name="brandname"
-                    placeholder="If applicable"
-                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
-                  />
-                </div>
-
-                {/* Sub category */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">Brand</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Subcategory</label>
                   <select
                     name="subcategory"
+                    value={selectedSubcategory}
+                    onChange={(e) => setSelectedSubcategory(e.target.value)}
                     disabled={!selectedCategory}
                     className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <option value="">{selectedCategory ? 'Select subcategory' : 'Select category first'}</option>
-                    {selectedCategory && Array.isArray(categories) && categories.length > 0 && (
-                      categories
-                        .find((cat: any) => cat._id === selectedCategory)
-                        ?.children?.map((subcat: any) => (
-                          <option key={subcat._id} value={subcat._id}>
-                            {subcat.name}
-                          </option>
-                        ))
-                    )}
+                    {selectedCategoryObj?.children?.map((subcat: any) => (
+                      <option key={subcat._id} value={subcat._id}>
+                        {subcat.name}
+                      </option>
+                    ))}
                   </select>
+                </div>
+
+                {/* Sub-subcategory (Level 3) */}
+                {selectedSubcategoryObj?.children && selectedSubcategoryObj.children.length > 0 && (
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">Sub-subcategory</label>
+                    <select
+                      name="subsubcategory"
+                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
+                    >
+                      <option value="">Select sub-subcategory</option>
+                      {selectedSubcategoryObj.children.map((subsubcat: any) => (
+                        <option key={subsubcat._id} value={subsubcat._id}>
+                          {subsubcat.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                {/* Brand */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Brand</label>
+                  <input
+                    name="brandname"
+                    placeholder="Brand name (optional)"
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
+                  />
                 </div>
 
                 {/* Warranty */}
