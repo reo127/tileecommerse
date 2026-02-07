@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useCartMutation } from "@/hooks/cart";
 import { useWishlistMutation } from "@/hooks/wishlist";
 import { useSession } from "@/lib/auth/client";
@@ -10,15 +10,22 @@ import { EnquiryModal } from "./EnquiryModal";
 
 interface ProductInfoProps {
   product: ProductWithVariants;
+  onVariantChange?: (variant: any) => void;
 }
 
-export const ProductInfo = ({ product }: ProductInfoProps) => {
-  const [selectedColor, setSelectedColor] = useState(product.variants[0]?.color || "");
+export const ProductInfo = ({ product, onVariantChange }: ProductInfoProps) => {
+  // FIXED: Initialize with main product values if they exist, otherwise use first variant
+  // This ensures the UI shows the correct variant that matches the main product specs
+  const [selectedColor, setSelectedColor] = useState(
+    product.color || product.variants[0]?.color || ""
+  );
   const [selectedSize, setSelectedSize] = useState(
     // @ts-ignore - dummy data uses 'size', real schema uses 'sizes'
-    (product.variants[0]?.sizes?.[0] || product.variants[0]?.size) as string || ""
+    product.size || (product.variants[0]?.sizes?.[0] || product.variants[0]?.size) as string || ""
   );
-  const [selectedFinish, setSelectedFinish] = useState(product.variants[0]?.finish || "");
+  const [selectedFinish, setSelectedFinish] = useState(
+    product.finish || product.variants[0]?.finish || ""
+  );
   const [quantity, setQuantity] = useState(1);
 
   const { data: session } = useSession();
@@ -26,18 +33,72 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
   const { add: addToWishlist, isAddingToWishlist } = useWishlistMutation();
   const [isEnquiryModalOpen, setIsEnquiryModalOpen] = useState(false);
 
+  // FIXED: Include main product as the first "variant" option
+  const allVariantOptions = useMemo(() => {
+
+    return [
+      // Main product as default variant
+      {
+        color: product.color,
+        size: product.size,
+        finish: product.finish,
+        price: product.price,
+        cuttedPrice: product.cuttedPrice,
+        stock: product.stock,
+        images: product.images,
+        productId: product.productId,
+        isMainProduct: true
+      },
+      // Then all other variants
+      ...product.variants
+    ];
+  }, [product]);
+
+  const uniqueColors = useMemo(() =>
+    Array.from(new Set(allVariantOptions.map((v: any) => v.color))).filter(Boolean),
+    [allVariantOptions]
+  );
+
+  const uniqueSizes = useMemo(() =>
+    Array.from(new Set(
+      allVariantOptions.flatMap((v: any) =>
+        (v.sizes && v.sizes.length > 0) ? v.sizes : [v.size]
+      ).filter(Boolean)
+    )),
+    [allVariantOptions]
+  );
+
+  const uniqueFinishes = useMemo(() =>
+    Array.from(new Set(allVariantOptions.map((v: any) => v.finish))).filter(Boolean),
+    [allVariantOptions]
+  );
 
   // Get current selected variant based on color, size, and finish
-  const selectedVariant = product.variants.find((v: any) =>
-    v.color === selectedColor &&
-    (v.size === selectedSize || v.sizes?.includes(selectedSize)) &&
-    (!selectedFinish || v.finish === selectedFinish)
-  ) || product.variants[0];
+  const selectedVariant = useMemo(() => {
+    // Search in ALL options (main product + variants)
+    const foundVariant = allVariantOptions.find((v: any) =>
+      v.color === selectedColor &&
+      (v.size === selectedSize || v.sizes?.includes(selectedSize)) &&
+      (!selectedFinish || v.finish === selectedFinish)
+    );
+
+    return foundVariant || allVariantOptions[0]; // Default to main product
+  }, [allVariantOptions, selectedColor, selectedSize, selectedFinish]);
+
+  // Notify parent component when variant changes
+  useEffect(() => {
+
+
+    if (onVariantChange) {
+      onVariantChange(selectedVariant);
+    }
+  }, [selectedColor, selectedSize, selectedFinish, selectedVariant, onVariantChange]);
+
 
   // Get variant-specific price and stock
   const currentPrice = selectedVariant?.price || product.price;
   const currentStock = selectedVariant?.stock || product.stock;
-  const currentMRP = product.cuttedPrice;
+  const currentMRP = selectedVariant?.cuttedPrice || product.cuttedPrice;
 
   const handleAddToCart = () => {
     addToCart({
@@ -59,16 +120,6 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
     addToWishlist(product.id);
     toast.success("Added to wishlist!");
   };
-
-  const uniqueColors = Array.from(new Set(product.variants.map((v: any) => v.color))).filter(Boolean);
-  // Handle both 'sizes' array and 'size' string from dummy data
-  const uniqueSizes = Array.from(new Set(
-    product.variants.flatMap((v: any) =>
-      // @ts-ignore - dummy data uses 'size', real schema uses 'sizes'
-      (v.sizes && v.sizes.length > 0) ? v.sizes : [v.size]
-    ).filter(Boolean)
-  ));
-  const uniqueFinishes = Array.from(new Set(product.variants.map((v: any) => v.finish))).filter(Boolean);
 
 
   return (
@@ -167,37 +218,59 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
       </div>
 
 
-      {/* Available Colors - Smaller boxes with bigger text */}
+      {/* Available Colors - Image-based variant selection */}
       {uniqueColors.length > 0 && (
         <div>
           <h3 className="text-sm font-semibold text-slate-800 mb-3">Available Colors</h3>
-          <div className="grid grid-cols-6 sm:grid-cols-8 gap-2">
-            {uniqueColors.map((color: any) => (
-              <button
-                key={color}
-                onClick={() => setSelectedColor(color)}
-                className={`relative aspect-square rounded-lg border-2 transition-all overflow-hidden ${selectedColor === color
-                  ? "border-orange-500 ring-2 ring-orange-200"
-                  : "border-gray-300 hover:border-orange-300"
-                  }`}
-              >
-                <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-400 flex items-center justify-center">
-                  <span className="text-xs text-center px-1 font-semibold text-slate-700">
-                    {color}
-                  </span>
-                </div>
-                {selectedColor === color && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-orange-500/20">
-                    <svg className="w-5 h-5 text-orange-600" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                    </svg>
+          <div className="flex flex-wrap gap-3">
+            {uniqueColors.map((color: any) => {
+              // Find the variant for this color to get its image
+              const variantForColor = allVariantOptions.find((v: any) => v.color === color);
+              const variantImage = variantForColor?.images?.[0]?.url || product.img;
+
+
+
+              return (
+                <button
+                  key={color}
+                  onClick={() => {
+                    setSelectedColor(color);
+                  }}
+                  className={`relative group transition-all rounded-lg ${selectedColor === color
+                    ? "ring-3 ring-orange-500 ring-offset-2"
+                    : "hover:ring-2 hover:ring-orange-300 hover:ring-offset-2"
+                    }`}
+                  style={{ width: '100px', height: '100px' }}
+                >
+                  {/* Variant Image */}
+                  <div className="w-full h-full rounded-lg overflow-hidden border-2 border-gray-200">
+                    <img
+                      src={variantImage}
+                      alt={`${color} variant`}
+                      className="w-full h-full object-cover"
+                    />
                   </div>
-                )}
-              </button>
-            ))}
+
+                  {/* Color Label */}
+                  <div className="absolute bottom-0 left-0 right-0 bg-black/70 text-white text-xs py-1 px-2 text-center rounded-b-lg">
+                    {color}
+                  </div>
+
+                  {/* Selected Checkmark */}
+                  {selectedColor === color && (
+                    <div className="absolute top-1 right-1 bg-orange-500 rounded-full p-1 shadow-lg">
+                      <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                  )}
+                </button>
+              );
+            })}
           </div>
         </div>
       )}
+
 
       {/* Available Sizes */}
       {uniqueSizes.length > 0 && (
@@ -207,13 +280,16 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
             {uniqueSizes.map((size: any) => (
               <button
                 key={size}
-                onClick={() => setSelectedSize(size)}
+                onClick={() => {
+                  console.log('📏 Size Selected:', size);
+                  setSelectedSize(size);
+                }}
                 className={`px-6 py-3 rounded-lg border-2 font-medium transition-all ${selectedSize === size
                   ? "border-orange-500 bg-orange-50 text-orange-600"
                   : "border-gray-300 text-slate-700 hover:border-orange-300"
                   }`}
               >
-                {size}&quot;
+                {size}"
               </button>
             ))}
           </div>
@@ -228,7 +304,10 @@ export const ProductInfo = ({ product }: ProductInfoProps) => {
             <h3 className="text-sm font-semibold text-slate-800 mb-3">Select Finish</h3>
             <select
               value={selectedFinish}
-              onChange={(e) => setSelectedFinish(e.target.value)}
+              onChange={(e) => {
+                console.log('✨ Finish Selected:', e.target.value);
+                setSelectedFinish(e.target.value);
+              }}
               className="w-full px-4 py-3 bg-white border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all font-medium text-slate-700"
             >
               <option value="">Choose finish...</option>

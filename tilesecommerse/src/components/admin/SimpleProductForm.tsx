@@ -42,6 +42,14 @@ const MATERIAL_TYPES = [
   'Solar Glass', 'Silicon (Solar Grade)', 'Rubber'
 ];
 
+// colors for products
+const COLORS = [
+  'White', 'Grey', 'Beige', 'Black', 'Brown', 'Cream', 'Ivory',
+  'Sand', 'Stone', 'Marble', 'Wood', 'Chrome', 'Stainless Steel', 'Gold',
+  'Rose Gold', 'Gunmetal', 'Copper', 'Bronze', 'Blue',
+  'Green', 'Red', 'Yellow', 'Pink', 'Multicolour', 'Transparent'
+];
+
 const fileToBase64 = (file: File): Promise<string> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -50,6 +58,27 @@ const fileToBase64 = (file: File): Promise<string> => {
     reader.onerror = error => reject(error);
   });
 };
+
+interface VariantImage {
+  file: File;
+  preview: string;
+  id: string;
+}
+
+interface Variant {
+  id: string;
+  color: string;
+  size: string;
+  productId: string;
+  finish: string;
+  material: string;
+  unit: string;
+  price: string;
+  cuttedPrice: string;
+  stock: string;
+  images: VariantImage[];
+  featuredImageIndex: number;
+}
 
 export function SimpleProductForm() {
   const router = useRouter();
@@ -60,25 +89,25 @@ export function SimpleProductForm() {
   const [imagePreviews, setImagePreviews] = useState<Array<{ file: File; preview: string; id: string }>>([]);
   const [featuredImageIndex, setFeaturedImageIndex] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
-  const [specCount, setSpecCount] = useState(2); // Start with 2 specifications
+  const [specCount, setSpecCount] = useState(2);
   const [selectedCategory, setSelectedCategory] = useState('');
 
-  // Fetch categories from backend
   const { categories, isLoading: categoriesLoading } = useCategories();
 
-  // Variants state
   const [hasVariants, setHasVariants] = useState(false);
-  const [variants, setVariants] = useState<Array<{
-    id: string;
-    color: string;
-    size: string;
-    productId: string;
-    finish: string;
-    price: string;
-    stock: string;
-  }>>([]);
+  const [variants, setVariants] = useState<Variant[]>([]);
 
-
+  const [mainFormValues, setMainFormValues] = useState({
+    productId: '',
+    material: '',
+    finish: '',
+    color: '',
+    size: '',
+    unit: 'inches',
+    price: '',
+    cuttedPrice: '',
+    stock: '100'
+  });
 
   const handleImageSelect = (files: FileList | null) => {
     if (!files) return;
@@ -111,7 +140,6 @@ export function SimpleProductForm() {
   const removeImage = (id: string) => {
     setImagePreviews(prev => {
       const newPreviews = prev.filter(img => img.id !== id);
-      // Adjust featured index if needed
       if (featuredImageIndex >= newPreviews.length) {
         setFeaturedImageIndex(Math.max(0, newPreviews.length - 1));
       }
@@ -123,17 +151,60 @@ export function SimpleProductForm() {
     setFeaturedImageIndex(index);
   };
 
-  // Variant management functions
+  const handleVariantImageSelect = (variantId: string, files: FileList | null) => {
+    if (!files) return;
+
+    const newImages = Array.from(files).map(file => ({
+      file,
+      preview: URL.createObjectURL(file),
+      id: Math.random().toString(36).substr(2, 9)
+    }));
+
+    setVariants(variants.map(v =>
+      v.id === variantId
+        ? { ...v, images: [...v.images, ...newImages] }
+        : v
+    ));
+  };
+
+  const removeVariantImage = (variantId: string, imageId: string) => {
+    setVariants(variants.map(v => {
+      if (v.id === variantId) {
+        const newImages = v.images.filter(img => img.id !== imageId);
+        return {
+          ...v,
+          images: newImages,
+          featuredImageIndex: v.featuredImageIndex >= newImages.length
+            ? Math.max(0, newImages.length - 1)
+            : v.featuredImageIndex
+        };
+      }
+      return v;
+    }));
+  };
+
+  const setVariantFeaturedImage = (variantId: string, index: number) => {
+    setVariants(variants.map(v =>
+      v.id === variantId ? { ...v, featuredImageIndex: index } : v
+    ));
+  };
+
   const addVariant = () => {
-    setVariants([...variants, {
+    const newVariant: Variant = {
       id: Math.random().toString(36).substr(2, 9),
-      color: '',
-      size: '',
-      productId: '',
-      finish: '',
-      price: '',
-      stock: ''
-    }]);
+      color: mainFormValues.color,
+      size: mainFormValues.size,
+      productId: mainFormValues.productId,
+      finish: mainFormValues.finish,
+      material: mainFormValues.material,
+      unit: mainFormValues.unit,
+      price: mainFormValues.price,
+      cuttedPrice: mainFormValues.cuttedPrice,
+      stock: mainFormValues.stock,
+      images: [],
+      featuredImageIndex: 0
+    };
+    setVariants([...variants, newVariant]);
   };
 
   const updateVariant = (id: string, field: string, value: string) => {
@@ -146,11 +217,9 @@ export function SimpleProductForm() {
     setVariants(variants.filter(v => v.id !== id));
   };
 
-
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    // Validate images
     if (imagePreviews.length === 0) {
       setError('Please upload at least one product image');
       return;
@@ -172,20 +241,12 @@ export function SimpleProductForm() {
       const cuttedPrice = formData.get('cuttedPrice') as string;
       const category = formData.get('category') as string;
       const subcategory = formData.get('subcategory') as string;
-      const brandname = formData.get('brandname') as string;
       const stock = formData.get('stock') as string;
-      const warranty = formData.get('warranty') as string;
       const material = formData.get('material') as string;
       const finish = formData.get('finish') as string;
       const color = formData.get('color') as string;
       const size = formData.get('size') as string;
       const unit = formData.get('unit') as string;
-      const thickness = formData.get('thickness') as string;
-      const coverage = formData.get('coverage') as string;
-      const tilesPerBox = formData.get('tilesPerBox') as string;
-      const weight = formData.get('weight') as string;
-      const waterAbsorption = formData.get('waterAbsorption') as string;
-      const slipResistance = formData.get('slipResistance') as string;
 
       const roomType = formData.getAll('roomType') as string[];
       const highlight1 = formData.get('highlight1') as string;
@@ -196,10 +257,8 @@ export function SimpleProductForm() {
       const highlight6 = formData.get('highlight6') as string;
       const highlights = [highlight1, highlight2, highlight3, highlight4, highlight5, highlight6].filter(h => h);
 
-      // Collect selected tags
       const tags = formData.getAll('tags') as string[];
 
-      // Collect all dynamic specifications
       const specifications = [];
       for (let i = 1; i <= specCount; i++) {
         const specTitle = formData.get(`specTitle${i}`) as string;
@@ -217,14 +276,6 @@ export function SimpleProductForm() {
         images.push(base64);
       }
 
-      setUploadProgress('Processing brand logo...');
-      const logoFile = formData.get('logo') as File;
-      let logo = '';
-      if (logoFile && logoFile.size > 0) {
-        logo = await fileToBase64(logoFile);
-      }
-
-
       const requestBody: any = {
         name,
         description,
@@ -234,71 +285,51 @@ export function SimpleProductForm() {
         cuttedPrice: Number(cuttedPrice),
         category,
         subcategory: subcategory || undefined,
-        brandname,
-        logo,
         images,
         highlights,
         specifications,
         stock: Number(stock),
-        warranty: Number(warranty),
       };
 
-      // Only add optional fields if they have values
       if (material) requestBody.material = material;
       if (finish) requestBody.finish = finish;
       if (color) requestBody.color = color;
       if (size) requestBody.size = size;
-      if (roomType.length > 0) requestBody.roomType = JSON.stringify(roomType);
-      if (thickness) requestBody.thickness = Number(thickness);
-      if (coverage) requestBody.coverage = Number(coverage);
-      if (tilesPerBox) requestBody.tilesPerBox = Number(tilesPerBox);
-      if (weight) requestBody.weight = Number(weight);
-      if (waterAbsorption) requestBody.waterAbsorption = waterAbsorption;
-      if (slipResistance) requestBody.slipResistance = slipResistance;
 
-      // Handle variants - if hasVariants is true, ensure main product data is included as a variant
       requestBody.hasVariants = hasVariants;
-      if (hasVariants) {
-        const variantsToSend = [...variants];
+      if (hasVariants && variants.length > 0) {
+        setUploadProgress('Processing variant images...');
 
-        // If user filled main product specs but didn't add them as a variant, create a default variant
-        if (variantsToSend.length === 0 || (color || finish || formData.get('size'))) {
-          const mainProductVariant = {
-            id: 'main-product',
-            productId: formData.get('productId') as string || '',
-            color: color || '',
-            size: formData.get('size') as string || '',
-            finish: finish || '',
-            price: price || '',
-            stock: stock || ''
-          };
-
-          // Only add if it has meaningful data
-          if (mainProductVariant.color || mainProductVariant.size || mainProductVariant.finish) {
-            // Check if this variant doesn't already exist
-            const exists = variantsToSend.some(v =>
-              v.color === mainProductVariant.color &&
-              v.size === mainProductVariant.size &&
-              v.finish === mainProductVariant.finish
-            );
-
-            if (!exists) {
-              variantsToSend.unshift(mainProductVariant); // Add as first variant
-            }
+        const variantsToSend = [];
+        for (const variant of variants) {
+          const variantImages = [];
+          for (let i = 0; i < variant.images.length; i++) {
+            setUploadProgress(`Processing variant images ${i + 1}...`);
+            const base64 = await fileToBase64(variant.images[i].file);
+            variantImages.push(base64);
           }
+
+          variantsToSend.push({
+            productId: variant.productId,
+            color: variant.color,
+            size: variant.size,
+            finish: variant.finish,
+            material: variant.material,
+            unit: variant.unit,
+            price: variant.price,
+            cuttedPrice: variant.cuttedPrice,
+            stock: variant.stock,
+            images: variantImages,
+            featuredImageIndex: variant.featuredImageIndex
+          });
         }
 
-        if (variantsToSend.length > 0) {
-          requestBody.variants = JSON.stringify(variantsToSend);
-        }
+        requestBody.variants = JSON.stringify(variantsToSend);
       }
 
-
-      // Add tags if selected
       if (tags.length > 0) {
         requestBody.tags = JSON.stringify(tags);
       }
-
 
       setUploadProgress('Uploading to server...');
       const token = localStorage.getItem('auth_token');
@@ -321,10 +352,22 @@ export function SimpleProductForm() {
         return;
       }
 
-      setSuccess('Product created successfully! You can create another product or go to the products page.');
+      setSuccess('Product created successfully!');
       setUploadProgress('');
-      // Reset form after success
       (e.target as HTMLFormElement).reset();
+      setImagePreviews([]);
+      setVariants([]);
+      setMainFormValues({
+        productId: '',
+        material: '',
+        finish: '',
+        color: '',
+        size: '',
+        unit: 'inches',
+        price: '',
+        cuttedPrice: '',
+        stock: '100'
+      });
 
     } catch (err) {
       console.error('Error:', err);
@@ -338,15 +381,13 @@ export function SimpleProductForm() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50">
       <form onSubmit={handleSubmit} className="max-w-5xl mx-auto px-6 py-12">
-        {/* Header */}
         <div className="mb-12 text-center">
           <h1 className="text-4xl font-light text-slate-900 mb-3 tracking-tight">Create New Product</h1>
           <p className="text-slate-500 text-lg font-light">Add a premium tile to your collection</p>
         </div>
 
-        {/* Status Messages */}
         {error && (
-          <div className="mb-8 p-4 bg-red-50 border border-red-100 rounded-2xl flex items-center gap-3 animate-shake">
+          <div className="mb-8 p-4 bg-red-50 border border-red-100 rounded-2xl flex items-center gap-3">
             <FiX className="w-5 h-5 text-red-500 flex-shrink-0" />
             <p className="text-red-700 text-sm">{error}</p>
           </div>
@@ -365,9 +406,7 @@ export function SimpleProductForm() {
           </div>
         )}
 
-        {/* Form Content - Accordion Sections */}
         <Accordion type="multiple" defaultValue={["basic"]} className="space-y-4">
-
           {/* 1. Basic Information */}
           <AccordionItem value="basic" className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
             <AccordionTrigger className="px-8 py-6 hover:no-underline hover:bg-slate-50 transition-colors">
@@ -430,16 +469,6 @@ export function SimpleProductForm() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">Sub category</label>
-                  <input
-                    name="brandname"
-                    placeholder="If applicable"
-                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
-                  />
-                </div>
-
-                {/* Sub category */}
-                <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">Brand</label>
                   <select
                     name="subcategory"
@@ -458,185 +487,37 @@ export function SimpleProductForm() {
                     )}
                   </select>
                 </div>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
 
-                {/* Warranty */}
+          {/* 2. Specifications */}
+          <AccordionItem value="specs" className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
+            <AccordionTrigger className="px-8 py-6 hover:no-underline hover:bg-slate-50 transition-colors">
+              <h2 className="text-xl font-medium text-slate-900">2. Specifications</h2>
+            </AccordionTrigger>
+            <AccordionContent className="px-8 pb-8">
+              <div className="grid md:grid-cols-2 gap-6 pt-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">Warranty (years)</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Product ID</label>
                   <input
-                    name="warranty"
-                    type="number"
-                    defaultValue="5"
+                    name="productId"
+                    type="text"
+                    placeholder="SKU-12345 or any unique ID"
+                    value={mainFormValues.productId}
+                    onChange={(e) => setMainFormValues({ ...mainFormValues, productId: e.target.value })}
                     className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
                   />
                 </div>
 
-              </div>
-            </AccordionContent>
-          </AccordionItem>
-
-          {/* 2. Images */}
-          <AccordionItem value="images" className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
-            <AccordionTrigger className="px-8 py-6 hover:no-underline hover:bg-slate-50 transition-colors">
-              <h2 className="text-xl font-medium text-slate-900">2. Images</h2>
-            </AccordionTrigger>
-            <AccordionContent className="px-8 pb-8">
-              <div className="space-y-6 pt-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-3">
-                    Product Images {imagePreviews.length > 0 && `(${imagePreviews.length})`}
-                  </label>
-
-                  {/* Upload Area */}
-                  <div
-                    onDragOver={handleDragOver}
-                    onDragLeave={handleDragLeave}
-                    onDrop={handleDrop}
-                    className={`relative border-2 border-dashed rounded-xl transition-all ${isDragging
-                      ? 'border-orange-500 bg-orange-50'
-                      : 'border-slate-300 bg-slate-50'
-                      }`}
-                  >
-                    <input
-                      type="file"
-                      accept="image/*"
-                      multiple
-                      onChange={(e) => handleImageSelect(e.target.files)}
-                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                    />
-                    <div className="py-12 px-4 text-center pointer-events-none">
-                      <FiUpload className={`w-12 h-12 mx-auto mb-3 ${isDragging ? 'text-orange-500' : 'text-slate-400'}`} />
-                      <p className="text-sm font-medium text-slate-700 mb-1">
-                        {isDragging ? 'Drop images here' : 'Click to upload or drag and drop'}
-                      </p>
-                      <p className="text-xs text-slate-500">
-                        PNG, JPG, GIF up to 10MB each
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Image Previews */}
-                  {imagePreviews.length > 0 && (
-                    <div className="mt-6">
-                      <div className="flex items-center justify-between mb-3">
-                        <p className="text-sm font-medium text-slate-700">
-                          Selected Images
-                        </p>
-                        <p className="text-xs text-slate-500">
-                          Click <FiStar className="inline w-3 h-3" /> to set as featured image
-                        </p>
-                      </div>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        {imagePreviews.map((image, index) => (
-                          <div
-                            key={image.id}
-                            className={`relative group rounded-lg overflow-hidden border-2 transition-all ${index === featuredImageIndex
-                              ? 'border-orange-500 ring-2 ring-orange-200'
-                              : 'border-slate-200 hover:border-slate-300'
-                              }`}
-                          >
-                            {/* Image */}
-                            <div className="aspect-square bg-slate-100">
-                              <img
-                                src={image.preview}
-                                alt={`Preview ${index + 1}`}
-                                className="w-full h-full object-cover"
-                              />
-                            </div>
-
-                            {/* Featured Badge */}
-                            {index === featuredImageIndex && (
-                              <div className="absolute top-2 left-2 bg-orange-500 text-white px-2 py-1 rounded-md text-xs font-medium flex items-center gap-1">
-                                <FiStar className="w-3 h-3 fill-current" />
-                                Featured
-                              </div>
-                            )}
-
-                            {/* Action Buttons */}
-                            <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
-                              <button
-                                type="button"
-                                onClick={() => setFeaturedImage(index)}
-                                className="p-2 bg-white rounded-lg hover:bg-orange-500 hover:text-white transition-colors"
-                                title="Set as featured"
-                              >
-                                <FiStar className={index === featuredImageIndex ? 'fill-current' : ''} />
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => removeImage(image.id)}
-                                className="p-2 bg-white text-red-600 rounded-lg hover:bg-red-600 hover:text-white transition-colors"
-                                title="Remove image"
-                              >
-                                <FiTrash2 />
-                              </button>
-                            </div>
-
-                            {/* Image Number */}
-                            <div className="absolute bottom-2 right-2 bg-black bg-opacity-60 text-white px-2 py-1 rounded text-xs font-medium">
-                              {index + 1}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {imagePreviews.length === 0 && (
-                    <p className="text-xs text-red-500 mt-2">* At least one product image is required</p>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-3">Brand Logo</label>
-                  <input
-                    name="logo"
-                    type="file"
-                    accept="image/*"
-                    className="w-full px-4 py-4 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-slate-900 file:text-white file:text-sm hover:file:bg-slate-800"
-                  />
-                </div>
-              </div>
-            </AccordionContent>
-          </AccordionItem>
-
-          {/* 3. Highlights & Details */}
-          <AccordionItem value="highlights" className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
-            <AccordionTrigger className="px-8 py-6 hover:no-underline hover:bg-slate-50 transition-colors">
-              <h2 className="text-xl font-medium text-slate-900">3. Highlights</h2>
-            </AccordionTrigger>
-            <AccordionContent className="px-8 pb-8">
-              <div className="space-y-6 pt-4">
-                <div className="space-y-3">
-                  <label className="block text-sm font-medium text-slate-700">Product Highlights</label>
-                  <input name="highlight1" placeholder="Highlight 1" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
-                  <input name="highlight2" placeholder="Highlight 2" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
-                  <input name="highlight3" placeholder="Highlight 3" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
-                  <input name="highlight4" placeholder="Highlight 4" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
-                  <input name="highlight5" placeholder="Highlight 5" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
-                  <input name="highlight6" placeholder="Highlight 6" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
-                </div>
-              </div>
-            </AccordionContent>
-          </AccordionItem>
-
-          {/* 4. Specifications */}
-          <AccordionItem value="specs" className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
-            <AccordionTrigger className="px-8 py-6 hover:no-underline hover:bg-slate-50 transition-colors">
-              <h2 className="text-xl font-medium text-slate-900">4. Specifications</h2>
-            </AccordionTrigger>
-            <AccordionContent className="px-8 pb-8">
-              <div className="grid md:grid-cols-2 gap-6 pt-4">
-
-                {/* Product ID */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">Product ID</label>
-                  <input name="productId" type="text" placeholder="SKU-12345 or any unique ID" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
-                </div>
-
-                {/* Material */}
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">Material</label>
-                  <select name="material" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all">
+                  <select
+                    name="material"
+                    value={mainFormValues.material}
+                    onChange={(e) => setMainFormValues({ ...mainFormValues, material: e.target.value })}
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
+                  >
                     <option value="">Select material</option>
                     {MATERIAL_TYPES.map((material) => (
                       <option key={material} value={material}>
@@ -646,10 +527,14 @@ export function SimpleProductForm() {
                   </select>
                 </div>
 
-                {/* Finish */}
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">Finish</label>
-                  <select name="finish" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all">
+                  <select
+                    name="finish"
+                    value={mainFormValues.finish}
+                    onChange={(e) => setMainFormValues({ ...mainFormValues, finish: e.target.value })}
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
+                  >
                     <option value="">Select finish</option>
                     {FINISH_TYPES.map((finish) => (
                       <option key={finish} value={finish}>
@@ -659,110 +544,196 @@ export function SimpleProductForm() {
                   </select>
                 </div>
 
-                {/* Color */}
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">Color</label>
-                  <input name="color" placeholder="White, Beige, Gray..." className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
+                  <select
+                    name="color"
+                    value={mainFormValues.color}
+                    onChange={(e) => setMainFormValues({ ...mainFormValues, color: e.target.value })}
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
+                  >
+                    <option value="">Select color</option>
+                    {COLORS.map((color) => (
+                      <option key={color} value={color}>
+                        {color}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
-                {/* Size */}
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">Size</label>
-                  <input name="size" type="text" placeholder="24x24, 1200x600mm, etc." className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
+                  <input
+                    name="size"
+                    type="text"
+                    placeholder="24x24, 1200x600mm, etc."
+                    value={mainFormValues.size}
+                    onChange={(e) => setMainFormValues({ ...mainFormValues, size: e.target.value })}
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
+                  />
                 </div>
 
-                {/* Unit */}
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">Unit</label>
-                  <select name="unit" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all">
+                  <select
+                    name="unit"
+                    value={mainFormValues.unit}
+                    onChange={(e) => setMainFormValues({ ...mainFormValues, unit: e.target.value })}
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
+                  >
                     <option value="inches">Inches</option>
                     <option value="cm">CM</option>
                     <option value="mm">MM</option>
                   </select>
                 </div>
 
-                {/* Thickness */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">Thickness (mm)</label>
-                  <input name="thickness" type="number" placeholder="8" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
-                </div>
-
-                {/* Price */}
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">Price (₹)</label>
                   <input
                     name="price"
                     type="number"
                     placeholder="999"
+                    value={mainFormValues.price}
+                    onChange={(e) => setMainFormValues({ ...mainFormValues, price: e.target.value })}
                     className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
                   />
                 </div>
 
-                {/* MRP */}
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">MRP (₹)</label>
                   <input
                     name="cuttedPrice"
                     type="number"
                     placeholder="1499"
+                    value={mainFormValues.cuttedPrice}
+                    onChange={(e) => setMainFormValues({ ...mainFormValues, cuttedPrice: e.target.value })}
                     className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
                   />
                 </div>
 
-                {/* Stock */}
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">Stock</label>
                   <input
                     name="stock"
                     type="number"
-                    defaultValue="100"
+                    value={mainFormValues.stock}
+                    onChange={(e) => setMainFormValues({ ...mainFormValues, stock: e.target.value })}
                     className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
                   />
                 </div>
 
-                <div className="md:col-span-2 pt-4">
-                  <label className="block text-sm font-medium text-slate-700 mb-3">Technical Specifications</label>
-                  <div className="space-y-3">
-                    {/* Dynamic Specification Fields */}
-                    {Array.from({ length: specCount }, (_, index) => (
-                      <div key={index} className="grid grid-cols-2 gap-4">
-                        <input
-                          name={`specTitle${index + 1}`}
-                          placeholder={`Specification Title ${index + 1}`}
-                          className="px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
-                        />
-                        <input
-                          name={`specDesc${index + 1}`}
-                          placeholder={`Specification Description ${index + 1}`}
-                          className="px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
-                        />
-                      </div>
-                    ))}
+                <div className="md:col-span-2 space-y-6 pt-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-3">
+                      Product Images {imagePreviews.length > 0 && `(${imagePreviews.length})`}
+                    </label>
 
-                    {/* Add Specification Button */}
-                    <button
-                      type="button"
-                      onClick={() => setSpecCount(specCount + 1)}
-                      className="w-full py-3 px-4 border-2 border-dashed border-slate-300 text-slate-600 rounded-xl hover:border-slate-400 hover:bg-slate-50 transition-all flex items-center justify-center gap-2 group"
+                    <div
+                      onDragOver={handleDragOver}
+                      onDragLeave={handleDragLeave}
+                      onDrop={handleDrop}
+                      className={`relative border-2 border-dashed rounded-xl transition-all ${isDragging
+                        ? 'border-orange-500 bg-orange-50'
+                        : 'border-slate-300 bg-slate-50'
+                        }`}
                     >
-                      <FiPlus className="w-4 h-4 group-hover:scale-110 transition-transform" />
-                      <span className="text-sm font-medium">Add Specification</span>
-                    </button>
-                  </div>
-                </div>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        onChange={(e) => handleImageSelect(e.target.files)}
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                      />
+                      <div className="py-12 px-4 text-center pointer-events-none">
+                        <FiUpload className={`w-12 h-12 mx-auto mb-3 ${isDragging ? 'text-orange-500' : 'text-slate-400'}`} />
+                        <p className="text-sm font-medium text-slate-700 mb-1">
+                          {isDragging ? 'Drop images here' : 'Click to upload or drag and drop'}
+                        </p>
+                        <p className="text-xs text-slate-500">
+                          PNG, JPG, GIF up to 10MB each
+                        </p>
+                      </div>
+                    </div>
 
+                    {imagePreviews.length > 0 && (
+                      <div className="mt-6">
+                        <div className="flex items-center justify-between mb-3">
+                          <p className="text-sm font-medium text-slate-700">
+                            Selected Images
+                          </p>
+                          <p className="text-xs text-slate-500">
+                            Click <FiStar className="inline w-3 h-3" /> to set as featured image
+                          </p>
+                        </div>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                          {imagePreviews.map((image, index) => (
+                            <div
+                              key={image.id}
+                              className={`relative group rounded-lg overflow-hidden border-2 transition-all ${index === featuredImageIndex
+                                ? 'border-orange-500 ring-2 ring-orange-200'
+                                : 'border-slate-200 hover:border-slate-300'
+                                }`}
+                            >
+                              <div className="aspect-square bg-slate-100">
+                                <img
+                                  src={image.preview}
+                                  alt={`Preview ${index + 1}`}
+                                  className="w-full h-full object-cover"
+                                />
+                              </div>
+
+                              {index === featuredImageIndex && (
+                                <div className="absolute top-2 left-2 bg-orange-500 text-white px-2 py-1 rounded-md text-xs font-medium flex items-center gap-1">
+                                  <FiStar className="w-3 h-3 fill-current" />
+                                  Featured
+                                </div>
+                              )}
+
+                              <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
+                                <button
+                                  type="button"
+                                  onClick={() => setFeaturedImage(index)}
+                                  className="p-2 bg-white rounded-lg hover:bg-orange-500 hover:text-white transition-colors"
+                                  title="Set as featured"
+                                >
+                                  <FiStar className={index === featuredImageIndex ? 'fill-current' : ''} />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => removeImage(image.id)}
+                                  className="p-2 bg-white text-red-600 rounded-lg hover:bg-red-600 hover:text-white transition-colors"
+                                  title="Remove image"
+                                >
+                                  <FiTrash2 />
+                                </button>
+                              </div>
+
+                              <div className="absolute bottom-2 right-2 bg-black bg-opacity-60 text-white px-2 py-1 rounded text-xs font-medium">
+                                {index + 1}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {imagePreviews.length === 0 && (
+                      <p className="text-xs text-red-500 mt-2">* At least one product image is required</p>
+                    )}
+                  </div>
+
+                </div>
               </div>
             </AccordionContent>
           </AccordionItem>
 
-          {/* 5. Product Variants */}
+          {/* 3. Product Variants */}
           <AccordionItem value="variants" className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
             <AccordionTrigger className="px-8 py-6 hover:no-underline hover:bg-slate-50 transition-colors">
-              <h2 className="text-xl font-medium text-slate-900">5. Product Variants (Optional)</h2>
+              <h2 className="text-xl font-medium text-slate-900">3. Product Variants (Optional)</h2>
             </AccordionTrigger>
             <AccordionContent className="px-8 pb-8">
               <div className="space-y-6 pt-4">
-                {/* Enable Variants Toggle */}
                 <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
                   <div>
                     <h3 className="text-sm font-medium text-slate-900">Enable Product Variants</h3>
@@ -773,20 +744,17 @@ export function SimpleProductForm() {
                     onClick={() => {
                       setHasVariants(!hasVariants);
                       if (!hasVariants && variants.length === 0) {
-                        addVariant(); // Add first variant when enabling
+                        addVariant();
                       }
                     }}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${hasVariants ? 'bg-slate-900' : 'bg-slate-300'
-                      }`}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${hasVariants ? 'bg-slate-900' : 'bg-slate-300'}`}
                   >
                     <span
-                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${hasVariants ? 'translate-x-6' : 'translate-x-1'
-                        }`}
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${hasVariants ? 'translate-x-6' : 'translate-x-1'}`}
                     />
                   </button>
                 </div>
 
-                {/* Variants List */}
                 {hasVariants && (
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
@@ -810,47 +778,81 @@ export function SimpleProductForm() {
                         </button>
                       </div>
                     ) : (
-                      <div className="space-y-3">
+                      <div className="space-y-4">
                         {variants.map((variant, index) => (
-                          <div key={variant.id} className="p-4 bg-slate-50 rounded-xl border border-slate-200">
-                            <div className="flex items-center justify-between mb-3">
+                          <div key={variant.id} className="p-6 bg-slate-50 rounded-xl border border-slate-200">
+                            <div className="flex items-center justify-between mb-4">
                               <span className="text-sm font-medium text-slate-700">Variant {index + 1}</span>
                               <button
                                 type="button"
                                 onClick={() => removeVariant(variant.id)}
-                                className="text-red-600 hover:text-red-700 text-sm font-medium"
+                                className="text-red-600 hover:text-red-700 text-sm font-medium flex items-center gap-1"
                               >
+                                <FiTrash2 className="w-4 h-4" />
                                 Remove
                               </button>
                             </div>
 
-                            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                              {/* Color */}
-                              <div>
-                                <label className="block text-xs font-medium text-slate-600 mb-1">Color</label>
-                                <input
-                                  type="text"
-                                  value={variant.color}
-                                  onChange={(e) => updateVariant(variant.id, 'color', e.target.value)}
-                                  placeholder="White, Beige..."
-                                  className="w-full px-3 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
-                                />
-                              </div>
-
-                              {/* Product ID */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                               <div>
                                 <label className="block text-xs font-medium text-slate-600 mb-1">Product ID</label>
                                 <input
                                   type="text"
-                                  value={variant.productId || ''}
+                                  value={variant.productId}
                                   onChange={(e) => updateVariant(variant.id, 'productId', e.target.value)}
                                   placeholder="SKU-001"
                                   className="w-full px-3 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
                                 />
                               </div>
 
+                              <div>
+                                <label className="block text-xs font-medium text-slate-600 mb-1">Material</label>
+                                <select
+                                  value={variant.material}
+                                  onChange={(e) => updateVariant(variant.id, 'material', e.target.value)}
+                                  className="w-full px-3 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
+                                >
+                                  <option value="">Select material</option>
+                                  {MATERIAL_TYPES.map((material) => (
+                                    <option key={material} value={material}>
+                                      {material}
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
 
-                              {/* Size */}
+                              <div>
+                                <label className="block text-xs font-medium text-slate-600 mb-1">Finish</label>
+                                <select
+                                  value={variant.finish}
+                                  onChange={(e) => updateVariant(variant.id, 'finish', e.target.value)}
+                                  className="w-full px-3 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
+                                >
+                                  <option value="">Select finish</option>
+                                  {FINISH_TYPES.map((finish) => (
+                                    <option key={finish} value={finish}>
+                                      {finish}
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
+
+                              <div>
+                                <label className="block text-xs font-medium text-slate-600 mb-1">Color</label>
+                                <select
+                                  value={variant.color}
+                                  onChange={(e) => updateVariant(variant.id, 'color', e.target.value)}
+                                  className="w-full px-3 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
+                                >
+                                  <option value="">Select color</option>
+                                  {COLORS.map((color) => (
+                                    <option key={color} value={color}>
+                                      {color}
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
+
                               <div>
                                 <label className="block text-xs font-medium text-slate-600 mb-1">Size</label>
                                 <input
@@ -862,20 +864,19 @@ export function SimpleProductForm() {
                                 />
                               </div>
 
-                              {/* Finish */}
                               <div>
-                                <label className="block text-xs font-medium text-slate-600 mb-1">Finish</label>
-                                <select name="finish" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all">
-                                  <option value="">Select finish</option>
-                                  {FINISH_TYPES.map((finish) => (
-                                    <option key={finish} value={finish}>
-                                      {finish}
-                                    </option>
-                                  ))}
+                                <label className="block text-xs font-medium text-slate-600 mb-1">Unit</label>
+                                <select
+                                  value={variant.unit}
+                                  onChange={(e) => updateVariant(variant.id, 'unit', e.target.value)}
+                                  className="w-full px-3 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
+                                >
+                                  <option value="inches">Inches</option>
+                                  <option value="cm">CM</option>
+                                  <option value="mm">MM</option>
                                 </select>
                               </div>
 
-                              {/* Price */}
                               <div>
                                 <label className="block text-xs font-medium text-slate-600 mb-1">Price (₹)</label>
                                 <input
@@ -887,7 +888,17 @@ export function SimpleProductForm() {
                                 />
                               </div>
 
-                              {/* Stock */}
+                              <div>
+                                <label className="block text-xs font-medium text-slate-600 mb-1">MRP (₹)</label>
+                                <input
+                                  type="number"
+                                  value={variant.cuttedPrice}
+                                  onChange={(e) => updateVariant(variant.id, 'cuttedPrice', e.target.value)}
+                                  placeholder="1499"
+                                  className="w-full px-3 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
+                                />
+                              </div>
+
                               <div>
                                 <label className="block text-xs font-medium text-slate-600 mb-1">Stock</label>
                                 <input
@@ -899,10 +910,97 @@ export function SimpleProductForm() {
                                 />
                               </div>
                             </div>
+
+                            {/* Variant Images */}
+                            <div className="mt-6 pt-6 border-t border-slate-200">
+                              <label className="block text-sm font-medium text-slate-700 mb-3">
+                                Variant Images {variant.images.length > 0 && `(${variant.images.length})`}
+                              </label>
+
+                              <div className="relative border-2 border-dashed border-slate-300 bg-white rounded-xl hover:border-slate-400 transition-all">
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  multiple
+                                  onChange={(e) => handleVariantImageSelect(variant.id, e.target.files)}
+                                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                                />
+                                <div className="py-8 px-4 text-center pointer-events-none">
+                                  <FiUpload className="w-8 h-8 mx-auto mb-2 text-slate-400" />
+                                  <p className="text-xs font-medium text-slate-600 mb-1">
+                                    Click to upload variant images
+                                  </p>
+                                  <p className="text-xs text-slate-500">
+                                    PNG, JPG, GIF up to 10MB
+                                  </p>
+                                </div>
+                              </div>
+
+                              {variant.images.length > 0 && (
+                                <div className="mt-4">
+                                  <div className="flex items-center justify-between mb-2">
+                                    <p className="text-xs font-medium text-slate-600">
+                                      Selected Images
+                                    </p>
+                                    <p className="text-xs text-slate-500">
+                                      Click <FiStar className="inline w-3 h-3" /> for featured
+                                    </p>
+                                  </div>
+                                  <div className="grid grid-cols-3 md:grid-cols-4 gap-3">
+                                    {variant.images.map((image, imgIndex) => (
+                                      <div
+                                        key={image.id}
+                                        className={`relative group rounded-lg overflow-hidden border-2 transition-all ${imgIndex === variant.featuredImageIndex
+                                          ? 'border-orange-500 ring-2 ring-orange-200'
+                                          : 'border-slate-200 hover:border-slate-300'
+                                          }`}
+                                      >
+                                        <div className="aspect-square bg-slate-100">
+                                          <img
+                                            src={image.preview}
+                                            alt={`Variant ${index + 1} Image ${imgIndex + 1}`}
+                                            className="w-full h-full object-cover"
+                                          />
+                                        </div>
+
+                                        {imgIndex === variant.featuredImageIndex && (
+                                          <div className="absolute top-1 left-1 bg-orange-500 text-white px-1.5 py-0.5 rounded text-xs font-medium flex items-center gap-0.5">
+                                            <FiStar className="w-2.5 h-2.5 fill-current" />
+                                            Featured
+                                          </div>
+                                        )}
+
+                                        <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100">
+                                          <button
+                                            type="button"
+                                            onClick={() => setVariantFeaturedImage(variant.id, imgIndex)}
+                                            className="p-1.5 bg-white rounded-md hover:bg-orange-500 hover:text-white transition-colors"
+                                            title="Set as featured"
+                                          >
+                                            <FiStar className={`w-3 h-3 ${imgIndex === variant.featuredImageIndex ? 'fill-current' : ''}`} />
+                                          </button>
+                                          <button
+                                            type="button"
+                                            onClick={() => removeVariantImage(variant.id, image.id)}
+                                            className="p-1.5 bg-white text-red-600 rounded-md hover:bg-red-600 hover:text-white transition-colors"
+                                            title="Remove image"
+                                          >
+                                            <FiTrash2 className="w-3 h-3" />
+                                          </button>
+                                        </div>
+
+                                        <div className="absolute bottom-1 right-1 bg-black bg-opacity-60 text-white px-1.5 py-0.5 rounded text-xs font-medium">
+                                          {imgIndex + 1}
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
                           </div>
                         ))}
 
-                        {/* Add Variant Button */}
                         <button
                           type="button"
                           onClick={addVariant}
@@ -912,12 +1010,10 @@ export function SimpleProductForm() {
                           <span className="text-sm font-medium">Add Another Variant</span>
                         </button>
 
-                        {/* Helpful Note */}
                         <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
                           <p className="text-xs text-blue-800 leading-relaxed">
-                            <strong>💡 Tip:</strong> Each variant should have at least one unique attribute (Color, Size, or Finish).
-                            For example: If you have different colors, fill in the Color field for each variant.
-                            If you have different sizes, fill in the Size field. You can leave other fields empty if not applicable.
+                            <strong>💡 Tip:</strong> Each variant is pre-filled with values from the main specifications form above.
+                            You can modify any field for each variant. Each variant can have its own set of images - upload them in the variant's image section.
                           </p>
                         </div>
                       </div>
@@ -928,10 +1024,59 @@ export function SimpleProductForm() {
             </AccordionContent>
           </AccordionItem>
 
-          {/* 6. Product Tags */}
+          {/* 4. Highlights */}
+          <AccordionItem value="highlights" className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
+            <AccordionTrigger className="px-8 py-6 hover:no-underline hover:bg-slate-50 transition-colors">
+              <h2 className="text-xl font-medium text-slate-900">4. Highlights</h2>
+            </AccordionTrigger>
+            <AccordionContent className="px-8 pb-8">
+              <div className="space-y-6 pt-4">
+                <div className="space-y-3">
+                  <label className="block text-sm font-medium text-slate-700">Product Highlights</label>
+                  <input name="highlight1" placeholder="Highlight 1" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
+                  <input name="highlight2" placeholder="Highlight 2" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
+                  <input name="highlight3" placeholder="Highlight 3" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
+                  <input name="highlight4" placeholder="Highlight 4" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
+                  <input name="highlight5" placeholder="Highlight 5" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
+                  <input name="highlight6" placeholder="Highlight 6" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
+                </div>
+
+                <div className="pt-4">
+                  <label className="block text-sm font-medium text-slate-700 mb-3">Technical Specifications</label>
+                  <div className="space-y-3">
+                    {Array.from({ length: specCount }, (_, index) => (
+                      <div key={index} className="grid grid-cols-2 gap-4">
+                        <input
+                          name={`specTitle${index + 1}`}
+                          placeholder={`Specification Title ${index + 1}`}
+                          className="px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
+                        />
+                        <input
+                          name={`specDesc${index + 1}`}
+                          placeholder={`Specification Description ${index + 1}`}
+                          className="px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
+                        />
+                      </div>
+                    ))}
+
+                    <button
+                      type="button"
+                      onClick={() => setSpecCount(specCount + 1)}
+                      className="w-full py-3 px-4 border-2 border-dashed border-slate-300 text-slate-600 rounded-xl hover:border-slate-400 hover:bg-slate-50 transition-all flex items-center justify-center gap-2 group"
+                    >
+                      <FiPlus className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                      <span className="text-sm font-medium">Add Specification</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+
+          {/* 5. Product Tags */}
           <AccordionItem value="tags" className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
             <AccordionTrigger className="px-8 py-6 hover:no-underline hover:bg-slate-50 transition-colors">
-              <h2 className="text-xl font-medium text-slate-900">6. Product Tags</h2>
+              <h2 className="text-xl font-medium text-slate-900">5. Product Tags</h2>
             </AccordionTrigger>
             <AccordionContent className="px-8 pb-8">
               <div className="pt-4">
@@ -940,7 +1085,6 @@ export function SimpleProductForm() {
                 </label>
 
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  {/* Popular */}
                   <label className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200 hover:bg-blue-50 hover:border-blue-300 transition-all cursor-pointer group">
                     <input
                       type="checkbox"
@@ -953,7 +1097,6 @@ export function SimpleProductForm() {
                     </span>
                   </label>
 
-                  {/* Trending */}
                   <label className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200 hover:bg-yellow-50 hover:border-yellow-300 transition-all cursor-pointer group">
                     <input
                       type="checkbox"
@@ -966,7 +1109,6 @@ export function SimpleProductForm() {
                     </span>
                   </label>
 
-                  {/* New */}
                   <label className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200 hover:bg-green-50 hover:border-green-300 transition-all cursor-pointer group">
                     <input
                       type="checkbox"
@@ -979,7 +1121,6 @@ export function SimpleProductForm() {
                     </span>
                   </label>
 
-                  {/* Premium */}
                   <label className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200 hover:bg-purple-50 hover:border-purple-300 transition-all cursor-pointer group">
                     <input
                       type="checkbox"
@@ -992,7 +1133,6 @@ export function SimpleProductForm() {
                     </span>
                   </label>
 
-                  {/* Exclusive */}
                   <label className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200 hover:bg-pink-50 hover:border-pink-300 transition-all cursor-pointer group">
                     <input
                       type="checkbox"
@@ -1005,7 +1145,6 @@ export function SimpleProductForm() {
                     </span>
                   </label>
 
-                  {/* Classic */}
                   <label className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200 hover:bg-slate-100 hover:border-slate-400 transition-all cursor-pointer group">
                     <input
                       type="checkbox"
@@ -1018,7 +1157,6 @@ export function SimpleProductForm() {
                     </span>
                   </label>
 
-                  {/* Best Seller */}
                   <label className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200 hover:bg-orange-50 hover:border-orange-300 transition-all cursor-pointer group">
                     <input
                       type="checkbox"
@@ -1031,7 +1169,6 @@ export function SimpleProductForm() {
                     </span>
                   </label>
 
-                  {/* Limited Edition */}
                   <label className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200 hover:bg-red-50 hover:border-red-300 transition-all cursor-pointer group">
                     <input
                       type="checkbox"
@@ -1049,14 +1186,12 @@ export function SimpleProductForm() {
                   Selected tags will appear as badges on the product card for better visibility
                 </p>
 
-                {/* Applications Section */}
                 <div className="mt-8 pt-8 border-t border-slate-200">
                   <label className="block text-sm font-medium text-slate-700 mb-4">
                     Applications (Room Types)
                   </label>
 
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    {/* Kitchen */}
                     <label className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200 hover:bg-amber-50 hover:border-amber-300 transition-all cursor-pointer group">
                       <input
                         type="checkbox"
@@ -1069,7 +1204,6 @@ export function SimpleProductForm() {
                       </span>
                     </label>
 
-                    {/* Bathroom */}
                     <label className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200 hover:bg-cyan-50 hover:border-cyan-300 transition-all cursor-pointer group">
                       <input
                         type="checkbox"
@@ -1082,7 +1216,6 @@ export function SimpleProductForm() {
                       </span>
                     </label>
 
-                    {/* Living Room */}
                     <label className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200 hover:bg-indigo-50 hover:border-indigo-300 transition-all cursor-pointer group">
                       <input
                         type="checkbox"
@@ -1095,7 +1228,6 @@ export function SimpleProductForm() {
                       </span>
                     </label>
 
-                    {/* Bedroom */}
                     <label className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200 hover:bg-violet-50 hover:border-violet-300 transition-all cursor-pointer group">
                       <input
                         type="checkbox"
@@ -1108,7 +1240,6 @@ export function SimpleProductForm() {
                       </span>
                     </label>
 
-                    {/* Outdoor */}
                     <label className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200 hover:bg-emerald-50 hover:border-emerald-300 transition-all cursor-pointer group">
                       <input
                         type="checkbox"
@@ -1121,7 +1252,6 @@ export function SimpleProductForm() {
                       </span>
                     </label>
 
-                    {/* Commercial */}
                     <label className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200 hover:bg-gray-50 hover:border-gray-400 transition-all cursor-pointer group">
                       <input
                         type="checkbox"
@@ -1142,8 +1272,8 @@ export function SimpleProductForm() {
               </div>
             </AccordionContent>
           </AccordionItem>
-
         </Accordion>
+
         <div className="flex gap-4 pt-4">
           <button
             type="button"
@@ -1177,4 +1307,3 @@ export function SimpleProductForm() {
     </div>
   );
 }
-

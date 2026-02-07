@@ -20,6 +20,7 @@ export const SingleProduct = async ({
   let productPlainObject;
   try {
     productPlainObject = await getProduct(id);
+
     if (!productPlainObject) {
       // Fallback to dummy data
       // @ts-ignore - dummy data uses string IDs
