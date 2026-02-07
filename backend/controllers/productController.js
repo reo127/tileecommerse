@@ -92,28 +92,6 @@ exports.createProduct = asyncErrorHandler(async (req, res, next) => {
         });
     }
 
-
-    // Handle brand logo upload if provided
-    if (req.body.logo) {
-        const result = await cloudinary.v2.uploader.upload(req.body.logo, {
-            folder: "brands",
-        });
-        const brandLogo = {
-            public_id: result.public_id,
-            url: result.secure_url,
-        };
-
-        req.body.brand = {
-            name: req.body.brandname,
-            logo: brandLogo
-        };
-    } else if (req.body.brandname) {
-        // If only brand name is provided without logo
-        req.body.brand = {
-            name: req.body.brandname
-        };
-    }
-
     req.body.images = imagesLink;
     req.body.user = req.user.id;
 
@@ -122,6 +100,46 @@ exports.createProduct = asyncErrorHandler(async (req, res, next) => {
         specs.push(JSON.parse(s))
     });
     req.body.specifications = specs;
+
+    // Handle tags (if it's a string, convert to array)
+    if (req.body.tags && typeof req.body.tags === 'string') {
+        req.body.tags = JSON.parse(req.body.tags);
+    }
+
+    // Handle variants with images
+    if (req.body.variants && typeof req.body.variants === 'string') {
+        const variants = JSON.parse(req.body.variants);
+
+        // Process variant images
+        const processedVariants = [];
+        for (const variant of variants) {
+            const variantData = { ...variant };
+
+            // Upload variant images if they exist
+            if (variant.images && Array.isArray(variant.images) && variant.images.length > 0) {
+                const variantImagesLink = [];
+
+                for (let i = 0; i < variant.images.length; i++) {
+                    const result = await cloudinary.v2.uploader.upload(variant.images[i], {
+                        folder: "products/variants",
+                    });
+
+                    variantImagesLink.push({
+                        public_id: result.public_id,
+                        url: result.secure_url,
+                        isFeatured: i === (variant.featuredImageIndex || 0)
+                    });
+                }
+
+                variantData.images = variantImagesLink;
+                delete variantData.featuredImageIndex; // Remove this as we use isFeatured instead
+            }
+
+            processedVariants.push(variantData);
+        }
+
+        req.body.variants = processedVariants;
+    }
 
     // Handle tiles-specific fields
     if (req.body.dimensions) {
@@ -134,16 +152,6 @@ exports.createProduct = asyncErrorHandler(async (req, res, next) => {
 
     if (req.body.bulkPricing && typeof req.body.bulkPricing === 'string') {
         req.body.bulkPricing = JSON.parse(req.body.bulkPricing);
-    }
-
-    // Handle tags (if it's a string, convert to array)
-    if (req.body.tags && typeof req.body.tags === 'string') {
-        req.body.tags = JSON.parse(req.body.tags);
-    }
-
-    // Handle variants (if it's a string, parse it)
-    if (req.body.variants && typeof req.body.variants === 'string') {
-        req.body.variants = JSON.parse(req.body.variants);
     }
 
     const product = await Product.create(req.body);

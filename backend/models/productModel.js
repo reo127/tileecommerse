@@ -63,23 +63,6 @@ const productSchema = new mongoose.Schema({
             }
         }
     ],
-    brand: {
-        name: {
-            type: String,
-            required: false,
-            trim: true
-        },
-        logo: {
-            public_id: {
-                type: String,
-                required: false,
-            },
-            url: {
-                type: String,
-                required: false,
-            }
-        }
-    },
     category: {
         type: mongoose.Schema.ObjectId,
         ref: "Category",
@@ -208,17 +191,48 @@ const productSchema = new mongoose.Schema({
             required: false,
             trim: true
         },
+        material: {
+            type: String,
+            required: false,
+            trim: true
+        },
+        unit: {
+            type: String,
+            required: false,
+            trim: true
+        },
         price: {
             type: Number,
             required: false,
             min: [0, "Variant price cannot be negative"]
+        },
+        cuttedPrice: {
+            type: Number,
+            required: false,
+            min: [0, "Variant cutted price cannot be negative"]
         },
         stock: {
             type: Number,
             required: false,
             min: [0, "Variant stock cannot be negative"],
             default: 0
-        }
+        },
+        images: [
+            {
+                public_id: {
+                    type: String,
+                    required: false
+                },
+                url: {
+                    type: String,
+                    required: false
+                },
+                isFeatured: {
+                    type: Boolean,
+                    default: false
+                }
+            }
+        ]
     }],
 
     stock: {
@@ -226,11 +240,6 @@ const productSchema = new mongoose.Schema({
         required: [true, "Please enter product stock"],
         min: [0, "Stock cannot be negative"],
         default: 1
-    },
-    warranty: {
-        type: Number,
-        default: 1,
-        min: [0, "Warranty cannot be negative"]
     },
     ratings: {
         type: Number,
