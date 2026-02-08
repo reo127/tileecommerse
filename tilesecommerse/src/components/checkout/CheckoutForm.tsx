@@ -1,13 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useCart, useCartMutation } from "@/hooks/cart";
 import { getAllProducts } from "@/app/actions";
 import { toast } from "sonner";
 import LoadingButton from "@/components/ui/loadingButton";
 import { useValidateCoupon } from "@/hooks/coupon/mutations/useValidateCoupon";
-import { HiLocationMarker, HiUser, HiPhone, HiMail, HiTag, HiX, HiCheckCircle, HiShieldCheck } from "react-icons/hi";
+import { HiLocationMarker, HiUser, HiPhone, HiMail, HiTag, HiX, HiCheckCircle, HiShieldCheck, HiPlus, HiCheck } from "react-icons/hi";
 
 // Declare Razorpay on window object
 declare global {
@@ -26,6 +26,19 @@ const INDIAN_STATES = [
   "Delhi", "Jammu and Kashmir", "Ladakh", "Lakshadweep", "Puducherry"
 ];
 
+interface Address {
+  _id: string;
+  name: string;
+  phoneNo: number;
+  address: string;
+  city: string;
+  state: string;
+  country: string;
+  pincode: number;
+  addressType: string;
+  isDefault: boolean;
+}
+
 export const CheckoutForm = () => {
   const router = useRouter();
   const { items } = useCart();
@@ -35,6 +48,12 @@ export const CheckoutForm = () => {
 
   const [paymentMethod, setPaymentMethod] = useState("razorpay");
   const [upiId, setUpiId] = useState("");
+
+  // Address Management
+  const [savedAddresses, setSavedAddresses] = useState<Address[]>([]);
+  const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
+  const [useNewAddress, setUseNewAddress] = useState(false);
+  const [loadingAddresses, setLoadingAddresses] = useState(true);
 
   const [couponCode, setCouponCode] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState<{
@@ -62,6 +81,89 @@ export const CheckoutForm = () => {
     addressType: "home",
     deliveryInstructions: "",
   });
+
+  // Fetch saved addresses on mount
+  useEffect(() => {
+    fetchSavedAddresses();
+  }, []);
+
+  const fetchSavedAddresses = async () => {
+    try {
+      const token = localStorage.getItem('auth_token');
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000/api/v1'}/me`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+        credentials: 'include',
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        setSavedAddresses(data.user.addresses || []);
+
+        // Auto-select default address if exists
+        const defaultAddress = data.user.addresses?.find((addr: Address) => addr.isDefault);
+        if (defaultAddress && !useNewAddress) {
+          handleSelectAddress(defaultAddress);
+        } else if (data.user.addresses?.length === 0) {
+          setUseNewAddress(true);
+        }
+
+        // Pre-fill email from user data
+        if (data.user.email) {
+          setFormData(prev => ({ ...prev, email: data.user.email }));
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching addresses:', error);
+      setUseNewAddress(true);
+    } finally {
+      setLoadingAddresses(false);
+    }
+  };
+
+  const handleSelectAddress = (address: Address) => {
+    setSelectedAddressId(address._id);
+    setUseNewAddress(false);
+
+    // Auto-fill form with selected address
+    setFormData({
+      fullName: address.name,
+      email: formData.email, // Keep existing email
+      phoneNo: address.phoneNo.toString(),
+      alternatePhone: "",
+      addressLine1: address.address,
+      addressLine2: "",
+      landmark: "",
+      city: address.city,
+      state: address.state,
+      pinCode: address.pincode.toString(),
+      addressType: address.addressType,
+      deliveryInstructions: "",
+    });
+  };
+
+  const handleUseNewAddress = () => {
+    setUseNewAddress(true);
+    setSelectedAddressId(null);
+
+    // Clear address fields but keep email
+    setFormData({
+      fullName: "",
+      email: formData.email,
+      phoneNo: "",
+      alternatePhone: "",
+      addressLine1: "",
+      addressLine2: "",
+      landmark: "",
+      city: "",
+      state: "",
+      pinCode: "",
+      addressType: "home",
+      deliveryInstructions: "",
+    });
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setFormData({
@@ -446,151 +548,232 @@ export const CheckoutForm = () => {
 
             {/* Shipping Address */}
             <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                  <HiLocationMarker className="w-5 h-5 text-blue-600" />
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                    <HiLocationMarker className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <h2 className="text-xl font-bold text-slate-900">Delivery Address</h2>
                 </div>
-                <h2 className="text-xl font-bold text-slate-900">Delivery Address</h2>
+                {!useNewAddress && savedAddresses.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={handleUseNewAddress}
+                    className="flex items-center gap-2 text-sm text-orange-600 hover:text-orange-700 font-medium"
+                  >
+                    <HiPlus className="w-4 h-4" />
+                    Add New Address
+                  </button>
+                )}
               </div>
 
-              <div className="space-y-4">
-                {/* Address Type */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-3">
-                    Address Type <span className="text-red-500">*</span>
-                  </label>
-                  <div className="flex gap-3">
-                    {['home', 'office', 'other'].map((type) => (
-                      <label
-                        key={type}
-                        className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 border-2 rounded-xl cursor-pointer transition-all ${formData.addressType === type
+              {/* Saved Addresses */}
+              {!useNewAddress && savedAddresses.length > 0 && (
+                <div className="mb-6 space-y-3">
+                  <p className="text-sm font-medium text-slate-700 mb-3">Select a saved address:</p>
+                  {savedAddresses.map((address) => (
+                    <div
+                      key={address._id}
+                      onClick={() => handleSelectAddress(address)}
+                      className={`relative p-4 border-2 rounded-xl cursor-pointer transition-all ${selectedAddressId === address._id
+                          ? 'border-orange-500 bg-orange-50'
+                          : 'border-slate-200 hover:border-slate-300'
+                        }`}
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5 ${selectedAddressId === address._id
+                            ? 'border-orange-500 bg-orange-500'
+                            : 'border-slate-300'
+                          }`}>
+                          {selectedAddressId === address._id && (
+                            <HiCheck className="w-3 h-3 text-white" />
+                          )}
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <p className="font-semibold text-slate-900">{address.name}</p>
+                            <span className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded capitalize">
+                              {address.addressType}
+                            </span>
+                            {address.isDefault && (
+                              <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded font-medium">
+                                Default
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-sm text-slate-600 mb-1">{address.address}</p>
+                          <p className="text-sm text-slate-600">
+                            {address.city}, {address.state} - {address.pincode}
+                          </p>
+                          <p className="text-sm text-slate-600 mt-1">
+                            <HiPhone className="inline w-3 h-3 mr-1" />
+                            {address.phoneNo}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* New Address Form */}
+              {(useNewAddress || savedAddresses.length === 0) && (
+                <div className="space-y-4">
+                  {savedAddresses.length > 0 && (
+                    <div className="flex items-center justify-between mb-4">
+                      <p className="text-sm font-medium text-slate-700">Enter new address:</p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setUseNewAddress(false);
+                          const defaultAddr = savedAddresses.find(a => a.isDefault) || savedAddresses[0];
+                          if (defaultAddr) handleSelectAddress(defaultAddr);
+                        }}
+                        className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                      >
+                        Use Saved Address
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Address Type */}
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-3">
+                      Address Type <span className="text-red-500">*</span>
+                    </label>
+                    <div className="flex gap-3">
+                      {['home', 'office', 'other'].map((type) => (
+                        <label
+                          key={type}
+                          className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 border-2 rounded-xl cursor-pointer transition-all ${formData.addressType === type
                             ? 'border-orange-500 bg-orange-50 text-orange-700'
                             : 'border-slate-200 hover:border-slate-300'
-                          }`}
-                      >
-                        <input
-                          type="radio"
-                          name="addressType"
-                          value={type}
-                          checked={formData.addressType === type}
-                          onChange={handleChange}
-                          className="sr-only"
-                        />
-                        <span className="font-medium capitalize">{type}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Address Line 1 <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="addressLine1"
-                    required
-                    value={formData.addressLine1}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
-                    placeholder="House No., Building Name"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Address Line 2 (Optional)
-                  </label>
-                  <input
-                    type="text"
-                    name="addressLine2"
-                    value={formData.addressLine2}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
-                    placeholder="Road Name, Area, Colony"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Landmark (Optional)
-                  </label>
-                  <input
-                    type="text"
-                    name="landmark"
-                    value={formData.landmark}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
-                    placeholder="E.g., Near Metro Station, Opposite Mall"
-                  />
-                </div>
-
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">
-                      City <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      name="city"
-                      required
-                      value={formData.city}
-                      onChange={handleChange}
-                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
-                      placeholder="City"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">
-                      State <span className="text-red-500">*</span>
-                    </label>
-                    <select
-                      name="state"
-                      required
-                      value={formData.state}
-                      onChange={handleChange}
-                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
-                    >
-                      <option value="">Select State</option>
-                      {INDIAN_STATES.map((state) => (
-                        <option key={state} value={state}>{state}</option>
+                            }`}
+                        >
+                          <input
+                            type="radio"
+                            name="addressType"
+                            value={type}
+                            checked={formData.addressType === type}
+                            onChange={handleChange}
+                            className="sr-only"
+                          />
+                          <span className="font-medium capitalize">{type}</span>
+                        </label>
                       ))}
-                    </select>
+                    </div>
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-2">
-                      PIN Code <span className="text-red-500">*</span>
+                      Address Line 1 <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
-                      name="pinCode"
+                      name="addressLine1"
                       required
-                      value={formData.pinCode}
+                      value={formData.addressLine1}
                       onChange={handleChange}
-                      maxLength={6}
-                      pattern="[0-9]{6}"
                       className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
-                      placeholder="6-digit PIN code"
+                      placeholder="House No., Building Name"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                      Address Line 2 (Optional)
+                    </label>
+                    <input
+                      type="text"
+                      name="addressLine2"
+                      value={formData.addressLine2}
+                      onChange={handleChange}
+                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
+                      placeholder="Road Name, Area, Colony"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                      Landmark (Optional)
+                    </label>
+                    <input
+                      type="text"
+                      name="landmark"
+                      value={formData.landmark}
+                      onChange={handleChange}
+                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
+                      placeholder="E.g., Near Metro Station, Opposite Mall"
+                    />
+                  </div>
+
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-2">
+                        City <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        name="city"
+                        required
+                        value={formData.city}
+                        onChange={handleChange}
+                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
+                        placeholder="City"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-2">
+                        State <span className="text-red-500">*</span>
+                      </label>
+                      <select
+                        name="state"
+                        required
+                        value={formData.state}
+                        onChange={handleChange}
+                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
+                      >
+                        <option value="">Select State</option>
+                        {INDIAN_STATES.map((state) => (
+                          <option key={state} value={state}>{state}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-2">
+                        PIN Code <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        name="pinCode"
+                        required
+                        value={formData.pinCode}
+                        onChange={handleChange}
+                        maxLength={6}
+                        pattern="[0-9]{6}"
+                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
+                        placeholder="6-digit PIN code"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                      Delivery Instructions (Optional)
+                    </label>
+                    <textarea
+                      name="deliveryInstructions"
+                      value={formData.deliveryInstructions}
+                      onChange={handleChange}
+                      rows={3}
+                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all resize-none"
+                      placeholder="Any specific instructions for delivery..."
                     />
                   </div>
                 </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Delivery Instructions (Optional)
-                  </label>
-                  <textarea
-                    name="deliveryInstructions"
-                    value={formData.deliveryInstructions}
-                    onChange={handleChange}
-                    rows={3}
-                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all resize-none"
-                    placeholder="Any specific instructions for delivery..."
-                  />
-                </div>
-              </div>
+              )}
             </div>
           </div>
 
@@ -656,8 +839,8 @@ export const CheckoutForm = () => {
                 <div className="space-y-3">
                   {/* Razorpay Option */}
                   <label className={`block p-4 border-2 rounded-xl cursor-pointer transition-all ${paymentMethod === 'razorpay'
-                      ? 'border-orange-500 bg-orange-50'
-                      : 'border-slate-200 hover:border-slate-300'
+                    ? 'border-orange-500 bg-orange-50'
+                    : 'border-slate-200 hover:border-slate-300'
                     }`}>
                     <div className="flex items-center gap-3">
                       <input
@@ -683,8 +866,8 @@ export const CheckoutForm = () => {
 
                   {/* UPI Option */}
                   <label className={`block p-4 border-2 rounded-xl cursor-pointer transition-all ${paymentMethod === 'upi'
-                      ? 'border-orange-500 bg-orange-50'
-                      : 'border-slate-200 hover:border-slate-300'
+                    ? 'border-orange-500 bg-orange-50'
+                    : 'border-slate-200 hover:border-slate-300'
                     }`}>
                     <div className="flex items-center gap-3">
                       <input
@@ -723,8 +906,8 @@ export const CheckoutForm = () => {
 
                   {/* COD Option */}
                   <label className={`block p-4 border-2 rounded-xl cursor-pointer transition-all ${paymentMethod === 'cod'
-                      ? 'border-orange-500 bg-orange-50'
-                      : 'border-slate-200 hover:border-slate-300'
+                    ? 'border-orange-500 bg-orange-50'
+                    : 'border-slate-200 hover:border-slate-300'
                     }`}>
                     <div className="flex items-center gap-3">
                       <input
