@@ -300,3 +300,161 @@ exports.deleteUser = asyncErrorHandler(async (req, res, next) => {
         success: true
     });
 });
+// ADDRESS MANAGEMENT
+
+// Add New Address
+exports.addAddress = asyncErrorHandler(async (req, res, next) => {
+    const user = await User.findById(req.user.id);
+
+    if (!user) {
+        return next(new ErrorHandler("User not found", 404));
+    }
+
+    const { name, phoneNo, address, city, state, country, pincode, addressType, isDefault } = req.body;
+
+    // If this is set as default, unset all other defaults
+    if (isDefault) {
+        user.addresses.forEach(addr => {
+            addr.isDefault = false;
+        });
+    }
+
+    // If this is the first address, make it default
+    const makeDefault = user.addresses.length === 0 || isDefault;
+
+    user.addresses.push({
+        name,
+        phoneNo,
+        address,
+        city,
+        state,
+        country: country || "India",
+        pincode,
+        addressType: addressType || "home",
+        isDefault: makeDefault
+    });
+
+    await user.save();
+
+    res.status(201).json({
+        success: true,
+        message: "Address added successfully",
+        addresses: user.addresses
+    });
+});
+
+// Update Address
+exports.updateAddress = asyncErrorHandler(async (req, res, next) => {
+    const user = await User.findById(req.user.id);
+
+    if (!user) {
+        return next(new ErrorHandler("User not found", 404));
+    }
+
+    const addressIndex = user.addresses.findIndex(
+        addr => addr._id.toString() === req.params.addressId
+    );
+
+    if (addressIndex === -1) {
+        return next(new ErrorHandler("Address not found", 404));
+    }
+
+    const { name, phoneNo, address, city, state, country, pincode, addressType, isDefault } = req.body;
+
+    // If this is set as default, unset all other defaults
+    if (isDefault) {
+        user.addresses.forEach(addr => {
+            addr.isDefault = false;
+        });
+    }
+
+    // Update the address
+    user.addresses[addressIndex] = {
+        ...user.addresses[addressIndex],
+        name,
+        phoneNo,
+        address,
+        city,
+        state,
+        country: country || "India",
+        pincode,
+        addressType: addressType || "home",
+        isDefault: isDefault || user.addresses[addressIndex].isDefault
+    };
+
+    await user.save();
+
+    res.status(200).json({
+        success: true,
+        message: "Address updated successfully",
+        addresses: user.addresses
+    });
+});
+
+// Delete Address
+exports.deleteAddress = asyncErrorHandler(async (req, res, next) => {
+    const user = await User.findById(req.user.id);
+
+    if (!user) {
+        return next(new ErrorHandler("User not found", 404));
+    }
+
+    const addressIndex = user.addresses.findIndex(
+        addr => addr._id.toString() === req.params.addressId
+    );
+
+    if (addressIndex === -1) {
+        return next(new ErrorHandler("Address not found", 404));
+    }
+
+    const wasDefault = user.addresses[addressIndex].isDefault;
+
+    // Remove the address
+    user.addresses.splice(addressIndex, 1);
+
+    // If deleted address was default and there are other addresses, make the first one default
+    if (wasDefault && user.addresses.length > 0) {
+        user.addresses[0].isDefault = true;
+    }
+
+    await user.save();
+
+    res.status(200).json({
+        success: true,
+        message: "Address deleted successfully",
+        addresses: user.addresses
+    });
+});
+
+// Set Default Address
+exports.setDefaultAddress = asyncErrorHandler(async (req, res, next) => {
+    const user = await User.findById(req.user.id);
+
+    if (!user) {
+        return next(new ErrorHandler("User not found", 404));
+    }
+
+    const addressIndex = user.addresses.findIndex(
+        addr => addr._id.toString() === req.params.addressId
+    );
+
+    if (addressIndex === -1) {
+        return next(new ErrorHandler("Address not found", 404));
+    }
+
+    // Unset all defaults
+    user.addresses.forEach(addr => {
+        addr.isDefault = false;
+    });
+
+    // Set the selected address as default
+    user.addresses[addressIndex].isDefault = true;
+
+    await user.save();
+
+    res.status(200).json({
+        success: true,
+        message: "Default address updated successfully",
+        addresses: user.addresses
+    });
+});

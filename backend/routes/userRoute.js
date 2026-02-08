@@ -1,5 +1,22 @@
 const express = require('express');
-const { registerUser, loginUser, logoutUser, getUserDetails, forgotPassword, resetPassword, updatePassword, updateProfile, getAllUsers, getSingleUser, updateUserRole, deleteUser } = require('../controllers/userController');
+const {
+    registerUser,
+    loginUser,
+    logoutUser,
+    getUserDetails,
+    forgotPassword,
+    resetPassword,
+    updatePassword,
+    updateProfile,
+    getAllUsers,
+    getSingleUser,
+    updateUserRole,
+    deleteUser,
+    addAddress,
+    updateAddress,
+    deleteAddress,
+    setDefaultAddress
+} = require('../controllers/userController');
 const { isAuthenticatedUser, authorizeRoles } = require('../middlewares/auth');
 
 const router = express.Router();
@@ -16,6 +33,12 @@ router.route('/password/reset/:token').put(resetPassword);
 router.route('/password/update').put(isAuthenticatedUser, updatePassword);
 
 router.route('/me/update').put(isAuthenticatedUser, updateProfile);
+
+// Address Management Routes
+router.route('/me/addresses/new').post(isAuthenticatedUser, addAddress);
+router.route('/me/addresses/:addressId').put(isAuthenticatedUser, updateAddress);
+router.route('/me/addresses/:addressId').delete(isAuthenticatedUser, deleteAddress);
+router.route('/me/addresses/:addressId/default').put(isAuthenticatedUser, setDefaultAddress);
 
 router.route("/admin/users").get(isAuthenticatedUser, authorizeRoles("admin", "superadmin"), getAllUsers);
 
