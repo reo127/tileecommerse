@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { FaPhone, FaCalculator, FaStore, FaSearch, FaUser } from "react-icons/fa";
@@ -11,6 +12,8 @@ import type { Manager } from "@/hooks/useManager";
 
 export const TopBar = ({ editProfileManager }: { editProfileManager: Manager }) => {
   const { data: session, isPending } = useSession();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   return (
     <div className="text-white bg-gradient-to-r from-red-600 via-red-500 to-orange-500">
@@ -90,7 +93,7 @@ export const TopBar = ({ editProfileManager }: { editProfileManager: Manager }) 
             </Link>
 
             {/* Sign In / User */}
-            {isPending ? (
+            {!mounted || isPending ? (
               <div className="w-12 h-12 bg-gray-700 rounded-full animate-pulse" />
             ) : session?.user ? (
               <button

@@ -4,7 +4,7 @@ import {
   GridProducts,
   ProductItem,
 } from "@/components/products";
-import { type ProductCategory, ProductCategoryZod } from "@/schemas";
+import { type ProductCategory } from "@/schemas";
 import { Suspense } from "react";
 
 interface Props {
@@ -32,7 +32,7 @@ const CategoryPage = async ({ params }: Props) => {
   return (
     <section className="pt-14">
       <Suspense fallback={<ProductsSkeleton items={6} />}>
-        <CategoryProducts category={ProductCategoryZod.parse(category)} />
+        <CategoryProducts category={category} />
       </Suspense>
     </section>
   );

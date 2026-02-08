@@ -11,6 +11,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { useCategories } from "@/hooks/category/queries/useCategories";
+import { colorMapping } from "@/constants/colors";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000/api/v1';
 
@@ -802,7 +803,14 @@ export default function EditProductPage({ params }: EditProductPageProps) {
                 {/* Color */}
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">Color</label>
-                  <input name="color" defaultValue={product.color} placeholder="White, Beige, Gray..." className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
+                  <select name="color" defaultValue={product.color} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all">
+                    <option value="">Select color</option>
+                    {Object.keys(colorMapping).map((color) => (
+                      <option key={color} value={color}>
+                        {color.charAt(0).toUpperCase() + color.slice(1)}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                 {/* Size */}
@@ -940,7 +948,14 @@ export default function EditProductPage({ params }: EditProductPageProps) {
                             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                               <div>
                                 <label className="block text-xs font-medium text-slate-600 mb-1">Color</label>
-                                <input type="text" value={variant.color} onChange={(e) => updateVariant(variant.id, 'color', e.target.value)} placeholder="White, Beige..." className="w-full px-3 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
+                                <select value={variant.color} onChange={(e) => updateVariant(variant.id, 'color', e.target.value)} className="w-full px-3 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all">
+                                  <option value="">Select color</option>
+                                  {Object.keys(colorMapping).map((color) => (
+                                    <option key={color} value={color}>
+                                      {color.charAt(0).toUpperCase() + color.slice(1)}
+                                    </option>
+                                  ))}
+                                </select>
                               </div>
                               <div>
                                 <label className="block text-xs font-medium text-slate-600 mb-1">Product ID</label>

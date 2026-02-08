@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import { getUser } from "@/lib/auth/server";
 import Link from "next/link";
 import { OrdersList } from "@/components/orders/OrdersList";

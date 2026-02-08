@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import { Suspense } from "react";
 import { getAllProducts } from "./actions";
 import { ErrorBoundary } from "react-error-boundary";

@@ -42,13 +42,7 @@ const MATERIAL_TYPES = [
   'Solar Glass', 'Silicon (Solar Grade)', 'Rubber'
 ];
 
-// colors for products
-const COLORS = [
-  'White', 'Grey', 'Beige', 'Black', 'Brown', 'Cream', 'Ivory',
-  'Sand', 'Stone', 'Marble', 'Wood', 'Chrome', 'Stainless Steel', 'Gold',
-  'Rose Gold', 'Gunmetal', 'Copper', 'Bronze', 'Blue',
-  'Green', 'Red', 'Yellow', 'Pink', 'Multicolour', 'Transparent'
-];
+import { colorMapping } from "@/constants/colors";
 
 const fileToBase64 = (file: File): Promise<string> => {
   return new Promise((resolve, reject) => {
@@ -597,9 +591,9 @@ export function SimpleProductForm() {
                     className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
                   >
                     <option value="">Select color</option>
-                    {COLORS.map((color) => (
+                    {Object.keys(colorMapping).map((color) => (
                       <option key={color} value={color}>
-                        {color}
+                        {color.charAt(0).toUpperCase() + color.slice(1)}
                       </option>
                     ))}
                   </select>
@@ -889,9 +883,9 @@ export function SimpleProductForm() {
                                   className="w-full px-3 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
                                 >
                                   <option value="">Select color</option>
-                                  {COLORS.map((color) => (
+                                  {Object.keys(colorMapping).map((color) => (
                                     <option key={color} value={color}>
-                                      {color}
+                                      {color.charAt(0).toUpperCase() + color.slice(1)}
                                     </option>
                                   ))}
                                 </select>

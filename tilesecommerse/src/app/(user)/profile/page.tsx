@@ -59,6 +59,8 @@ export default function ProfilePage() {
   const [user, setUser] = useState<User | null>(null);
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [isAddressUpdating, setIsAddressUpdating] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [showAddressForm, setShowAddressForm] = useState(false);
   const [editingAddress, setEditingAddress] = useState<Address | null>(null);
@@ -130,6 +132,7 @@ export default function ProfilePage() {
   };
 
   const handleUpdateProfile = async () => {
+    setIsUpdating(true);
     try {
       const token = localStorage.getItem("auth_token");
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000/api/v1'}/me/update`, {
@@ -153,10 +156,13 @@ export default function ProfilePage() {
     } catch (error) {
       console.error("Error updating profile:", error);
       toast.error("Failed to update profile");
+    } finally {
+      setIsUpdating(false);
     }
   };
 
   const handleAddAddress = async () => {
+    setIsAddressUpdating(true);
     try {
       const token = localStorage.getItem("auth_token");
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000/api/v1'}/me/addresses/new`, {
@@ -185,12 +191,14 @@ export default function ProfilePage() {
     } catch (error) {
       console.error("Error adding address:", error);
       toast.error("Failed to add address");
+    } finally {
+      setIsAddressUpdating(false);
     }
   };
 
   const handleUpdateAddress = async () => {
     if (!editingAddress) return;
-
+    setIsAddressUpdating(true);
     try {
       const token = localStorage.getItem("auth_token");
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000/api/v1'}/me/addresses/${editingAddress._id}`, {
@@ -220,6 +228,8 @@ export default function ProfilePage() {
     } catch (error) {
       console.error("Error updating address:", error);
       toast.error("Failed to update address");
+    } finally {
+      setIsAddressUpdating(false);
     }
   };
 
@@ -438,6 +448,7 @@ export default function ProfilePage() {
                 {editMode && (
                   <div className="flex gap-3">
                     <LoadingButton
+                      loading={isUpdating}
                       onClick={handleUpdateProfile}
                       className="flex-1 px-6 py-3 bg-orange-500 text-white rounded-xl hover:bg-orange-600 transition-colors font-medium"
                     >
@@ -610,6 +621,7 @@ export default function ProfilePage() {
                           Cancel
                         </button>
                         <LoadingButton
+                          loading={isAddressUpdating}
                           onClick={editingAddress ? handleUpdateAddress : handleAddAddress}
                           className="flex-1 px-6 py-3 bg-orange-500 text-white rounded-xl hover:bg-orange-600 transition-colors font-medium"
                         >

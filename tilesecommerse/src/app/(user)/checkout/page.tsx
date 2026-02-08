@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import { Suspense } from "react";
 import { getUser } from "@/lib/auth/server";
 import { SVGLoadingIcon } from "@/components/ui/loader";

@@ -7,7 +7,6 @@ export const OrderWithDetailsSchema = z.any();
 export const InsertOrderItemSchema = z.any();
 export const InsertCustomerInfoSchema = z.any();
 export const InsertOrderProductSchema = z.any();
-export const ProductCategoryZod = z.enum(["living-room", "kitchen", "bathroom", "outdoor", "floor-tiles", "wall-tiles", "bathroom-tiles", "kitchen-tiles", "outdoor-tiles"]);
 export const ProductSizeEnum = z.enum(["12x12", "12x24", "16x16", "18x18", "24x24", "32x32"]);
 export const WishlistItemSchema = z.any();
 

@@ -1,3 +1,5 @@
+import { useState, useEffect } from 'react';
+
 /**
  * Auth Client for Backend Integration
  * Handles authentication with the tiles e-commerce backend API
@@ -154,32 +156,40 @@ export const authClient = {
     }
   },
 
-  useSession: () => ({ data: null, isPending: false, error: null }),
 };
 
 // useSession hook to get current user from localStorage
 export function useSession() {
-  if (typeof window === 'undefined') {
-    return {
-      data: { session: null, user: null },
-      isPending: false,
-      error: null,
-    };
-  }
-
-  const userStr = localStorage.getItem('user');
-  const token = localStorage.getItem('auth_token');
-
-  const user = userStr ? JSON.parse(userStr) : null;
-
-  return {
-    data: {
-      session: token ? { token } : null,
-      user: user,
-    },
-    isPending: false,
+  const [session, setSession] = useState<{ data: { session: { token: string } | null, user: any | null }, isPending: boolean, error: any | null }>({
+    data: { session: null, user: null },
+    isPending: true,
     error: null,
-  };
+  });
+
+  useEffect(() => {
+    try {
+      const userStr = localStorage.getItem('user');
+      const token = localStorage.getItem('auth_token');
+      const user = userStr ? JSON.parse(userStr) : null;
+
+      setSession({
+        data: {
+          session: token ? { token } : null,
+          user: user,
+        },
+        isPending: false,
+        error: null,
+      });
+    } catch (error) {
+      setSession({
+        data: { session: null, user: null },
+        isPending: false,
+        error: error,
+      });
+    }
+  }, []);
+
+  return session;
 }
 
 // signOut function
