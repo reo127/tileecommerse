@@ -208,11 +208,19 @@ export const OrdersList = () => {
                                         </p>
                                     </div>
                                     <div className="mt-2 md:mt-0">
-                                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${order.orderStatus === 'Delivered'
-                                                ? 'bg-green-100 text-green-800'
+                                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border-2 ${order.orderStatus === 'Delivered'
+                                                ? 'bg-green-100 text-green-800 border-green-200'
                                                 : order.orderStatus === 'Shipped'
-                                                    ? 'bg-blue-100 text-blue-800'
-                                                    : 'bg-yellow-100 text-yellow-800'
+                                                    ? 'bg-blue-100 text-blue-800 border-blue-200'
+                                                    : order.orderStatus === 'Packed'
+                                                        ? 'bg-purple-100 text-purple-800 border-purple-200'
+                                                        : order.orderStatus === 'Processing'
+                                                            ? 'bg-yellow-100 text-yellow-800 border-yellow-200'
+                                                            : order.orderStatus === 'Confirmed'
+                                                                ? 'bg-cyan-100 text-cyan-800 border-cyan-200'
+                                                                : order.orderStatus === 'Cancelled'
+                                                                    ? 'bg-red-100 text-red-800 border-red-200'
+                                                                    : 'bg-gray-100 text-gray-800 border-gray-200'
                                             }`}>
                                             {order.orderStatus}
                                         </span>

@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { HiArrowLeft, HiUser, HiMail, HiPhone, HiLocationMarker, HiCurrencyRupee, HiCalendar, HiTag } from "react-icons/hi";
 import { getOrderDetails } from "./actions";
+import OrderStatusManager from "@/components/admin/OrderStatusManager";
 
 export default async function AdminOrderDetailPage({
   params,
@@ -15,35 +16,68 @@ export default async function AdminOrderDetailPage({
     notFound();
   }
 
+  // Helper function to get status badge color
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'Delivered':
+        return 'bg-green-100 text-green-800 border-green-200';
+      case 'Shipped':
+        return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'Packed':
+        return 'bg-purple-100 text-purple-800 border-purple-200';
+      case 'Processing':
+        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'Confirmed':
+        return 'bg-cyan-100 text-cyan-800 border-cyan-200';
+      case 'Cancelled':
+        return 'bg-red-100 text-red-800 border-red-200';
+      case 'Pending':
+        return 'bg-gray-100 text-gray-800 border-gray-200';
+      default:
+        return 'bg-slate-100 text-slate-800 border-slate-200';
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-4">
-        <Link
-          href="/admin/orders"
-          className="w-10 h-10 flex items-center justify-center rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors"
-        >
-          <HiArrowLeft className="w-5 h-5 text-slate-600" />
-        </Link>
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900">
-            Order #{order._id.slice(-8).toUpperCase()}
-          </h1>
-          <p className="text-slate-600 mt-1">
-            Placed on {new Date(order.createdAt).toLocaleDateString("en-IN", {
-              year: "numeric",
-              month: "long",
-              day: "numeric",
-              hour: "2-digit",
-              minute: "2-digit",
-            })}
-          </p>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Link
+            href="/admin/orders"
+            className="w-10 h-10 flex items-center justify-center rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors"
+          >
+            <HiArrowLeft className="w-5 h-5 text-slate-600" />
+          </Link>
+          <div>
+            <h1 className="text-3xl font-bold text-slate-900">
+              Order #{order._id.slice(-8).toUpperCase()}
+            </h1>
+            <p className="text-slate-600 mt-1">
+              Placed on {new Date(order.createdAt).toLocaleDateString("en-IN", {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
+            </p>
+          </div>
+        </div>
+
+        {/* Current Status Badge */}
+        <div className={`px-4 py-2 rounded-xl border-2 font-semibold ${getStatusColor(order.orderStatus)}`}>
+          {order.orderStatus}
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Order Items */}
+        {/* Left Column - Order Items & Status Manager */}
         <div className="lg:col-span-2 space-y-6">
+          {/* Order Status Manager */}
+          <OrderStatusManager orderId={order._id} currentStatus={order.orderStatus} statusHistory={order.statusHistory || []} />
+
+          {/* Order Items */}
           <div className="bg-white rounded-xl shadow-md border border-slate-200 p-6">
             <h2 className="text-xl font-bold text-slate-900 mb-4">Order Items</h2>
             <div className="space-y-4">
@@ -88,27 +122,28 @@ export default async function AdminOrderDetailPage({
           </div>
         </div>
 
-        {/* Customer & Order Info */}
+        {/* Right Column - Customer & Order Info */}
         <div className="space-y-6">
-          {/* Order Status */}
+          {/* Payment Info */}
           <div className="bg-white rounded-xl shadow-md border border-slate-200 p-6">
-            <h2 className="text-xl font-bold text-slate-900 mb-4">Order Status</h2>
+            <h2 className="text-xl font-bold text-slate-900 mb-4">Payment Information</h2>
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-slate-600">Status</span>
-                <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${order.orderStatus === 'Delivered'
-                    ? 'bg-green-100 text-green-800'
-                    : order.orderStatus === 'Shipped'
-                      ? 'bg-blue-100 text-blue-800'
-                      : 'bg-yellow-100 text-yellow-800'
-                  }`}>
-                  {order.orderStatus}
+                <span className="text-slate-600">Payment ID</span>
+                <span className="font-mono text-xs text-slate-900 bg-slate-100 px-2 py-1 rounded">
+                  {order.paymentInfo?.id?.slice(0, 20)}...
                 </span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-slate-600">Payment</span>
+                <span className="text-slate-600">Method</span>
                 <span className="font-medium text-slate-900">
                   {order.paymentInfo?.status || "Cash on Delivery"}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-slate-600">Paid At</span>
+                <span className="font-medium text-slate-900">
+                  {new Date(order.paidAt).toLocaleDateString("en-IN")}
                 </span>
               </div>
             </div>
