@@ -93,10 +93,39 @@ const orderSchema = new mongoose.Schema({
     orderStatus: {
         type: String,
         required: true,
-        default: "Processing",
+        enum: [
+            "Pending",
+            "Confirmed",
+            "Processing",
+            "Packed",
+            "Shipped",
+            "Delivered",
+            "Cancelled"
+        ],
+        default: "Confirmed", // Default to Confirmed after payment
     },
-    deliveredAt: Date,
+    statusHistory: [
+        {
+            status: {
+                type: String,
+                enum: ["Pending", "Confirmed", "Processing", "Packed", "Shipped", "Delivered", "Cancelled"]
+            },
+            timestamp: {
+                type: Date,
+                default: Date.now
+            },
+            updatedBy: {
+                type: mongoose.Schema.ObjectId,
+                ref: "User"
+            },
+            note: String
+        }
+    ],
+    packedAt: Date,
     shippedAt: Date,
+    deliveredAt: Date,
+    cancelledAt: Date,
+    cancellationReason: String,
     createdAt: {
         type: Date,
         default: Date.now

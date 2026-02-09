@@ -84,6 +84,12 @@ exports.newOrder = asyncErrorHandler(async (req, res, next) => {
         ...couponData,
         paidAt: Date.now(),
         user: req.user._id,
+        orderStatus: "Confirmed", // Set to Confirmed after payment
+        statusHistory: [{
+            status: "Confirmed",
+            timestamp: Date.now(),
+            note: "Order placed and payment confirmed"
+        }]
     });
 
     await sendEmail({
@@ -168,26 +174,85 @@ exports.updateOrder = asyncErrorHandler(async (req, res, next) => {
         return next(new ErrorHandler("Order Not Found", 404));
     }
 
-    if (order.orderStatus === "Delivered") {
-        return next(new ErrorHandler("Already Delivered", 400));
+    const { status, note } = req.body;
+
+    // Validate status
+    const validStatuses = ["Pending", "Confirmed", "Processing", "Packed", "Shipped", "Delivered", "Cancelled"];
+    if (!validStatuses.includes(status)) {
+        return next(new ErrorHandler("Invalid order status", 400));
     }
 
-    if (req.body.status === "Shipped") {
+    // Prevent updating if already delivered
+    if (order.orderStatus === "Delivered") {
+        return next(new ErrorHandler("Cannot update status of delivered order", 400));
+    }
+
+    // Prevent updating if already cancelled
+    if (order.orderStatus === "Cancelled") {
+        return next(new ErrorHandler("Cannot update status of cancelled order", 400));
+    }
+
+    // Status flow validation (prevent going backward)
+    const statusFlow = {
+        "Pending": 0,
+        "Confirmed": 1,
+        "Processing": 2,
+        "Packed": 3,
+        "Shipped": 4,
+        "Delivered": 5,
+        "Cancelled": -1 // Can cancel at any stage
+    };
+
+    const currentStatusLevel = statusFlow[order.orderStatus];
+    const newStatusLevel = statusFlow[status];
+
+    // Allow cancellation at any stage
+    if (status !== "Cancelled" && newStatusLevel < currentStatusLevel) {
+        return next(new ErrorHandler(`Cannot change status from ${order.orderStatus} to ${status}`, 400));
+    }
+
+    // Update stock when order is shipped
+    if (status === "Shipped" && order.orderStatus !== "Shipped") {
         order.shippedAt = Date.now();
-        order.orderItems.forEach(async (i) => {
-            await updateStock(i.product, i.quantity)
+        order.orderItems.forEach(async (item) => {
+            await updateStock(item.product, item.quantity);
         });
     }
 
-    order.orderStatus = req.body.status;
-    if (req.body.status === "Delivered") {
+    // Update timestamps based on status
+    if (status === "Packed" && !order.packedAt) {
+        order.packedAt = Date.now();
+    }
+    if (status === "Shipped" && !order.shippedAt) {
+        order.shippedAt = Date.now();
+    }
+    if (status === "Delivered" && !order.deliveredAt) {
         order.deliveredAt = Date.now();
     }
+    if (status === "Cancelled" && !order.cancelledAt) {
+        order.cancelledAt = Date.now();
+        if (note) {
+            order.cancellationReason = note;
+        }
+    }
+
+    // Add to status history
+    order.statusHistory.push({
+        status: status,
+        timestamp: Date.now(),
+        updatedBy: req.user._id,
+        note: note || `Status updated to ${status}`
+    });
+
+    // Update order status
+    order.orderStatus = status;
 
     await order.save({ validateBeforeSave: false });
 
     res.status(200).json({
-        success: true
+        success: true,
+        message: `Order status updated to ${status}`,
+        order
     });
 });
 
