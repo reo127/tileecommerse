@@ -7,3 +7,7 @@ config/config.env
 *.env
 
 migrate-categories.js
+
+/docs
+docs
+docs/*
