@@ -115,7 +115,7 @@ exports.newOrder = asyncErrorHandler(async (req, res, next) => {
 // Get Single Order Details
 exports.getSingleOrderDetails = asyncErrorHandler(async (req, res, next) => {
 
-    const order = await Order.findById(req.params.id).populate("user", "name email");
+    const order = await Order.findById(req.params.id).populate("user", "name email _id");
 
     if (!order) {
         return next(new ErrorHandler("Order Not Found", 404));
@@ -131,7 +131,7 @@ exports.getSingleOrderDetails = asyncErrorHandler(async (req, res, next) => {
 // Get Logged In User Orders
 exports.myOrders = asyncErrorHandler(async (req, res, next) => {
 
-    const orders = await Order.find({ user: req.user._id }).populate("user", "name email");
+    const orders = await Order.find({ user: req.user._id }).populate("user", "name email _id");
 
     if (!orders) {
         return next(new ErrorHandler("Order Not Found", 404));
@@ -147,7 +147,7 @@ exports.myOrders = asyncErrorHandler(async (req, res, next) => {
 // Get All Orders ---ADMIN
 exports.getAllOrders = asyncErrorHandler(async (req, res, next) => {
 
-    const orders = await Order.find().populate("user", "name email");
+    const orders = await Order.find().populate("user", "name email _id");
 
     if (!orders) {
         return next(new ErrorHandler("Order Not Found", 404));
