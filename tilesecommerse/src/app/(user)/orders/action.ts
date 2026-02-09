@@ -34,51 +34,53 @@ export const getOrder = async (
 
     if (data.success && data.order) {
       // The backend response needs to be transformed to match the frontend's OrderWithDetails schema
-      // This is a temporary transformation and might need adjustments based on the actual schemas
       const order = data.order;
+
+      console.log('📦 Backend order data:', order);
+
       return {
         id: order._id,
-        orderNumber: order._id.slice(-8).toUpperCase(), // Or a real order number if available
-        userId: order.user.id,
+        orderNumber: order._id.slice(-8).toUpperCase(),
+        userId: order.user?._id || order.user || 'unknown',
         user: {
-          id: order.user.id,
-          name: order.user.name,
-          email: order.user.email,
+          id: order.user?._id || order.user || 'unknown',
+          name: order.user?.name || 'Guest User',
+          email: order.user?.email || 'no-email@example.com',
         },
         customerInfo: {
-          id: order._id, // Placeholder
+          id: order._id,
           orderId: order._id,
-          name: order.shippingInfo.name || order.user.name,
-          email: order.user.email,
-          phone: order.shippingInfo.phoneNo.toString(),
+          name: order.user?.name || 'Guest User',
+          email: order.user?.email || 'no-email@example.com',
+          phone: order.shippingInfo?.phoneNo?.toString() || '',
           address: {
-            line1: order.shippingInfo.address,
-            city: order.shippingInfo.city,
-            state: order.shippingInfo.state,
-            postal_code: order.shippingInfo.pincode.toString(),
-            country: order.shippingInfo.country,
+            line1: order.shippingInfo?.address || '',
+            city: order.shippingInfo?.city || '',
+            state: order.shippingInfo?.state || '',
+            postal_code: order.shippingInfo?.pincode?.toString() || '',
+            country: order.shippingInfo?.country || 'India',
           },
-          totalPrice: order.totalPrice,
+          totalPrice: order.totalPrice || 0,
         },
-        orderProducts: order.orderItems.map((item: any) => ({
-          id: item._id,
+        orderProducts: (order.orderItems || []).map((item: any) => ({
+          id: item._id || item.product,
           orderId: order._id,
-          variantId: item.product, // Assuming product ID is the variant ID
-          quantity: item.quantity,
-          size: "600x600", // Placeholder, as size is not in the backend model
+          variantId: item.product,
+          quantity: item.quantity || 1,
+          size: "600x600",
           variant: {
             id: item.product,
             productId: item.product,
-            color: "Default", // Placeholder
-            stripeId: "stripe_id_placeholder", // Placeholder
-            images: [{ id: 1, url: item.image, alt: item.name }],
+            color: "Default",
+            stripeId: "stripe_id_placeholder",
+            images: [{ id: 1, url: item.image || '', alt: item.name || 'Product' }],
             product: {
               id: item.product,
-              name: item.name,
-              description: "Product description placeholder", // Placeholder
-              price: item.price,
-              stripeId: "stripe_id_placeholder", // Placeholder
-              category: "uncategorized", // Placeholder
+              name: item.name || 'Product',
+              description: "Product description",
+              price: item.price || 0,
+              stripeId: "stripe_id_placeholder",
+              category: "uncategorized",
               createdAt: new Date().toISOString(),
               updatedAt: new Date().toISOString(),
             },
