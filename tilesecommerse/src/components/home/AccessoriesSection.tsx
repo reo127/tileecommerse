@@ -12,7 +12,7 @@ async function getCategoryProducts() {
   try {
     // First, get all categories to find the one we want
     const categoriesResponse = await fetch(`${API_BASE_URL}/categories`, {
-      cache: 'no-store',
+      next: { revalidate: 300 }, // Cache for 5 minutes
     });
 
     if (!categoriesResponse.ok) {
@@ -33,8 +33,8 @@ async function getCategoryProducts() {
 
     // Now get products for this category
     const productsResponse = await fetch(
-      `${API_BASE_URL}/products?category=${category._id}`,
-      { cache: 'no-store' }
+      `${API_BASE_URL}/products?category=${category._id}&limit=6`,
+      { next: { revalidate: 300 } } // Cache for 5 minutes, limit to 6 products
     );
 
     if (!productsResponse.ok) {

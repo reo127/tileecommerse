@@ -91,7 +91,7 @@ function transformProduct(backendProduct: any) {
 export async function getAllProducts() {
   try {
     const response = await fetch(`${API_BASE_URL}/products/all`, {
-      next: { revalidate: 60 }, // Cache for 60 seconds
+      next: { revalidate: 300 }, // Cache for 5 minutes
     });
 
     if (!response.ok) {
@@ -241,9 +241,22 @@ export async function getProduct(productId: string) {
 
 export async function getRandomProducts(limit: number = 4) {
   try {
-    const allProducts = await getAllProducts();
-    const shuffled = [...allProducts].sort(() => 0.5 - Math.random());
-    return shuffled.slice(0, limit);
+    // Fetch random products from backend instead of fetching all and shuffling
+    const response = await fetch(`${API_BASE_URL}/products/random?limit=${limit}`, {
+      next: { revalidate: 60 }, // Cache for 1 minute
+    });
+
+    if (!response.ok) {
+      // Fallback to old method if backend doesn't support random endpoint
+      console.warn('Random endpoint not available, falling back to client-side shuffle');
+      const allProducts = await getAllProducts();
+      const shuffled = [...allProducts].sort(() => 0.5 - Math.random());
+      return shuffled.slice(0, limit);
+    }
+
+    const data = await response.json();
+    const products = data.success ? data.products : [];
+    return products.map(transformProduct);
   } catch (error) {
     console.error('Error fetching random products:', error);
     return [];

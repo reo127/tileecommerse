@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { FaCalendar, FaUser, FaArrowRight, FaClock } from "react-icons/fa";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000/api/v1';
@@ -47,12 +48,30 @@ export const LatestBlogs = () => {
 
   useEffect(() => {
     setMounted(true);
-    fetchLatestBlogs();
+
+    const abortController = new AbortController();
+
+    const fetchWithAbort = async () => {
+      try {
+        await fetchLatestBlogs(abortController.signal);
+      } catch (error) {
+        if (error instanceof Error && error.name !== 'AbortError') {
+          console.error('Error fetching blogs:', error);
+        }
+      }
+    };
+
+    fetchWithAbort();
+
+    // Cleanup function
+    return () => {
+      abortController.abort();
+    };
   }, []);
 
-  const fetchLatestBlogs = async () => {
+  const fetchLatestBlogs = async (signal?: AbortSignal) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/blogs/latest?limit=4`);
+      const response = await fetch(`${API_BASE_URL}/blogs/latest?limit=4`, { signal });
 
       if (!response.ok) {
         console.error('Failed to fetch blogs:', response.status);
@@ -130,10 +149,13 @@ export const LatestBlogs = () => {
             {/* Image */}
             <div className="relative h-48 overflow-hidden bg-slate-50">
               {blog.featuredImage ? (
-                <img
+                <Image
                   src={blog.featuredImage}
                   alt={blog.title}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+                  fill
+                  sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                  className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+                  loading="lazy"
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-slate-300 bg-slate-50">

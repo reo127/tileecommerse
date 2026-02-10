@@ -17,8 +17,8 @@ const applicationTags = [
 
 async function getProductsByTag() {
   try {
-    const response = await fetch(`${API_BASE_URL}/products`, {
-      cache: 'no-store',
+    const response = await fetch(`${API_BASE_URL}/products?limit=50`, {
+      next: { revalidate: 300 }, // Cache for 5 minutes, limit to 50 products
     });
 
     if (!response.ok) {

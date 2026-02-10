@@ -21,7 +21,7 @@ export const RandomProducts = async ({
         </h2>
       )}
       <GridProducts className="grid-cols-auto-fill-110">
-        {randomProducts.map((p) => (
+        {randomProducts.map((p: any) => (
           <ProductItem key={p.id} product={p} />
         ))}
       </GridProducts>

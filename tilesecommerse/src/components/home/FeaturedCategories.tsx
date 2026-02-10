@@ -19,7 +19,7 @@ const tagColors: Record<string, string> = {
 async function getFeaturedCategories() {
   try {
     const response = await fetch(`${API_BASE_URL}/categories`, {
-      cache: 'no-store',
+      next: { revalidate: 300 }, // Cache for 5 minutes
     });
 
     if (!response.ok) {
@@ -38,8 +38,8 @@ async function getFeaturedCategories() {
       topLevelCategories.map(async (category: any) => {
         try {
           const productsResponse = await fetch(
-            `${API_BASE_URL}/products?category=${category._id}`,
-            { cache: 'no-store' }
+            `${API_BASE_URL}/products?category=${category._id}&limit=1`,
+            { next: { revalidate: 300 } } // Cache for 5 minutes, only fetch 1 product for image
           );
 
           if (!productsResponse.ok) {

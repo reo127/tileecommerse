@@ -43,6 +43,8 @@ export const OrdersList = () => {
     const [showSuccess, setShowSuccess] = useState(false);
 
     useEffect(() => {
+        let timeoutId: NodeJS.Timeout | null = null;
+
         // Check if redirected from successful order
         const params = new URLSearchParams(window.location.search);
         if (params.get('success') === 'true') {
@@ -50,10 +52,17 @@ export const OrdersList = () => {
             // Remove the success param from URL
             window.history.replaceState({}, '', '/orders');
             // Hide success message after 5 seconds
-            setTimeout(() => setShowSuccess(false), 5000);
+            timeoutId = setTimeout(() => setShowSuccess(false), 5000);
         }
 
         fetchOrders();
+
+        // Cleanup function
+        return () => {
+            if (timeoutId) {
+                clearTimeout(timeoutId);
+            }
+        };
     }, []);
 
     const fetchOrders = async () => {

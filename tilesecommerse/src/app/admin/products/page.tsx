@@ -51,10 +51,18 @@ export default function AdminProductsPage() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [productToDelete, setProductToDelete] = useState<{ id: string; name: string } | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [successTimeoutId, setSuccessTimeoutId] = useState<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     fetchProducts();
-  }, []);
+
+    // Cleanup function
+    return () => {
+      if (successTimeoutId) {
+        clearTimeout(successTimeoutId);
+      }
+    };
+  }, [successTimeoutId]);
 
   const fetchProducts = async () => {
     try {
@@ -82,8 +90,14 @@ export default function AdminProductsPage() {
   };
 
   const showSuccessMessage = (message: string) => {
+    // Clear any existing timeout
+    if (successTimeoutId) {
+      clearTimeout(successTimeoutId);
+    }
+
     setSuccessMessage(message);
-    setTimeout(() => setSuccessMessage(null), 5000);
+    const timeoutId = setTimeout(() => setSuccessMessage(null), 5000);
+    setSuccessTimeoutId(timeoutId);
   };
 
   const openDeleteModal = (productId: string, productName: string) => {

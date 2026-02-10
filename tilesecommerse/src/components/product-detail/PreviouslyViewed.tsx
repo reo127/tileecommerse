@@ -13,10 +13,15 @@ export const PreviouslyViewed = ({ currentProductId }: PreviouslyViewedProps) =>
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const abortController = new AbortController();
+
     const fetchProducts = async () => {
       try {
         const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000/api/v1';
-        const response = await fetch(`${API_BASE_URL}/products/all`);
+        // Only fetch 10 products instead of all
+        const response = await fetch(`${API_BASE_URL}/products?limit=10`, {
+          signal: abortController.signal
+        });
 
         if (response.ok) {
           const data = await response.json();
@@ -36,13 +41,22 @@ export const PreviouslyViewed = ({ currentProductId }: PreviouslyViewedProps) =>
           setProducts(filteredProducts);
         }
       } catch (error) {
-        console.error('Error fetching products:', error);
+        if (error instanceof Error && error.name === 'AbortError') {
+          console.log('Fetch aborted');
+        } else {
+          console.error('Error fetching products:', error);
+        }
       } finally {
         setLoading(false);
       }
     };
 
     fetchProducts();
+
+    // Cleanup function to abort fetch if component unmounts
+    return () => {
+      abortController.abort();
+    };
   }, [currentProductId]);
 
   if (loading) {

@@ -18,8 +18,8 @@ const tagColors: Record<string, string> = {
 
 async function getFeaturedProducts() {
   try {
-    const response = await fetch(`${API_BASE_URL}/products`, {
-      cache: 'no-store',
+    const response = await fetch(`${API_BASE_URL}/products?limit=30`, {
+      next: { revalidate: 300 }, // Cache for 5 minutes, limit to 30 products
     });
 
     if (!response.ok) {
