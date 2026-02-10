@@ -224,11 +224,60 @@ export const ProductInfo = ({ product, onVariantChange }: ProductInfoProps) => {
           <h3 className="text-sm font-semibold text-slate-800 mb-3">Available Colors</h3>
           <div className="flex flex-wrap gap-3">
             {uniqueColors.map((color: any) => {
-              // Find the variant for this color to get its image
+              // Find the variant for this color to get its featured image
               const variantForColor = allVariantOptions.find((v: any) => v.color === color);
-              const variantImage = variantForColor?.images?.[0]?.url || product.img;
 
+              console.log(`\n🔍 ========== Debugging Color: ${color} ==========`);
+              console.log('Variant found:', variantForColor);
+              console.log('Variant has images:', variantForColor?.images);
+              console.log('Images array:', JSON.stringify(variantForColor?.images, null, 2));
+              console.log('Images count:', variantForColor?.images?.length);
 
+              // Get the featured image from variant
+              let variantImage = null;
+
+              if (variantForColor?.images && Array.isArray(variantForColor.images) && variantForColor.images.length > 0) {
+                console.log(`📸 ${color} has ${variantForColor.images.length} images`);
+
+                // Log each image
+                variantForColor.images.forEach((img: any, idx: number) => {
+                  console.log(`  Image ${idx}:`, {
+                    url: img.url,
+                    isFeatured: img.isFeatured,
+                    type: typeof img.isFeatured
+                  });
+                });
+
+                // First, try to find the featured image
+                const featuredImage = variantForColor.images.find((img: any) => img.isFeatured === true);
+
+                if (featuredImage) {
+                  variantImage = featuredImage.url;
+                  console.log(`✅ ${color}: Found featured image:`, featuredImage.url);
+                } else {
+                  // If no featured image, use the first image
+                  variantImage = variantForColor.images[0]?.url;
+                  console.log(`📸 ${color}: No featured image, using first:`, variantImage);
+                }
+              } else {
+                console.log(`⚠️ ${color}: No images array or empty`);
+              }
+
+              // Fallback to main product image if variant has no images
+              if (!variantImage) {
+                console.log(`🔄 ${color}: Falling back to product images`);
+                if (product.images && Array.isArray(product.images) && product.images.length > 0) {
+                  const productFeaturedImage = product.images.find((img: any) => img.isFeatured === true);
+                  variantImage = productFeaturedImage?.url || product.images[0]?.url;
+                  console.log(`🔄 ${color}: Using product image:`, variantImage);
+                } else {
+                  variantImage = product.img || '/placeholder-image.jpg';
+                  console.log(`⚠️ ${color}: Using fallback:`, variantImage);
+                }
+              }
+
+              console.log(`🎨 ${color}: FINAL IMAGE:`, variantImage);
+              console.log(`========================================\n`);
 
               return (
                 <button
@@ -248,6 +297,11 @@ export const ProductInfo = ({ product, onVariantChange }: ProductInfoProps) => {
                       src={variantImage}
                       alt={`${color} variant`}
                       className="w-full h-full object-cover"
+                      onError={(e) => {
+                        console.error(`❌ Image failed to load for ${color}:`, variantImage);
+                        // Fallback to placeholder on error
+                        (e.target as HTMLImageElement).src = '/placeholder-image.jpg';
+                      }}
                     />
                   </div>
 
@@ -270,6 +324,7 @@ export const ProductInfo = ({ product, onVariantChange }: ProductInfoProps) => {
           </div>
         </div>
       )}
+
 
 
       {/* Available Sizes */}

@@ -82,8 +82,13 @@ export default function EditProductPage({ params }: EditProductPageProps) {
     size: string;
     productId: string;
     finish: string;
+    material: string;
+    unit: string;
     price: string;
+    cuttedPrice: string;
     stock: string;
+    images: Array<{ preview: string; id: string; isExisting?: boolean }>;
+    featuredImageIndex: number;
   }>>([]);
 
   const { categories, isLoading: categoriesLoading } = useCategories();
@@ -183,18 +188,37 @@ export default function EditProductPage({ params }: EditProductPageProps) {
           setSpecCount(Math.max(2, result.product.specifications.length));
         }
 
-        // FIX: Load existing variants
+        // FIX: Load existing variants with all fields including images
         if (result.product.hasVariants && result.product.variants && result.product.variants.length > 0) {
           setHasVariants(true);
-          const loadedVariants = result.product.variants.map((v: any, index: number) => ({
-            id: `variant-${index}`,
-            color: v.color || '',
-            size: v.size || '',
-            productId: v.productId || '',
-            finish: v.finish || '',
-            price: v.price?.toString() || '',
-            stock: v.stock?.toString() || ''
-          }));
+          const loadedVariants = result.product.variants.map((v: any, index: number) => {
+            // Load variant images
+            const variantImages = v.images && Array.isArray(v.images)
+              ? v.images.map((img: any, imgIndex: number) => ({
+                  preview: img.url,
+                  id: `existing-variant-${index}-img-${imgIndex}`,
+                  isExisting: true
+                }))
+              : [];
+
+            // Find featured image index
+            const featuredIndex = v.images?.findIndex((img: any) => img.isFeatured) || 0;
+
+            return {
+              id: `variant-${index}`,
+              color: v.color || '',
+              size: v.size || '',
+              productId: v.productId || '',
+              finish: v.finish || '',
+              material: v.material || '',
+              unit: v.unit || '',
+              price: v.price?.toString() || '',
+              cuttedPrice: v.cuttedPrice?.toString() || '',
+              stock: v.stock?.toString() || '',
+              images: variantImages,
+              featuredImageIndex: featuredIndex >= 0 ? featuredIndex : 0
+            };
+          });
           setVariants(loadedVariants);
         }
       } else {
@@ -216,8 +240,13 @@ export default function EditProductPage({ params }: EditProductPageProps) {
       size: '',
       productId: '',
       finish: '',
+      material: '',
+      unit: '',
       price: '',
-      stock: ''
+      cuttedPrice: '',
+      stock: '',
+      images: [],
+      featuredImageIndex: 0
     }]);
   };
 
@@ -229,6 +258,45 @@ export default function EditProductPage({ params }: EditProductPageProps) {
 
   const removeVariant = (id: string) => {
     setVariants(variants.filter(v => v.id !== id));
+  };
+
+  const handleVariantImageSelect = (variantId: string, files: FileList | null) => {
+    if (!files) return;
+
+    const newImages = Array.from(files).map(file => ({
+      file,
+      preview: URL.createObjectURL(file),
+      id: Math.random().toString(36).substr(2, 9),
+      isExisting: false
+    }));
+
+    setVariants(variants.map(v =>
+      v.id === variantId
+        ? { ...v, images: [...v.images, ...newImages] }
+        : v
+    ));
+  };
+
+  const removeVariantImage = (variantId: string, imageId: string) => {
+    setVariants(variants.map(v => {
+      if (v.id === variantId) {
+        const newImages = v.images.filter(img => img.id !== imageId);
+        return {
+          ...v,
+          images: newImages,
+          featuredImageIndex: v.featuredImageIndex >= newImages.length
+            ? Math.max(0, newImages.length - 1)
+            : v.featuredImageIndex
+        };
+      }
+      return v;
+    }));
+  };
+
+  const setVariantFeaturedImage = (variantId: string, index: number) => {
+    setVariants(variants.map(v =>
+      v.id === variantId ? { ...v, featuredImageIndex: index } : v
+    ));
   };
 
   const handleImageSelect = (files: FileList | null) => {
@@ -340,10 +408,48 @@ export default function EditProductPage({ params }: EditProductPageProps) {
         requestBody.tags = JSON.stringify(tags);
       }
 
-      // FIX: Handle variants properly
+      // FIX: Handle variants properly with image uploads
       requestBody.hasVariants = hasVariants;
       if (hasVariants && variants.length > 0) {
-        requestBody.variants = JSON.stringify(variants);
+        setUploadProgress('Processing variant images...');
+
+        const variantsToSend = [];
+        for (const variant of variants) {
+          const variantData: any = {
+            productId: variant.productId,
+            color: variant.color,
+            size: variant.size,
+            finish: variant.finish,
+            material: variant.material,
+            unit: variant.unit,
+            price: variant.price,
+            cuttedPrice: variant.cuttedPrice,
+            stock: variant.stock,
+            featuredImageIndex: variant.featuredImageIndex
+          };
+
+          // Process variant images - upload new ones, keep existing ones
+          if (variant.images && variant.images.length > 0) {
+            const variantImages = [];
+            for (let i = 0; i < variant.images.length; i++) {
+              const img = variant.images[i];
+              if (img.isExisting) {
+                // Keep existing image URL
+                variantImages.push(img.preview);
+              } else if ((img as any).file) {
+                // Upload new image
+                setUploadProgress(`Processing variant ${variants.indexOf(variant) + 1} image ${i + 1}...`);
+                const base64 = await fileToBase64((img as any).file);
+                variantImages.push(base64);
+              }
+            }
+            variantData.images = variantImages;
+          }
+
+          variantsToSend.push(variantData);
+        }
+
+        requestBody.variants = JSON.stringify(variantsToSend);
       }
 
       // Handle new images if uploaded
@@ -485,8 +591,8 @@ export default function EditProductPage({ params }: EditProductPageProps) {
           </div>
         )}
 
-        {/* FIX: Changed defaultValue to match Create form - only "basic" open */}
-        <Accordion type="multiple" defaultValue={["basic"]} className="space-y-4">
+        {/* FIX: Open all sections by default so FormData includes all inputs */}
+        <Accordion type="multiple" defaultValue={["basic", "images", "highlights", "specs", "variants", "tags"]} className="space-y-4">
 
           {/* 1. Basic Information */}
           <AccordionItem value="basic" className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
@@ -940,15 +1046,32 @@ export default function EditProductPage({ params }: EditProductPageProps) {
                     ) : (
                       <div className="space-y-3">
                         {variants.map((variant, index) => (
-                          <div key={variant.id} className="p-4 bg-slate-50 rounded-xl border border-slate-200">
-                            <div className="flex items-center justify-between mb-3">
-                              <span className="text-sm font-medium text-slate-700">Variant {index + 1}</span>
+                          <div key={variant.id} className="p-6 bg-white rounded-xl border-2 border-slate-200 shadow-sm">
+                            <div className="flex items-center justify-between mb-4">
+                              <div className="flex items-center gap-3">
+                                <span className="text-base font-semibold text-slate-900">Variant {index + 1}</span>
+                                {variant.color && (
+                                  <span className="text-xs px-2 py-1 bg-slate-100 text-slate-600 rounded-md">
+                                    {variant.color}
+                                  </span>
+                                )}
+                                {variant.size && (
+                                  <span className="text-xs px-2 py-1 bg-slate-100 text-slate-600 rounded-md">
+                                    {variant.size}
+                                  </span>
+                                )}
+                              </div>
                               <button type="button" onClick={() => removeVariant(variant.id)} className="text-red-600 hover:text-red-700 text-sm font-medium">Remove</button>
                             </div>
-                            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
+                              <div>
+                                <label className="block text-xs font-medium text-slate-600 mb-1">Product ID</label>
+                                <input type="text" value={variant.productId || ''} onChange={(e) => updateVariant(variant.id, 'productId', e.target.value)} placeholder="SKU-001" className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
+                              </div>
                               <div>
                                 <label className="block text-xs font-medium text-slate-600 mb-1">Color</label>
-                                <select value={variant.color} onChange={(e) => updateVariant(variant.id, 'color', e.target.value)} className="w-full px-3 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all">
+                                <select value={variant.color} onChange={(e) => updateVariant(variant.id, 'color', e.target.value)} className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all">
                                   <option value="">Select color</option>
                                   {Object.keys(colorMapping).map((color) => (
                                     <option key={color} value={color}>
@@ -958,16 +1081,12 @@ export default function EditProductPage({ params }: EditProductPageProps) {
                                 </select>
                               </div>
                               <div>
-                                <label className="block text-xs font-medium text-slate-600 mb-1">Product ID</label>
-                                <input type="text" value={variant.productId || ''} onChange={(e) => updateVariant(variant.id, 'productId', e.target.value)} placeholder="SKU-001" className="w-full px-3 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
-                              </div>
-                              <div>
                                 <label className="block text-xs font-medium text-slate-600 mb-1">Size</label>
-                                <input type="text" value={variant.size} onChange={(e) => updateVariant(variant.id, 'size', e.target.value)} placeholder="24x24, 12x12..." className="w-full px-3 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
+                                <input type="text" value={variant.size} onChange={(e) => updateVariant(variant.id, 'size', e.target.value)} placeholder="24x24, 12x12..." className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
                               </div>
                               <div>
                                 <label className="block text-xs font-medium text-slate-600 mb-1">Finish</label>
-                                <select value={variant.finish} onChange={(e) => updateVariant(variant.id, 'finish', e.target.value)} className="w-full px-3 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all">
+                                <select value={variant.finish} onChange={(e) => updateVariant(variant.id, 'finish', e.target.value)} className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all">
                                   <option value="">Select finish</option>
                                   {FINISH_TYPES.map((finish) => (
                                     <option key={finish} value={finish}>{finish}</option>
@@ -975,13 +1094,101 @@ export default function EditProductPage({ params }: EditProductPageProps) {
                                 </select>
                               </div>
                               <div>
+                                <label className="block text-xs font-medium text-slate-600 mb-1">Material</label>
+                                <select value={variant.material} onChange={(e) => updateVariant(variant.id, 'material', e.target.value)} className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all">
+                                  <option value="">Select material</option>
+                                  {MATERIAL_TYPES.map((material) => (
+                                    <option key={material} value={material}>{material}</option>
+                                  ))}
+                                </select>
+                              </div>
+                              <div>
+                                <label className="block text-xs font-medium text-slate-600 mb-1">Unit</label>
+                                <input type="text" value={variant.unit} onChange={(e) => updateVariant(variant.id, 'unit', e.target.value)} placeholder="inches, cm, sqft..." className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
+                              </div>
+                              <div>
                                 <label className="block text-xs font-medium text-slate-600 mb-1">Price (₹)</label>
-                                <input type="number" value={variant.price} onChange={(e) => updateVariant(variant.id, 'price', e.target.value)} placeholder="999" className="w-full px-3 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
+                                <input type="number" value={variant.price} onChange={(e) => updateVariant(variant.id, 'price', e.target.value)} placeholder="999" className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
+                              </div>
+                              <div>
+                                <label className="block text-xs font-medium text-slate-600 mb-1">MRP (₹)</label>
+                                <input type="number" value={variant.cuttedPrice} onChange={(e) => updateVariant(variant.id, 'cuttedPrice', e.target.value)} placeholder="1499" className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
                               </div>
                               <div>
                                 <label className="block text-xs font-medium text-slate-600 mb-1">Stock</label>
-                                <input type="number" value={variant.stock} onChange={(e) => updateVariant(variant.id, 'stock', e.target.value)} placeholder="100" className="w-full px-3 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
+                                <input type="number" value={variant.stock} onChange={(e) => updateVariant(variant.id, 'stock', e.target.value)} placeholder="100" className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
                               </div>
+                            </div>
+
+                            {/* Variant Images */}
+                            <div className="mt-4 pt-4 border-t border-slate-200">
+                              <label className="block text-xs font-medium text-slate-600 mb-2">
+                                Variant Images {variant.images.length > 0 && `(${variant.images.length})`}
+                              </label>
+
+                              {/* Upload Area */}
+                              <div className="relative border-2 border-dashed border-slate-300 rounded-lg bg-slate-50 hover:bg-slate-100 transition-all mb-3">
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  multiple
+                                  onChange={(e) => handleVariantImageSelect(variant.id, e.target.files)}
+                                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                                />
+                                <div className="py-6 px-4 text-center pointer-events-none">
+                                  <FiUpload className="w-8 h-8 mx-auto mb-2 text-slate-400" />
+                                  <p className="text-xs text-slate-600">Click or drag images for this variant</p>
+                                </div>
+                              </div>
+
+                              {/* Image Previews */}
+                              {variant.images.length > 0 && (
+                                <div className="grid grid-cols-4 gap-2">
+                                  {variant.images.map((image, imgIndex) => (
+                                    <div
+                                      key={image.id}
+                                      className={`relative group rounded-lg overflow-hidden border-2 transition-all ${
+                                        imgIndex === variant.featuredImageIndex
+                                          ? 'border-orange-500 ring-2 ring-orange-200'
+                                          : 'border-slate-200 hover:border-slate-300'
+                                      }`}
+                                    >
+                                      <div className="aspect-square bg-slate-100">
+                                        <img
+                                          src={image.preview}
+                                          alt={`Variant ${index + 1} Image ${imgIndex + 1}`}
+                                          className="w-full h-full object-cover"
+                                        />
+                                      </div>
+
+                                      {imgIndex === variant.featuredImageIndex && (
+                                        <div className="absolute top-1 left-1 bg-orange-500 text-white px-1 py-0.5 rounded text-xs font-medium flex items-center gap-1">
+                                          <FiStar className="w-2 h-2 fill-current" />
+                                        </div>
+                                      )}
+
+                                      <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100">
+                                        <button
+                                          type="button"
+                                          onClick={() => setVariantFeaturedImage(variant.id, imgIndex)}
+                                          className="p-1.5 bg-white rounded hover:bg-orange-500 hover:text-white transition-colors"
+                                          title="Set as featured"
+                                        >
+                                          <FiStar className={`w-3 h-3 ${imgIndex === variant.featuredImageIndex ? 'fill-current' : ''}`} />
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() => removeVariantImage(variant.id, image.id)}
+                                          className="p-1.5 bg-white text-red-600 rounded hover:bg-red-600 hover:text-white transition-colors"
+                                          title="Remove"
+                                        >
+                                          <FiTrash2 className="w-3 h-3" />
+                                        </button>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
                             </div>
                           </div>
                         ))}

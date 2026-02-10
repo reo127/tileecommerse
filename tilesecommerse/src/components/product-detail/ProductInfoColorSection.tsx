@@ -14,9 +14,16 @@ export const ColorSection = ({ uniqueColors, selectedColor, setSelectedColor, pr
             <h3 className="text-sm font-semibold text-slate-800 mb-3">Available Colors</h3>
             <div className="flex flex-wrap gap-3">
                 {uniqueColors.map((color: string) => {
-                    // Find the variant for this color to get its image
+                    // Find the variant for this color to get its featured image
                     const variantForColor = product.variants.find((v: any) => v.color === color);
-                    const variantImage = variantForColor?.images?.[0]?.url || product.images?.[0]?.url || product.img;
+
+                    // Get the featured image from variant, or fallback to first variant image, then product featured image
+                    const featuredVariantImage = variantForColor?.images?.find((img: any) => img.isFeatured)?.url;
+                    const firstVariantImage = variantForColor?.images?.[0]?.url;
+                    const productFeaturedImage = product.images?.find((img: any) => img.isFeatured)?.url;
+                    const productFirstImage = product.images?.[0]?.url;
+
+                    const variantImage = featuredVariantImage || firstVariantImage || productFeaturedImage || productFirstImage || product.img;
 
                     return (
                         <button

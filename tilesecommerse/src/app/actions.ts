@@ -26,7 +26,8 @@ function transformProduct(backendProduct: any) {
       finish: variant.finish || backendProduct.finish,
       price: variant.price || backendProduct.price,
       stock: variant.stock || backendProduct.stock,
-      images: backendProduct.images || []
+      // FIX: Use variant's own images, fallback to product images if variant has none
+      images: variant.images && variant.images.length > 0 ? variant.images : backendProduct.images || []
     }));
   } else {
     // Create default variant from product data
