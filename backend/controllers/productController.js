@@ -282,9 +282,61 @@ exports.updateProduct = asyncErrorHandler(async (req, res, next) => {
         req.body.tags = JSON.parse(req.body.tags);
     }
 
-    // Handle variants (if it's a string, parse it)
+    // Handle variants with images
     if (req.body.variants && typeof req.body.variants === 'string') {
-        req.body.variants = JSON.parse(req.body.variants);
+        const variants = JSON.parse(req.body.variants);
+
+        // Process variant images
+        const processedVariants = [];
+        for (const variant of variants) {
+            const variantData = { ...variant };
+
+            // Upload variant images if they exist and are base64 strings (new uploads)
+            if (variant.images && Array.isArray(variant.images) && variant.images.length > 0) {
+                const variantImagesLink = [];
+
+                for (let i = 0; i < variant.images.length; i++) {
+                    const image = variant.images[i];
+
+                    // Check if this is a new base64 image upload or an existing URL
+                    if (typeof image === 'string' && image.startsWith('data:')) {
+                        // New image - upload to Cloudinary
+                        const result = await cloudinary.v2.uploader.upload(image, {
+                            folder: "products/variants",
+                        });
+
+                        variantImagesLink.push({
+                            public_id: result.public_id,
+                            url: result.secure_url,
+                            isFeatured: i === (variant.featuredImageIndex || 0)
+                        });
+                    } else if (typeof image === 'string' && image.startsWith('http')) {
+                        // Existing image URL - keep as is
+                        // Find the existing image from the product to preserve public_id
+                        const existingVariant = product.variants?.find(v =>
+                            v.productId === variant.productId ||
+                            (v.color === variant.color && v.size === variant.size)
+                        );
+                        const existingImage = existingVariant?.images?.find(img => img.url === image);
+
+                        if (existingImage) {
+                            variantImagesLink.push({
+                                public_id: existingImage.public_id,
+                                url: existingImage.url,
+                                isFeatured: i === (variant.featuredImageIndex || 0)
+                            });
+                        }
+                    }
+                }
+
+                variantData.images = variantImagesLink;
+                delete variantData.featuredImageIndex; // Remove this as we use isFeatured instead
+            }
+
+            processedVariants.push(variantData);
+        }
+
+        req.body.variants = processedVariants;
     }
 
     req.body.user = req.user.id;
