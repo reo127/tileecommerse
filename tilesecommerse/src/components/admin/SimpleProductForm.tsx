@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, FormEvent } from "react";
+import { useState, useEffect, FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { FiUpload, FiCheck, FiX, FiStar, FiTrash2, FiImage, FiPlus } from "react-icons/fi";
 import {
@@ -12,6 +12,11 @@ import {
 import { useCategories } from "@/hooks/category/queries/useCategories";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000/api/v1';
+
+// File upload constants
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+const MAX_IMAGES = 10;
+const VALID_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
 
 // Finish types for tiles and products
 const FINISH_TYPES = [
@@ -43,6 +48,19 @@ const MATERIAL_TYPES = [
 ];
 
 import { colorMapping } from "@/constants/colors";
+
+// Safe UUID generator with fallback for older browsers
+const generateUUID = (): string => {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  // Fallback for older browsers
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0;
+    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+};
 
 const fileToBase64 = (file: File): Promise<string> => {
   return new Promise((resolve, reject) => {
@@ -113,16 +131,61 @@ export function SimpleProductForm() {
     stock: '100'
   });
 
+  // Cleanup blob URLs on unmount to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      // Cleanup main product images
+      imagePreviews.forEach(img => {
+        if (img.preview.startsWith('blob:')) {
+          URL.revokeObjectURL(img.preview);
+        }
+      });
+
+      // Cleanup variant images
+      variants.forEach(variant => {
+        variant.images.forEach(img => {
+          if (img.preview.startsWith('blob:')) {
+            URL.revokeObjectURL(img.preview);
+          }
+        });
+      });
+    };
+  }, [imagePreviews, variants]);
+
   const handleImageSelect = (files: FileList | null) => {
     if (!files) return;
 
-    const newImages = Array.from(files).map(file => ({
-      file,
-      preview: URL.createObjectURL(file),
-      id: Math.random().toString(36).substr(2, 9)
-    }));
+    // Validate image count
+    if (imagePreviews.length + files.length > MAX_IMAGES) {
+      setError(`Maximum ${MAX_IMAGES} images allowed. You can upload ${MAX_IMAGES - imagePreviews.length} more.`);
+      return;
+    }
 
-    setImagePreviews(prev => [...prev, ...newImages]);
+    const newImages: Array<{ file: File; preview: string; id: string }> = [];
+    for (const file of Array.from(files)) {
+      // Validate file type
+      if (!VALID_IMAGE_TYPES.includes(file.type)) {
+        setError(`Invalid file type: ${file.name}. Only JPG, PNG, GIF, and WebP are allowed.`);
+        continue;
+      }
+
+      // Validate file size
+      if (file.size > MAX_FILE_SIZE) {
+        setError(`File too large: ${file.name}. Maximum 10MB per image.`);
+        continue;
+      }
+
+      newImages.push({
+        file,
+        preview: URL.createObjectURL(file),
+        id: generateUUID()
+      });
+    }
+
+    if (newImages.length > 0) {
+      setImagePreviews(prev => [...prev, ...newImages]);
+      setError(''); // Clear any previous errors
+    }
   };
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -142,13 +205,28 @@ export function SimpleProductForm() {
   };
 
   const removeImage = (id: string) => {
-    setImagePreviews(prev => {
-      const newPreviews = prev.filter(img => img.id !== id);
-      if (featuredImageIndex >= newPreviews.length) {
-        setFeaturedImageIndex(Math.max(0, newPreviews.length - 1));
+    const removedIndex = imagePreviews.findIndex(img => img.id === id);
+
+    // Revoke blob URL to prevent memory leak
+    const imageToRemove = imagePreviews.find(img => img.id === id);
+    if (imageToRemove && imageToRemove.preview.startsWith('blob:')) {
+      URL.revokeObjectURL(imageToRemove.preview);
+    }
+
+    // Remove the image
+    setImagePreviews(prev => prev.filter(img => img.id !== id));
+
+    // Adjust featured index if needed
+    if (removedIndex !== -1) {
+      if (removedIndex === featuredImageIndex) {
+        // Featured image was removed, set to first image
+        setFeaturedImageIndex(0);
+      } else if (removedIndex < featuredImageIndex) {
+        // Image removed before featured, shift index down
+        setFeaturedImageIndex(prev => prev - 1);
       }
-      return newPreviews;
-    });
+      // If removed after featured, no change needed
+    }
   };
 
   const setFeaturedImage = (index: number) => {
@@ -161,7 +239,7 @@ export function SimpleProductForm() {
     const newImages = Array.from(files).map(file => ({
       file,
       preview: URL.createObjectURL(file),
-      id: Math.random().toString(36).substr(2, 9)
+      id: generateUUID()
     }));
 
     setVariants(variants.map(v =>
@@ -174,6 +252,12 @@ export function SimpleProductForm() {
   const removeVariantImage = (variantId: string, imageId: string) => {
     setVariants(variants.map(v => {
       if (v.id === variantId) {
+        // Revoke blob URL to prevent memory leak
+        const imageToRemove = v.images.find(img => img.id === imageId);
+        if (imageToRemove && imageToRemove.preview.startsWith('blob:')) {
+          URL.revokeObjectURL(imageToRemove.preview);
+        }
+
         const newImages = v.images.filter(img => img.id !== imageId);
         return {
           ...v,
@@ -195,7 +279,7 @@ export function SimpleProductForm() {
 
   const addVariant = () => {
     const newVariant: Variant = {
-      id: Math.random().toString(36).substr(2, 9),
+      id: generateUUID(),
       color: mainFormValues.color,
       size: mainFormValues.size,
       productId: mainFormValues.productId,
@@ -294,6 +378,7 @@ export function SimpleProductForm() {
         category: finalCategory,
         subcategory: subcategory || undefined,
         images,
+        featuredImageIndex,
         highlights,
         specifications,
         stock: Number(stock),
@@ -384,6 +469,20 @@ export function SimpleProductForm() {
       console.error('Error:', err);
       setError('An unexpected error occurred');
       setUploadProgress('');
+
+      // Cleanup blob URLs on error to prevent memory leaks
+      imagePreviews.forEach(img => {
+        if (img.preview.startsWith('blob:')) {
+          URL.revokeObjectURL(img.preview);
+        }
+      });
+      variants.forEach(v => {
+        v.images.forEach(img => {
+          if (img.preview.startsWith('blob:')) {
+            URL.revokeObjectURL(img.preview);
+          }
+        });
+      });
     } finally {
       setLoading(false);
     }
@@ -417,7 +516,7 @@ export function SimpleProductForm() {
           </div>
         )}
 
-        <Accordion type="multiple" defaultValue={["basic"]} className="space-y-4">
+        <Accordion type="multiple" defaultValue={["basic", "images", "highlights", "specs", "variants", "tags"]} className="space-y-4">
           {/* 1. Basic Information */}
           <AccordionItem value="basic" className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
             <AccordionTrigger className="px-8 py-6 hover:no-underline hover:bg-slate-50 transition-colors">
@@ -529,10 +628,141 @@ export function SimpleProductForm() {
             </AccordionContent>
           </AccordionItem>
 
-          {/* 2. Specifications */}
+          {/* 2. Images */}
+          <AccordionItem value="images" className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
+            <AccordionTrigger className="px-8 py-6 hover:no-underline hover:bg-slate-50 transition-colors">
+              <h2 className="text-xl font-medium text-slate-900">2. Images</h2>
+            </AccordionTrigger>
+            <AccordionContent className="px-8 pb-8">
+              <div className="space-y-6 pt-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-3">
+                    Product Images {imagePreviews.length > 0 && `(${imagePreviews.length})`}
+                  </label>
+
+                  {/* Upload Area */}
+                  <div
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                    onDrop={handleDrop}
+                    className={`relative border-2 border-dashed rounded-xl transition-all ${isDragging
+                      ? 'border-orange-500 bg-orange-50'
+                      : 'border-slate-300 bg-slate-50'
+                      }`}
+                  >
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={(e) => handleImageSelect(e.target.files)}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                    />
+                    <div className="py-12 px-4 text-center pointer-events-none">
+                      <FiUpload className={`w-12 h-12 mx-auto mb-3 ${isDragging ? 'text-orange-500' : 'text-slate-400'}`} />
+                      <p className="text-sm font-medium text-slate-700 mb-1">
+                        {isDragging ? 'Drop images here' : 'Click to upload or drag and drop'}
+                      </p>
+                      <p className="text-xs text-slate-500">
+                        PNG, JPG, GIF up to 10MB each
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Image Previews */}
+                  {imagePreviews.length > 0 && (
+                    <div className="mt-6">
+                      <div className="flex items-center justify-between mb-3">
+                        <p className="text-sm font-medium text-slate-700">
+                          Selected Images
+                        </p>
+                        <p className="text-xs text-slate-500">
+                          Click <FiStar className="inline w-3 h-3" /> to set as featured image
+                        </p>
+                      </div>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        {imagePreviews.map((image, index) => (
+                          <div
+                            key={image.id}
+                            className={`relative group rounded-lg overflow-hidden border-2 transition-all ${index === featuredImageIndex
+                              ? 'border-orange-500 ring-2 ring-orange-200'
+                              : 'border-slate-200 hover:border-slate-300'
+                              }`}
+                          >
+                            <div className="aspect-square bg-slate-100">
+                              <img
+                                src={image.preview}
+                                alt={`Preview ${index + 1}`}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+
+                            {index === featuredImageIndex && (
+                              <div className="absolute top-2 left-2 bg-orange-500 text-white px-2 py-1 rounded-md text-xs font-medium flex items-center gap-1">
+                                <FiStar className="w-3 h-3 fill-current" />
+                                Featured
+                              </div>
+                            )}
+
+                            <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
+                              <button
+                                type="button"
+                                onClick={() => setFeaturedImage(index)}
+                                className="p-2 bg-white rounded-lg hover:bg-orange-500 hover:text-white transition-colors"
+                                title="Set as featured"
+                              >
+                                <FiStar className={index === featuredImageIndex ? 'fill-current' : ''} />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => removeImage(image.id)}
+                                className="p-2 bg-white text-red-600 rounded-lg hover:bg-red-600 hover:text-white transition-colors"
+                                title="Remove image"
+                              >
+                                <FiTrash2 />
+                              </button>
+                            </div>
+
+                            <div className="absolute bottom-2 right-2 bg-black bg-opacity-60 text-white px-2 py-1 rounded text-xs font-medium">
+                              {index + 1}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {imagePreviews.length === 0 && (
+                    <p className="text-xs text-red-500 mt-2">* At least one product image is required</p>
+                  )}
+                </div>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+
+          {/* 3. Highlights */}
+          <AccordionItem value="highlights" className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
+            <AccordionTrigger className="px-8 py-6 hover:no-underline hover:bg-slate-50 transition-colors">
+              <h2 className="text-xl font-medium text-slate-900">3. Highlights</h2>
+            </AccordionTrigger>
+            <AccordionContent className="px-8 pb-8">
+              <div className="space-y-6 pt-4">
+                <div className="space-y-3">
+                  <label className="block text-sm font-medium text-slate-700">Product Highlights</label>
+                  <input name="highlight1" placeholder="Highlight 1" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
+                  <input name="highlight2" placeholder="Highlight 2" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
+                  <input name="highlight3" placeholder="Highlight 3" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
+                  <input name="highlight4" placeholder="Highlight 4" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
+                  <input name="highlight5" placeholder="Highlight 5" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
+                  <input name="highlight6" placeholder="Highlight 6" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
+                </div>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+
+          {/* 4. Specifications */}
           <AccordionItem value="specs" className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
             <AccordionTrigger className="px-8 py-6 hover:no-underline hover:bg-slate-50 transition-colors">
-              <h2 className="text-xl font-medium text-slate-900">2. Specifications</h2>
+              <h2 className="text-xl font-medium text-slate-900">4. Specifications</h2>
             </AccordionTrigger>
             <AccordionContent className="px-8 pb-8">
               <div className="grid md:grid-cols-2 gap-6 pt-4">
@@ -660,115 +890,43 @@ export function SimpleProductForm() {
                   />
                 </div>
 
-                <div className="md:col-span-2 space-y-6 pt-4">
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-3">
-                      Product Images {imagePreviews.length > 0 && `(${imagePreviews.length})`}
-                    </label>
+                <div className="md:col-span-2 pt-4">
+                  <label className="block text-sm font-medium text-slate-700 mb-3">Technical Specifications</label>
+                  <div className="space-y-3">
+                    {Array.from({ length: specCount }, (_, index) => (
+                      <div key={index} className="grid grid-cols-2 gap-4">
+                        <input
+                          name={`specTitle${index + 1}`}
+                          placeholder={`Specification Title ${index + 1}`}
+                          className="px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
+                        />
+                        <input
+                          name={`specDesc${index + 1}`}
+                          placeholder={`Specification Description ${index + 1}`}
+                          className="px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
+                        />
+                      </div>
+                    ))}
 
-                    <div
-                      onDragOver={handleDragOver}
-                      onDragLeave={handleDragLeave}
-                      onDrop={handleDrop}
-                      className={`relative border-2 border-dashed rounded-xl transition-all ${isDragging
-                        ? 'border-orange-500 bg-orange-50'
-                        : 'border-slate-300 bg-slate-50'
-                        }`}
+                    <button
+                      type="button"
+                      onClick={() => setSpecCount(specCount + 1)}
+                      className="w-full py-3 px-4 border-2 border-dashed border-slate-300 text-slate-600 rounded-xl hover:border-slate-400 hover:bg-slate-50 transition-all flex items-center justify-center gap-2 group"
                     >
-                      <input
-                        type="file"
-                        accept="image/*"
-                        multiple
-                        onChange={(e) => handleImageSelect(e.target.files)}
-                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                      />
-                      <div className="py-12 px-4 text-center pointer-events-none">
-                        <FiUpload className={`w-12 h-12 mx-auto mb-3 ${isDragging ? 'text-orange-500' : 'text-slate-400'}`} />
-                        <p className="text-sm font-medium text-slate-700 mb-1">
-                          {isDragging ? 'Drop images here' : 'Click to upload or drag and drop'}
-                        </p>
-                        <p className="text-xs text-slate-500">
-                          PNG, JPG, GIF up to 10MB each
-                        </p>
-                      </div>
-                    </div>
-
-                    {imagePreviews.length > 0 && (
-                      <div className="mt-6">
-                        <div className="flex items-center justify-between mb-3">
-                          <p className="text-sm font-medium text-slate-700">
-                            Selected Images
-                          </p>
-                          <p className="text-xs text-slate-500">
-                            Click <FiStar className="inline w-3 h-3" /> to set as featured image
-                          </p>
-                        </div>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                          {imagePreviews.map((image, index) => (
-                            <div
-                              key={image.id}
-                              className={`relative group rounded-lg overflow-hidden border-2 transition-all ${index === featuredImageIndex
-                                ? 'border-orange-500 ring-2 ring-orange-200'
-                                : 'border-slate-200 hover:border-slate-300'
-                                }`}
-                            >
-                              <div className="aspect-square bg-slate-100">
-                                <img
-                                  src={image.preview}
-                                  alt={`Preview ${index + 1}`}
-                                  className="w-full h-full object-cover"
-                                />
-                              </div>
-
-                              {index === featuredImageIndex && (
-                                <div className="absolute top-2 left-2 bg-orange-500 text-white px-2 py-1 rounded-md text-xs font-medium flex items-center gap-1">
-                                  <FiStar className="w-3 h-3 fill-current" />
-                                  Featured
-                                </div>
-                              )}
-
-                              <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
-                                <button
-                                  type="button"
-                                  onClick={() => setFeaturedImage(index)}
-                                  className="p-2 bg-white rounded-lg hover:bg-orange-500 hover:text-white transition-colors"
-                                  title="Set as featured"
-                                >
-                                  <FiStar className={index === featuredImageIndex ? 'fill-current' : ''} />
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => removeImage(image.id)}
-                                  className="p-2 bg-white text-red-600 rounded-lg hover:bg-red-600 hover:text-white transition-colors"
-                                  title="Remove image"
-                                >
-                                  <FiTrash2 />
-                                </button>
-                              </div>
-
-                              <div className="absolute bottom-2 right-2 bg-black bg-opacity-60 text-white px-2 py-1 rounded text-xs font-medium">
-                                {index + 1}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {imagePreviews.length === 0 && (
-                      <p className="text-xs text-red-500 mt-2">* At least one product image is required</p>
-                    )}
+                      <FiPlus className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                      <span className="text-sm font-medium">Add Specification</span>
+                    </button>
                   </div>
-
                 </div>
+
               </div>
             </AccordionContent>
           </AccordionItem>
 
-          {/* 3. Product Variants */}
+          {/* 5. Product Variants */}
           <AccordionItem value="variants" className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
             <AccordionTrigger className="px-8 py-6 hover:no-underline hover:bg-slate-50 transition-colors">
-              <h2 className="text-xl font-medium text-slate-900">3. Product Variants (Optional)</h2>
+              <h2 className="text-xl font-medium text-slate-900">5. Product Variants (Optional)</h2>
             </AccordionTrigger>
             <AccordionContent className="px-8 pb-8">
               <div className="space-y-6 pt-4">
@@ -1062,59 +1220,10 @@ export function SimpleProductForm() {
             </AccordionContent>
           </AccordionItem>
 
-          {/* 4. Highlights */}
-          <AccordionItem value="highlights" className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
-            <AccordionTrigger className="px-8 py-6 hover:no-underline hover:bg-slate-50 transition-colors">
-              <h2 className="text-xl font-medium text-slate-900">4. Highlights</h2>
-            </AccordionTrigger>
-            <AccordionContent className="px-8 pb-8">
-              <div className="space-y-6 pt-4">
-                <div className="space-y-3">
-                  <label className="block text-sm font-medium text-slate-700">Product Highlights</label>
-                  <input name="highlight1" placeholder="Highlight 1" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
-                  <input name="highlight2" placeholder="Highlight 2" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
-                  <input name="highlight3" placeholder="Highlight 3" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
-                  <input name="highlight4" placeholder="Highlight 4" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
-                  <input name="highlight5" placeholder="Highlight 5" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
-                  <input name="highlight6" placeholder="Highlight 6" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
-                </div>
-
-                <div className="pt-4">
-                  <label className="block text-sm font-medium text-slate-700 mb-3">Technical Specifications</label>
-                  <div className="space-y-3">
-                    {Array.from({ length: specCount }, (_, index) => (
-                      <div key={index} className="grid grid-cols-2 gap-4">
-                        <input
-                          name={`specTitle${index + 1}`}
-                          placeholder={`Specification Title ${index + 1}`}
-                          className="px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
-                        />
-                        <input
-                          name={`specDesc${index + 1}`}
-                          placeholder={`Specification Description ${index + 1}`}
-                          className="px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
-                        />
-                      </div>
-                    ))}
-
-                    <button
-                      type="button"
-                      onClick={() => setSpecCount(specCount + 1)}
-                      className="w-full py-3 px-4 border-2 border-dashed border-slate-300 text-slate-600 rounded-xl hover:border-slate-400 hover:bg-slate-50 transition-all flex items-center justify-center gap-2 group"
-                    >
-                      <FiPlus className="w-4 h-4 group-hover:scale-110 transition-transform" />
-                      <span className="text-sm font-medium">Add Specification</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </AccordionContent>
-          </AccordionItem>
-
-          {/* 5. Product Tags */}
+          {/* 6. Product Tags */}
           <AccordionItem value="tags" className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
             <AccordionTrigger className="px-8 py-6 hover:no-underline hover:bg-slate-50 transition-colors">
-              <h2 className="text-xl font-medium text-slate-900">5. Product Tags</h2>
+              <h2 className="text-xl font-medium text-slate-900">6. Product Tags</h2>
             </AccordionTrigger>
             <AccordionContent className="px-8 pb-8">
               <div className="pt-4">
