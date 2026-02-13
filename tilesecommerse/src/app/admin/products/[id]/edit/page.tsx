@@ -767,6 +767,22 @@ export default function EditProductPage({ params }: EditProductPageProps) {
                   <input name="size" defaultValue={product.size} placeholder="24x24, 1200x600mm, etc." className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
                 </div>
 
+                {/* Unit */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Unit</label>
+                  <select name="unit" defaultValue={product.unit || 'inches'} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all">
+                    <option value="inches">Inches</option>
+                    <option value="cm">CM</option>
+                    <option value="mm">MM</option>
+                  </select>
+                </div>
+
+                {/* Thickness */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Thickness (mm)</label>
+                  <input name="thickness" type="number" defaultValue={product.thickness} placeholder="8" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
+                </div>
+
                 {/* Price */}
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">Price (₹)</label>
@@ -905,151 +921,7 @@ export default function EditProductPage({ params }: EditProductPageProps) {
             </AccordionContent>
           </AccordionItem>
 
-          {/* 4. Specifications */}
-          <AccordionItem value="specs" className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
-            <AccordionTrigger className="px-8 py-6 hover:no-underline hover:bg-slate-50 transition-colors">
-              <h2 className="text-xl font-medium text-slate-900">4. Specifications</h2>
-            </AccordionTrigger>
-            <AccordionContent className="px-8 pb-8">
-              <div className="grid md:grid-cols-2 gap-6 pt-4">
-                {/* FIX: Product ID moved to top like Create form */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">Product ID</label>
-                  <input name="productId" defaultValue={product.productId} placeholder="SKU-001" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
-                </div>
-
-                {/* Material */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">Material</label>
-                  <select name="material" defaultValue={product.material} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all">
-                    <option value="">Select material</option>
-                    {MATERIAL_TYPES.map((material) => (
-                      <option key={material} value={material}>
-                        {material}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Finish */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">Finish</label>
-                  <select name="finish" defaultValue={product.finish} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all">
-                    <option value="">Select finish</option>
-                    {FINISH_TYPES.map((finish) => (
-                      <option key={finish} value={finish}>
-                        {finish}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Color */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">Color</label>
-                  <select name="color" defaultValue={product.color} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all">
-                    <option value="">Select color</option>
-                    {Object.keys(colorMapping).map((color) => (
-                      <option key={color} value={color}>
-                        {color.charAt(0).toUpperCase() + color.slice(1)}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Size */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">Size</label>
-                  <input name="size" defaultValue={product.size} placeholder="24x24, 1200x600mm, etc." className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
-                </div>
-
-                {/* Unit */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">Unit</label>
-                  <select name="unit" defaultValue={product.unit || 'inches'} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all">
-                    <option value="inches">Inches</option>
-                    <option value="cm">CM</option>
-                    <option value="mm">MM</option>
-                  </select>
-                </div>
-
-                {/* Thickness */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">Thickness (mm)</label>
-                  <input name="thickness" type="number" defaultValue={product.thickness} placeholder="8" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
-                </div>
-
-                {/* Price */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">Price (₹)</label>
-                  <input
-                    name="price"
-                    type="number"
-                    defaultValue={product.price}
-                    placeholder="999"
-                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
-                  />
-                </div>
-
-                {/* MRP */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">MRP (₹)</label>
-                  <input
-                    name="cuttedPrice"
-                    type="number"
-                    defaultValue={product.cuttedPrice}
-                    placeholder="1499"
-                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
-                  />
-                </div>
-
-                {/* Stock */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">Stock</label>
-                  <input
-                    name="stock"
-                    type="number"
-                    defaultValue={product.stock}
-                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
-                  />
-                </div>
-
-                <div className="md:col-span-2 pt-4">
-                  <label className="block text-sm font-medium text-slate-700 mb-3">Technical Specifications</label>
-                  <div className="space-y-3">
-                    {Array.from({ length: specCount }, (_, index) => (
-                      <div key={index} className="grid grid-cols-2 gap-4">
-                        <input
-                          name={`specTitle${index + 1}`}
-                          defaultValue={product.specifications?.[index]?.title}
-                          placeholder={`Specification Title ${index + 1}`}
-                          className="px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
-                        />
-                        <input
-                          name={`specDesc${index + 1}`}
-                          defaultValue={product.specifications?.[index]?.description}
-                          placeholder={`Specification Description ${index + 1}`}
-                          className="px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
-                        />
-                      </div>
-                    ))}
-
-                    <button
-                      type="button"
-                      onClick={() => setSpecCount(specCount + 1)}
-                      className="w-full py-3 px-4 border-2 border-dashed border-slate-300 text-slate-600 rounded-xl hover:border-slate-400 hover:bg-slate-50 transition-all flex items-center justify-center gap-2 group"
-                    >
-                      <FiPlus className="w-4 h-4 group-hover:scale-110 transition-transform" />
-                      <span className="text-sm font-medium">Add Specification</span>
-                    </button>
-                  </div>
-                </div>
-
-              </div>
-            </AccordionContent>
-          </AccordionItem>
-
-          {/* FIX: 5. Product Variants - moved to separate accordion like Create form */}
+          {/* 3. Product Variants - moved to separate accordion like Create form */}
           <AccordionItem value="variants" className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
             <AccordionTrigger className="px-8 py-6 hover:no-underline hover:bg-slate-50 transition-colors">
               <h2 className="text-xl font-medium text-slate-900">3. Product Variants (Optional)</h2>
