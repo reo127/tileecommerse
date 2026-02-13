@@ -925,6 +925,16 @@ export default function EditProductPage({ params }: EditProductPageProps) {
                   <input name="size" defaultValue={product.size} placeholder="24x24, 1200x600mm, etc." className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
                 </div>
 
+                {/* Unit */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Unit</label>
+                  <select name="unit" defaultValue={product.unit || 'inches'} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all">
+                    <option value="inches">Inches</option>
+                    <option value="cm">CM</option>
+                    <option value="mm">MM</option>
+                  </select>
+                </div>
+
                 {/* Thickness */}
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">Thickness (mm)</label>
