@@ -76,6 +76,11 @@ exports.newOrder = asyncErrorHandler(async (req, res, next) => {
         };
     }
 
+    // Reduce stock for each product in the order
+    for (const item of orderItems) {
+        await updateStock(item.product, item.quantity);
+    }
+
     const order = await Order.create({
         shippingInfo,
         orderItems,
@@ -211,12 +216,11 @@ exports.updateOrder = asyncErrorHandler(async (req, res, next) => {
         return next(new ErrorHandler(`Cannot change status from ${order.orderStatus} to ${status}`, 400));
     }
 
-    // Update stock when order is shipped
-    if (status === "Shipped" && order.orderStatus !== "Shipped") {
-        order.shippedAt = Date.now();
-        order.orderItems.forEach(async (item) => {
-            await updateStock(item.product, item.quantity);
-        });
+    // Restore stock when order is cancelled
+    if (status === "Cancelled" && order.orderStatus !== "Cancelled") {
+        for (const item of order.orderItems) {
+            await restoreStock(item.product, item.quantity);
+        }
     }
 
     // Update timestamps based on status
@@ -259,6 +263,12 @@ exports.updateOrder = asyncErrorHandler(async (req, res, next) => {
 async function updateStock(id, quantity) {
     const product = await Product.findById(id);
     product.stock -= quantity;
+    await product.save({ validateBeforeSave: false });
+}
+
+async function restoreStock(id, quantity) {
+    const product = await Product.findById(id);
+    product.stock += quantity;
     await product.save({ validateBeforeSave: false });
 }
 
