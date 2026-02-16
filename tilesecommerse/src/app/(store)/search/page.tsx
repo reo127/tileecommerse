@@ -12,7 +12,7 @@ interface SearchProps {
   searchParams: Promise<{
     q?: string;
     category?: string | string[];
-    material?: string | string[];
+    tags?: string | string[];
     finish?: string | string[];
     color?: string | string[];
     size?: string | string[];
@@ -34,7 +34,7 @@ const Search = async ({ searchParams }: SearchProps) => {
 
   // Get filter params
   const categories = params.category ? (Array.isArray(params.category) ? params.category : [params.category]) : [];
-  const materials = params.material ? (Array.isArray(params.material) ? params.material : [params.material]) : [];
+  const tags = params.tags ? (Array.isArray(params.tags) ? params.tags : [params.tags]) : [];
   const finishes = params.finish ? (Array.isArray(params.finish) ? params.finish : [params.finish]) : [];
   const colors = params.color ? (Array.isArray(params.color) ? params.color : [params.color]) : [];
   const roomTypes = params.roomType ? (Array.isArray(params.roomType) ? params.roomType : [params.roomType]) : [];
@@ -73,7 +73,7 @@ const Search = async ({ searchParams }: SearchProps) => {
           <FilterSidebar
             allProducts={allProducts}
             selectedCategories={categories}
-            selectedMaterials={materials}
+            selectedTags={tags}
             selectedFinishes={finishes}
             selectedColors={colors}
             selectedRoomTypes={roomTypes}

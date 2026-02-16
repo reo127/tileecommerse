@@ -1,27 +1,37 @@
 "use client";
 
-import { useState } from "react";
+import { useCartMutation } from "@/hooks/cart";
 import { FiShoppingCart } from "react-icons/fi";
+import { toast } from "sonner";
 
 interface AddToCartButtonProps {
     productId: string;
+    variantId: number;
+    stripeId: string;
+    size: string;
 }
 
-export const AddToCartButton = ({ productId: _productId }: AddToCartButtonProps) => {
-    const [isAdding, setIsAdding] = useState(false);
+export const AddToCartButton = ({ productId, variantId, stripeId, size }: AddToCartButtonProps) => {
+    const { add, isAdding } = useCartMutation();
 
     const handleAddToCart = async (e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
 
-        setIsAdding(true);
+        try {
+            add({
+                variantId: variantId,
+                size: size as any, // ProductSize type
+                stripeId: stripeId,
+                productId: parseInt(productId),
+                quantity: 1,
+            });
 
-        // TODO: Implement actual add to cart logic
-        // For now, just simulate the action
-        setTimeout(() => {
-            setIsAdding(false);
-            // You can add toast notification here
-        }, 500);
+            toast.success("Added to cart!");
+        } catch (error) {
+            console.error("Error adding to cart:", error);
+            toast.error("Failed to add to cart");
+        }
     };
 
     return (

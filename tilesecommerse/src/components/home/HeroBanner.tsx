@@ -20,10 +20,10 @@ export const HeroBanner = () => {
       <div className="relative h-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center">
         <div className="max-w-2xl">
           <h1 className="text-4xl md:text-6xl font-bold text-white mb-6 leading-tight">
-            Transform Your Space with Premium Tiles
+            Complete Tiles & Sanitary Solutions Showroom
           </h1>
           <p className="text-lg md:text-xl text-gray-200 mb-8">
-            Discover our exclusive collection of high-quality tiles for your home and commercial spaces
+            From vitrified tiles to designer bathware, discover quality, durability, and style in every product.
           </p>
           <div className="flex flex-wrap gap-4">
             <Link
@@ -31,12 +31,6 @@ export const HeroBanner = () => {
               className="px-8 py-3 bg-yellow-500 hover:bg-yellow-600 text-white font-semibold rounded-lg transition-colors duration-200"
             >
               Explore Collection
-            </Link>
-            <Link
-              href="/search"
-              className="px-8 py-3 bg-white/10 hover:bg-white/20 text-white font-semibold rounded-lg backdrop-blur-sm border border-white/20 transition-colors duration-200"
-            >
-              Browse Catalog
             </Link>
           </div>
         </div>

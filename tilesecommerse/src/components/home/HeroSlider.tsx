@@ -9,26 +9,26 @@ const slides = [
   {
     id: 1,
     image: "https://images.unsplash.com/photo-1615971677499-5467cbab01c0?q=80&w=2000",
-    title: "Transform Your Space with Premium Tiles",
-    subtitle: "Discover our exclusive collection of high-quality tiles",
+    title: "Complete Tiles & Sanitary Solutions Showroom",
+    subtitle: "From vitrified tiles to designer bathware, discover quality, durability, and style in every product.",
     cta: "Explore Collection",
-    ctaLink: "/ceramic",
+    ctaLink: "/search",
   },
   {
     id: 2,
     image: "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?q=80&w=2000",
-    title: "Luxury Marble Finish Tiles",
-    subtitle: "Experience elegance with our marble-look collection",
-    cta: "View Collection",
-    ctaLink: "/marble",
+    title: "Your Trusted Destination for Tiles & Bathware",
+    subtitle: "Wide range. Competitive pricing. Expert guidance. Everything you need for your project.",
+    cta: "Explore Collection",
+    ctaLink: "/search",
   },
   {
     id: 3,
     image: "https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?q=80&w=2000",
-    title: "Modern Vitrified Tiles",
-    subtitle: "Durable, beautiful, and perfect for every room",
-    cta: "Shop Now",
-    ctaLink: "/porcelain",
+    title: "Luxury Tiles & Bathware for Modern Spaces",
+    subtitle: "Elevate every floor and wall with curated designs, superior finishes, and trusted brands — all under one roof.",
+    cta: "Explore Collection",
+    ctaLink: "/search",
   },
 ];
 
@@ -98,12 +98,6 @@ export const HeroSlider = () => {
                   className="px-8 py-3 bg-yellow-500 hover:bg-yellow-600 text-white font-semibold rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl hover:shadow-yellow-500/50 hover:scale-105 transform"
                 >
                   {slide.cta}
-                </Link>
-                <Link
-                  href="/search"
-                  className="px-8 py-3 bg-white/10 hover:bg-white/20 text-white font-semibold rounded-lg backdrop-blur-sm border border-white/20 transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 transform"
-                >
-                  Browse Catalog
                 </Link>
               </div>
             </div>

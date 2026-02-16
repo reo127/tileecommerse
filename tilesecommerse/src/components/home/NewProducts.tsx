@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { AddToCartButton } from "./AddToCartButton";
 import { WishlistButton } from "./WishlistButton";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000/api/v1';
@@ -45,6 +44,10 @@ async function getNewProducts() {
             price: product.price,
             cuttedPrice: product.cuttedPrice,
             slug: product.slug || product._id,
+            hasVariants: product.variants && product.variants.length > 1,
+            variantId: product.variants?.[0]?.id || product.id,
+            stripeId: product.stripeId || product.variants?.[0]?.stripeId,
+            size: product.size || 'default',
         }));
     } catch (error) {
         console.error('Error fetching new products:', error);
@@ -112,11 +115,6 @@ export const NewProducts = async () => {
                             {/* Wishlist Badge - Top Right */}
                             <div className="absolute top-3 right-3 z-10">
                                 <WishlistButton productId={product._id} />
-                            </div>
-
-                            {/* Add to Cart on Hover */}
-                            <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                <AddToCartButton productId={product._id} />
                             </div>
 
                             {/* Discount Badge - Top Left */}
