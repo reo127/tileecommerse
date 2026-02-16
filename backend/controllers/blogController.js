@@ -1,10 +1,22 @@
 const asyncErrorHandler = require('../middlewares/asyncErrorHandler');
 const Blog = require('../models/blogModel');
 const ErrorHandler = require('../utils/errorHandler');
+const cloudinary = require('cloudinary');
 
 // Create New Blog - ADMIN
 exports.createBlog = asyncErrorHandler(async (req, res, next) => {
     try {
+        const { featuredImage } = req.body;
+
+        // Upload featured image to Cloudinary if it's a base64 string
+        if (featuredImage && featuredImage.startsWith('data:')) {
+            const result = await cloudinary.v2.uploader.upload(featuredImage, {
+                folder: "blogs",
+            });
+
+            req.body.featuredImage = result.secure_url;
+        }
+
         const blog = await Blog.create(req.body);
 
         res.status(201).json({
@@ -108,6 +120,17 @@ exports.updateBlog = asyncErrorHandler(async (req, res, next) => {
 
     if (!blog) {
         return next(new ErrorHandler('Blog Not Found', 404));
+    }
+
+    const { featuredImage } = req.body;
+
+    // Upload featured image to Cloudinary if it's a new base64 string
+    if (featuredImage && featuredImage.startsWith('data:')) {
+        const result = await cloudinary.v2.uploader.upload(featuredImage, {
+            folder: "blogs",
+        });
+
+        req.body.featuredImage = result.secure_url;
     }
 
     blog = await Blog.findByIdAndUpdate(req.params.id, req.body, {
