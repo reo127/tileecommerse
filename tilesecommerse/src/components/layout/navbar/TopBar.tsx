@@ -75,7 +75,7 @@ export const TopBar = ({ editProfileManager }: { editProfileManager: Manager }) 
               </div>
               <div>
                 <h1 className="text-xl font-bold text-white">SLN TILES SHOWROOM</h1>
-                <p className="text-xs text-white">Premium Quality Tiles</p>
+                <p className="text-xs text-white">Trusted by Builders and Homeowners</p>
               </div>
             </Link>
           </div>
@@ -116,7 +116,7 @@ export const TopBar = ({ editProfileManager }: { editProfileManager: Manager }) 
 
             {/* Store */}
             <Link
-              href="/store"
+              href="/search"
               className="hidden lg:flex flex-col items-center justify-center text-white hover:text-orange-400 transition-colors"
               title="Store Locator"
             >

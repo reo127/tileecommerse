@@ -1,7 +1,8 @@
-import { getProductsWithPagination, getAllProducts } from "@/app/actions";
+import { getAllProducts } from "@/app/actions";
 import { pickFirst } from "@/utils";
 import { FilterSidebar, ProductGrid, Breadcrumb } from "@/components/search";
 import type { Metadata } from "next";
+import type { ProductWithVariants } from "@/schemas";
 
 export const metadata: Metadata = {
   title: "All Products - SLN TILES SHOWROOM",
@@ -12,7 +13,7 @@ interface SearchProps {
   searchParams: Promise<{
     q?: string;
     category?: string | string[];
-    material?: string | string[];
+    tags?: string | string[];
     finish?: string | string[];
     color?: string | string[];
     size?: string | string[];
@@ -34,7 +35,7 @@ const Search = async ({ searchParams }: SearchProps) => {
 
   // Get filter params
   const categories = params.category ? (Array.isArray(params.category) ? params.category : [params.category]) : [];
-  const materials = params.material ? (Array.isArray(params.material) ? params.material : [params.material]) : [];
+  const tags = params.tags ? (Array.isArray(params.tags) ? params.tags : [params.tags]) : [];
   const finishes = params.finish ? (Array.isArray(params.finish) ? params.finish : [params.finish]) : [];
   const colors = params.color ? (Array.isArray(params.color) ? params.color : [params.color]) : [];
   const roomTypes = params.roomType ? (Array.isArray(params.roomType) ? params.roomType : [params.roomType]) : [];
@@ -42,19 +43,141 @@ const Search = async ({ searchParams }: SearchProps) => {
   const minPrice = params.minPrice ? parseFloat(params.minPrice) : undefined;
   const maxPrice = params.maxPrice ? parseFloat(params.maxPrice) : undefined;
 
-  // Fetch products with server-side pagination
-  const paginationData = await getProductsWithPagination({
-    page,
-    limit,
-    keyword: q,
-    category: categories[0], // Backend supports single category
-    minPrice,
-    maxPrice
+  // Fetch ALL products (we'll filter client-side)
+  const allProducts = await getAllProducts();
+
+  // Fetch categories to get proper hierarchy
+  const categoriesResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000/api/v1'}/categories`);
+  const categoriesData = await categoriesResponse.json();
+  const dbCategories = categoriesData.categories || [];
+
+  // Helper function to recursively get all descendant category slugs
+  const getAllDescendantSlugs = (category: { slug: string; children?: any[] }): string[] => {
+    const slugs = [category.slug];
+    if (category.children && category.children.length > 0) {
+      category.children.forEach((child: { slug: string; children?: any[] }) => {
+        slugs.push(...getAllDescendantSlugs(child));
+      });
+    }
+    return slugs;
+  };
+
+  // Build a map of parent category slug -> all descendant slugs (including itself)
+  const categorySlugMap = new Map<string, string[]>();
+  dbCategories.forEach((category: { slug: string; children?: any[] }) => {
+    const allSlugs = getAllDescendantSlugs(category);
+    categorySlugMap.set(category.slug, allSlugs);
   });
 
-  // For filters sidebar, we still need all products to show available options
-  // This is a one-time fetch for filter options only
-  const allProducts = await getAllProducts();
+  // Client-side filtering
+  let filteredProducts = allProducts;
+
+  // Filter by search query
+  if (q) {
+    const searchLower = q.toLowerCase();
+    filteredProducts = filteredProducts.filter((product: ProductWithVariants) =>
+      product.name?.toLowerCase().includes(searchLower) ||
+      product.description?.toLowerCase().includes(searchLower) ||
+      product.category?.toLowerCase().includes(searchLower)
+    );
+  }
+
+  // Filter by categories (including subcategories)
+  if (categories.length > 0) {
+    filteredProducts = filteredProducts.filter((product: ProductWithVariants) => {
+      if (!product.category) return false;
+
+      // Check if product category is in any of the selected category hierarchies
+      return categories.some(selectedCategory => {
+        const categorySlugs = categorySlugMap.get(selectedCategory) || [selectedCategory];
+        return categorySlugs.includes(product.category);
+      });
+    });
+  }
+
+  // Filter by tags
+  if (tags.length > 0) {
+    filteredProducts = filteredProducts.filter((product: ProductWithVariants) =>
+      product.tags && Array.isArray(product.tags) &&
+      tags.some(tag => product.tags.map((t: string) => t.toLowerCase()).includes(tag.toLowerCase()))
+    );
+  }
+
+  // Filter by finishes
+  if (finishes.length > 0) {
+    filteredProducts = filteredProducts.filter((product: ProductWithVariants) => {
+      // Check base product finish
+      if (product.finish && finishes.includes(product.finish)) return true;
+
+      // Check variant finishes
+      if (product.variants && product.variants.length > 0) {
+        return product.variants.some((variant: { finish?: string }) =>
+          variant.finish && finishes.includes(variant.finish)
+        );
+      }
+
+      return false;
+    });
+  }
+
+  // Filter by colors
+  if (colors.length > 0) {
+    filteredProducts = filteredProducts.filter((product: ProductWithVariants) => {
+      // Check base product color
+      if (product.color && colors.includes(product.color)) return true;
+
+      // Check variant colors
+      if (product.variants && product.variants.length > 0) {
+        return product.variants.some((variant: { color?: string }) =>
+          variant.color && colors.includes(variant.color)
+        );
+      }
+
+      return false;
+    });
+  }
+
+  // Filter by room types (stored in tags)
+  if (roomTypes.length > 0) {
+    filteredProducts = filteredProducts.filter((product: ProductWithVariants) =>
+      product.tags && Array.isArray(product.tags) &&
+      roomTypes.some(rt => product.tags.map((t: string) => t.toLowerCase()).includes(rt.toLowerCase()))
+    );
+  }
+
+  // Filter by sizes
+  if (sizes.length > 0) {
+    filteredProducts = filteredProducts.filter((product: ProductWithVariants) => {
+      // Check variants for sizes
+      if (product.variants && product.variants.length > 0) {
+        return product.variants.some((variant: { size?: string; sizes?: string[] }) => {
+          if (variant.size && sizes.includes(variant.size)) return true;
+          if (variant.sizes && Array.isArray(variant.sizes)) {
+            return variant.sizes.some((s: string) => sizes.includes(s));
+          }
+          return false;
+        });
+      }
+      return false;
+    });
+  }
+
+  // Filter by price range
+  if (minPrice !== undefined || maxPrice !== undefined) {
+    filteredProducts = filteredProducts.filter((product: ProductWithVariants) => {
+      const price = product.price || 0;
+      if (minPrice !== undefined && price < minPrice) return false;
+      if (maxPrice !== undefined && price > maxPrice) return false;
+      return true;
+    });
+  }
+
+  // Calculate pagination
+  const totalProducts = filteredProducts.length;
+  const totalPages = Math.ceil(totalProducts / limit);
+  const startIndex = (page - 1) * limit;
+  const endIndex = startIndex + limit;
+  const paginatedProducts = filteredProducts.slice(startIndex, endIndex);
 
   const breadcrumbItems = [
     { label: "Products", href: "/search" },
@@ -73,7 +196,7 @@ const Search = async ({ searchParams }: SearchProps) => {
           <FilterSidebar
             allProducts={allProducts}
             selectedCategories={categories}
-            selectedMaterials={materials}
+            selectedTags={tags}
             selectedFinishes={finishes}
             selectedColors={colors}
             selectedRoomTypes={roomTypes}
@@ -82,12 +205,12 @@ const Search = async ({ searchParams }: SearchProps) => {
             maxPrice={maxPrice}
           />
 
-          {/* Product Grid with Server-Side Pagination */}
+          {/* Product Grid with Client-Side Filtered Products */}
           <ProductGrid
-            products={paginationData.products}
-            totalProducts={paginationData.totalProducts}
-            totalPages={paginationData.totalPages}
-            currentPage={paginationData.currentPage}
+            products={paginatedProducts}
+            totalProducts={totalProducts}
+            totalPages={totalPages}
+            currentPage={page}
             searchQuery={q}
           />
         </div>

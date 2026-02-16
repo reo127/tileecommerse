@@ -1,14 +1,15 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FaChevronDown, FaChevronUp } from "react-icons/fa";
 import type { ProductWithVariants } from "@/schemas";
+import { useCategories } from "@/hooks/category";
 
 interface FilterSidebarProps {
   allProducts: ProductWithVariants[];
   selectedCategories: string[];
-  selectedMaterials: string[];
+  selectedTags: string[];
   selectedFinishes: string[];
   selectedColors: string[];
   selectedRoomTypes: string[];
@@ -20,7 +21,7 @@ interface FilterSidebarProps {
 export const FilterSidebar = ({
   allProducts,
   selectedCategories,
-  selectedMaterials,
+  selectedTags,
   selectedFinishes,
   selectedColors,
   selectedRoomTypes,
@@ -31,11 +32,14 @@ export const FilterSidebar = ({
   const router = useRouter();
   const searchParams = useSearchParams();
 
+  // Fetch main categories from API (same as navbar)
+  const { categories: dbCategories } = useCategories(false); // Only active categories
+
   const [openSections, setOpenSections] = useState<string[]>([
     "Categories",
-    "Room Type",
+    "Tags",
+    "Shop by Room",
     "Finish Type",
-    "Material Type",
     "Color",
   ]);
   const [priceRange, setPriceRange] = useState({
@@ -45,24 +49,55 @@ export const FilterSidebar = ({
 
   // Generate filter options dynamically from products
   const filterOptions = useMemo(() => {
-    const categories = new Map<string, number>();
-    const materials = new Map<string, number>();
     const finishes = new Map<string, number>();
     const colors = new Map<string, number>();
     const roomTypes = new Map<string, number>();
     const sizes = new Map<string, number>();
+    const tags = new Map<string, number>();
+
+    // Predefined tags
+    const predefinedTags = ['popular', 'trending', 'new', 'premium', 'exclusive', 'classic', 'bestseller', 'limited'];
+
+    // Helper function to get all descendant category slugs (including the parent)
+    const getAllCategorySlugs = (category: any): string[] => {
+      const slugs = [category.slug];
+      if (category.children && category.children.length > 0) {
+        category.children.forEach((child: any) => {
+          slugs.push(...getAllCategorySlugs(child));
+        });
+      }
+      return slugs;
+    };
+
+    // Build a map of main category slug -> all related slugs (including subcategories)
+    const categorySlugMap = new Map<string, string[]>();
+    dbCategories.forEach(category => {
+      const allSlugs = getAllCategorySlugs(category);
+      categorySlugMap.set(category.slug, allSlugs);
+    });
+
+    // Count products for each main category (including subcategories)
+    const categoryCounts = new Map<string, number>();
 
     allProducts.forEach(product => {
-      // Count categories - use categoryName if available
-      const categoryValue = product.category || '';
-      const categoryLabel = product.categoryName || categoryValue;
-      if (categoryValue) {
-        categories.set(categoryValue, (categories.get(categoryValue) || 0) + 1);
+      const productCategorySlug = product.category || '';
+
+      // Check which main category this product belongs to
+      if (productCategorySlug) {
+        categorySlugMap.forEach((slugs, mainCategorySlug) => {
+          if (slugs.includes(productCategorySlug)) {
+            categoryCounts.set(mainCategorySlug, (categoryCounts.get(mainCategorySlug) || 0) + 1);
+          }
+        });
       }
 
-      // Count materials
-      if (product.material) {
-        materials.set(product.material, (materials.get(product.material) || 0) + 1);
+      // Count tags
+      if (product.tags && Array.isArray(product.tags)) {
+        product.tags.forEach((tag: string) => {
+          if (predefinedTags.includes(tag.toLowerCase())) {
+            tags.set(tag.toLowerCase(), (tags.get(tag.toLowerCase()) || 0) + 1);
+          }
+        });
       }
 
       // Count finishes from base product
@@ -102,21 +137,35 @@ export const FilterSidebar = ({
         });
       }
 
-      // Count room types
-      if (product.roomType) {
-        product.roomType.forEach((rt: string) => {
-          roomTypes.set(rt, (roomTypes.get(rt) || 0) + 1);
+      // Count room types from tags (only specific room type tags)
+      const roomTypeTags = ['kitchen', 'bathroom', 'living-room', 'bedroom', 'outdoor', 'commercial'];
+      if (product.tags && Array.isArray(product.tags)) {
+        product.tags.forEach((tag: string) => {
+          const tagLower = tag.toLowerCase();
+          if (roomTypeTags.includes(tagLower)) {
+            roomTypes.set(tagLower, (roomTypes.get(tagLower) || 0) + 1);
+          }
         });
       }
     });
 
+    // Ensure all predefined tags are in the list (even with 0 count)
+    predefinedTags.forEach(tag => {
+      if (!tags.has(tag)) {
+        tags.set(tag, 0);
+      }
+    });
+
+    // Use categories from API and add product counts (including subcategories)
+    const categoriesWithCounts = dbCategories.map(category => ({
+      label: category.name,
+      value: category.slug,
+      count: categoryCounts.get(category.slug) || 0,
+    }));
+
     return {
-      categories: Array.from(categories.entries()).map(([value, count]) => ({
-        label: value.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '),
-        value,
-        count,
-      })),
-      materials: Array.from(materials.entries()).map(([value, count]) => ({
+      categories: categoriesWithCounts,
+      tags: Array.from(tags.entries()).map(([value, count]) => ({
         label: value.charAt(0).toUpperCase() + value.slice(1),
         value,
         count,
@@ -142,7 +191,7 @@ export const FilterSidebar = ({
         count,
       })),
     };
-  }, [allProducts]);
+  }, [allProducts, dbCategories]);
 
   const toggleSection = (title: string) => {
     setOpenSections((prev) =>
@@ -215,7 +264,7 @@ export const FilterSidebar = ({
             onClick={() => toggleSection("Price Range")}
             className="flex items-center justify-between w-full mb-3"
           >
-            <h3 className="font-semibold text-slate-800">Price Range (₹/sq.ft)</h3>
+            <h3 className="font-semibold text-slate-800">Price Range</h3>
             {openSections.includes("Price Range") ? (
               <FaChevronUp className="text-slate-600 text-sm" />
             ) : (
@@ -290,23 +339,23 @@ export const FilterSidebar = ({
           </div>
         )}
 
-        {/* Material Filter */}
-        {filterOptions.materials.length > 0 && (
+        {/* Tags Filter */}
+        {filterOptions.tags.length > 0 && (
           <div className="mb-6 pb-6 border-b border-gray-200">
             <button
-              onClick={() => toggleSection("Material Type")}
+              onClick={() => toggleSection("Tags")}
               className="flex items-center justify-between w-full mb-3"
             >
-              <h3 className="font-semibold text-slate-800">Material Type</h3>
-              {openSections.includes("Material Type") ? (
+              <h3 className="font-semibold text-slate-800">Tags</h3>
+              {openSections.includes("Tags") ? (
                 <FaChevronUp className="text-slate-600 text-sm" />
               ) : (
                 <FaChevronDown className="text-slate-600 text-sm" />
               )}
             </button>
-            {openSections.includes("Material Type") && (
+            {openSections.includes("Tags") && (
               <div className="space-y-2 max-h-64 overflow-y-auto">
-                {filterOptions.materials.map((option) => (
+                {filterOptions.tags.map((option) => (
                   <label
                     key={option.value}
                     className="flex items-center justify-between cursor-pointer group"
@@ -314,8 +363,8 @@ export const FilterSidebar = ({
                     <div className="flex items-center gap-2">
                       <input
                         type="checkbox"
-                        checked={selectedMaterials.includes(option.value)}
-                        onChange={(e) => updateFilters('material', option.value, e.target.checked)}
+                        checked={selectedTags.includes(option.value)}
+                        onChange={(e) => updateFilters('tags', option.value, e.target.checked)}
                         className="w-4 h-4 text-orange-500 border-gray-300 rounded focus:ring-orange-500 cursor-pointer"
                       />
                       <span className="text-sm text-slate-700 group-hover:text-orange-500">
@@ -329,6 +378,102 @@ export const FilterSidebar = ({
             )}
           </div>
         )}
+
+        {/* Shop by Room Filter */}
+        <div className="mb-6 pb-6 border-b border-gray-200">
+          <button
+            onClick={() => toggleSection("Shop by Room")}
+            className="flex items-center justify-between w-full mb-3"
+          >
+            <h3 className="font-semibold text-slate-800">Shop by Room</h3>
+            {openSections.includes("Shop by Room") ? (
+              <FaChevronUp className="text-slate-600 text-sm" />
+            ) : (
+              <FaChevronDown className="text-slate-600 text-sm" />
+            )}
+          </button>
+          {openSections.includes("Shop by Room") && (
+            <div className="grid grid-cols-2 gap-3">
+              {/* Kitchen */}
+              <label className="flex items-center gap-2 p-3 bg-slate-50 rounded-lg border border-slate-200 hover:bg-amber-50 hover:border-amber-300 transition-all cursor-pointer group">
+                <input
+                  type="checkbox"
+                  checked={selectedRoomTypes.includes("kitchen")}
+                  onChange={(e) => updateFilters('roomType', 'kitchen', e.target.checked)}
+                  className="w-4 h-4 text-amber-600 bg-white border-slate-300 rounded focus:ring-2 focus:ring-amber-500 cursor-pointer"
+                />
+                <span className="text-sm font-medium text-slate-700 group-hover:text-amber-700">
+                  Kitchen
+                </span>
+              </label>
+
+              {/* Bathroom */}
+              <label className="flex items-center gap-2 p-3 bg-slate-50 rounded-lg border border-slate-200 hover:bg-cyan-50 hover:border-cyan-300 transition-all cursor-pointer group">
+                <input
+                  type="checkbox"
+                  checked={selectedRoomTypes.includes("bathroom")}
+                  onChange={(e) => updateFilters('roomType', 'bathroom', e.target.checked)}
+                  className="w-4 h-4 text-cyan-600 bg-white border-slate-300 rounded focus:ring-2 focus:ring-cyan-500 cursor-pointer"
+                />
+                <span className="text-sm font-medium text-slate-700 group-hover:text-cyan-700">
+                  Bathroom
+                </span>
+              </label>
+
+              {/* Living Room */}
+              <label className="flex items-center gap-2 p-3 bg-slate-50 rounded-lg border border-slate-200 hover:bg-indigo-50 hover:border-indigo-300 transition-all cursor-pointer group">
+                <input
+                  type="checkbox"
+                  checked={selectedRoomTypes.includes("living-room")}
+                  onChange={(e) => updateFilters('roomType', 'living-room', e.target.checked)}
+                  className="w-4 h-4 text-indigo-600 bg-white border-slate-300 rounded focus:ring-2 focus:ring-indigo-500 cursor-pointer"
+                />
+                <span className="text-sm font-medium text-slate-700 group-hover:text-indigo-700">
+                  Living Room
+                </span>
+              </label>
+
+              {/* Bedroom */}
+              <label className="flex items-center gap-2 p-3 bg-slate-50 rounded-lg border border-slate-200 hover:bg-violet-50 hover:border-violet-300 transition-all cursor-pointer group">
+                <input
+                  type="checkbox"
+                  checked={selectedRoomTypes.includes("bedroom")}
+                  onChange={(e) => updateFilters('roomType', 'bedroom', e.target.checked)}
+                  className="w-4 h-4 text-violet-600 bg-white border-slate-300 rounded focus:ring-2 focus:ring-violet-500 cursor-pointer"
+                />
+                <span className="text-sm font-medium text-slate-700 group-hover:text-violet-700">
+                  Bedroom
+                </span>
+              </label>
+
+              {/* Outdoor */}
+              <label className="flex items-center gap-2 p-3 bg-slate-50 rounded-lg border border-slate-200 hover:bg-emerald-50 hover:border-emerald-300 transition-all cursor-pointer group">
+                <input
+                  type="checkbox"
+                  checked={selectedRoomTypes.includes("outdoor")}
+                  onChange={(e) => updateFilters('roomType', 'outdoor', e.target.checked)}
+                  className="w-4 h-4 text-emerald-600 bg-white border-slate-300 rounded focus:ring-2 focus:ring-emerald-500 cursor-pointer"
+                />
+                <span className="text-sm font-medium text-slate-700 group-hover:text-emerald-700">
+                  Outdoor
+                </span>
+              </label>
+
+              {/* Commercial */}
+              <label className="flex items-center gap-2 p-3 bg-slate-50 rounded-lg border border-slate-200 hover:bg-gray-50 hover:border-gray-400 transition-all cursor-pointer group">
+                <input
+                  type="checkbox"
+                  checked={selectedRoomTypes.includes("commercial")}
+                  onChange={(e) => updateFilters('roomType', 'commercial', e.target.checked)}
+                  className="w-4 h-4 text-gray-600 bg-white border-slate-300 rounded focus:ring-2 focus:ring-gray-500 cursor-pointer"
+                />
+                <span className="text-sm font-medium text-slate-700 group-hover:text-gray-900">
+                  Commercial
+                </span>
+              </label>
+            </div>
+          )}
+        </div>
 
         {/* Finish Filter */}
         {filterOptions.finishes.length > 0 && (

@@ -17,8 +17,9 @@ const applicationTags = [
 
 async function getProductsByTag() {
   try {
-    const response = await fetch(`${API_BASE_URL}/products?limit=50`, {
-      next: { revalidate: 300 }, // Cache for 5 minutes, limit to 50 products
+    // Fetch all products to get better variety
+    const response = await fetch(`${API_BASE_URL}/products/all`, {
+      next: { revalidate: 300 }, // Cache for 5 minutes
     });
 
     if (!response.ok) {
@@ -29,13 +30,30 @@ async function getProductsByTag() {
     const result = await response.json();
     const products = result.products || [];
 
-    // Get one product for each tag
+    console.log(`📦 Fetched ${products.length} total products for Shop by Room`);
+
+    // Helper function to randomly select from array
+    const getRandomItem = (arr: any[]) => {
+      if (arr.length === 0) return null;
+      return arr[Math.floor(Math.random() * arr.length)];
+    };
+
+    // Get one RANDOM product for each tag
     const taggedProducts = applicationTags.map(({ tag, title, description, icon }) => {
-      const product = products.find((p: any) =>
+      // Find ALL products with this tag
+      const matchingProducts = products.filter((p: any) =>
         p.tags && Array.isArray(p.tags) && p.tags.includes(tag)
       );
 
-      if (!product) return null;
+      if (matchingProducts.length === 0) {
+        console.log(`⚠️ No products found for tag: ${tag}`);
+        return null;
+      }
+
+      // Randomly select one product from matching products
+      const product = getRandomItem(matchingProducts);
+
+      console.log(`✅ Selected random product for ${tag}: ${product?.name} (from ${matchingProducts.length} options)`);
 
       return {
         tag,
@@ -51,6 +69,7 @@ async function getProductsByTag() {
       };
     }).filter(Boolean); // Remove null entries
 
+    console.log(`🎯 Final collections count: ${taggedProducts.length}`);
     return taggedProducts;
   } catch (error) {
     console.error('Error fetching products by tag:', error);
@@ -94,7 +113,7 @@ export const CollectionGrid = async () => {
         {collections.map((collection: any, index: number) => (
           <Link
             key={index}
-            href={`/search?tags=${collection.tag}`}
+            href={`/search?roomType=${collection.tag}`}
             className="group relative overflow-hidden rounded-2xl bg-white shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2"
           >
             <div className="relative h-64 overflow-hidden">
