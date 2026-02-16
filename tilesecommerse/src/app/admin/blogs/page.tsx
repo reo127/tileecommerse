@@ -1,11 +1,21 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { HiPlus, HiPencil, HiTrash, HiX, HiCheck, HiNewspaper, HiEye, HiCalendar, HiUser, HiTag } from "react-icons/hi";
+import { HiPlus, HiPencil, HiTrash, HiX, HiCheck, HiNewspaper, HiEye, HiCalendar, HiUser, HiTag, HiUpload } from "react-icons/hi";
 import Image from "next/image";
 import { TipTapEditor } from "@/components/admin/TipTapEditor";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000/api/v1';
+
+// Helper function to convert file to base64
+const fileToBase64 = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = error => reject(error);
+  });
+};
 
 interface Blog {
   _id: string;
@@ -45,6 +55,8 @@ export default function BlogsPage() {
   const [previewMode, setPreviewMode] = useState(false);
   const [submitLoading, setSubmitLoading] = useState(false);
   const [modalError, setModalError] = useState<string | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -113,6 +125,8 @@ export default function BlogsPage() {
         tags: blog.tags,
         status: blog.status,
       });
+      setImagePreview(blog.featuredImage || null);
+      setImageFile(null);
     } else {
       setEditingBlog(null);
       setFormData({
@@ -125,17 +139,55 @@ export default function BlogsPage() {
         tags: [],
         status: 'draft',
       });
+      setImagePreview(null);
+      setImageFile(null);
     }
     setPreviewMode(false);
     setShowModal(true);
   };
 
   const handleCloseModal = () => {
+    // Revoke blob URL to prevent memory leak
+    if (imagePreview && imagePreview.startsWith('blob:')) {
+      URL.revokeObjectURL(imagePreview);
+    }
     setShowModal(false);
     setEditingBlog(null);
     setPreviewMode(false);
     setModalError(null);
     setSubmitLoading(false);
+    setImagePreview(null);
+    setImageFile(null);
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+    if (!validTypes.includes(file.type)) {
+      showModalError('Please upload a valid image (JPG, PNG, GIF, or WebP)');
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      showModalError('Image size must be less than 5MB');
+      return;
+    }
+
+    setImageFile(file);
+    setImagePreview(URL.createObjectURL(file));
+  };
+
+  const removeImage = () => {
+    if (imagePreview && imagePreview.startsWith('blob:')) {
+      URL.revokeObjectURL(imagePreview);
+    }
+    setImageFile(null);
+    setImagePreview(null);
+    setFormData({ ...formData, featuredImage: '' });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -165,6 +217,15 @@ export default function BlogsPage() {
         : `${API_BASE_URL}/admin/blog/new`;
       const method = editingBlog ? 'PUT' : 'POST';
 
+      // Prepare data to send
+      const dataToSend = { ...formData };
+
+      // If a new image file is uploaded, convert to base64
+      if (imageFile) {
+        const base64Image = await fileToBase64(imageFile);
+        dataToSend.featuredImage = base64Image;
+      }
+
       const response = await fetch(url, {
         method,
         headers: {
@@ -172,7 +233,7 @@ export default function BlogsPage() {
           'Authorization': `Bearer ${token}`,
         },
         credentials: 'include',
-        body: JSON.stringify(formData),
+        body: JSON.stringify(dataToSend),
       });
 
       const data = await response.json();
@@ -629,15 +690,48 @@ export default function BlogsPage() {
 
                   <div className="md:col-span-2">
                     <label className="block text-sm font-medium text-slate-700 mb-2">
-                      Featured Image URL
+                      Featured Image
                     </label>
-                    <input
-                      type="url"
-                      value={formData.featuredImage}
-                      onChange={(e) => setFormData({ ...formData, featuredImage: e.target.value })}
-                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
-                      placeholder="https://example.com/image.jpg"
-                    />
+
+                    {/* Image Upload Area */}
+                    {!imagePreview ? (
+                      <div className="relative border-2 border-dashed border-slate-300 rounded-xl hover:border-orange-500 transition-colors">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleImageUpload}
+                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                        />
+                        <div className="py-12 px-4 text-center pointer-events-none">
+                          <HiUpload className="w-12 h-12 mx-auto mb-3 text-slate-400" />
+                          <p className="text-sm font-medium text-slate-700 mb-1">
+                            Click to upload or drag and drop
+                          </p>
+                          <p className="text-xs text-slate-500">
+                            PNG, JPG, GIF, or WebP (max 5MB)
+                          </p>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="relative rounded-xl overflow-hidden border-2 border-slate-200">
+                        <div className="relative h-64 bg-slate-100">
+                          <img
+                            src={imagePreview}
+                            alt="Preview"
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <div className="absolute top-2 right-2">
+                          <button
+                            type="button"
+                            onClick={removeImage}
+                            className="p-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors shadow-lg"
+                          >
+                            <HiTrash className="w-5 h-5" />
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   <div>
