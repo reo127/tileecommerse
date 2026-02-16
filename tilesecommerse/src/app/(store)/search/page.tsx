@@ -2,6 +2,7 @@ import { getAllProducts } from "@/app/actions";
 import { pickFirst } from "@/utils";
 import { FilterSidebar, ProductGrid, Breadcrumb } from "@/components/search";
 import type { Metadata } from "next";
+import type { ProductWithVariants } from "@/schemas";
 
 export const metadata: Metadata = {
   title: "All Products - SLN TILES SHOWROOM",
@@ -51,10 +52,10 @@ const Search = async ({ searchParams }: SearchProps) => {
   const dbCategories = categoriesData.categories || [];
 
   // Helper function to recursively get all descendant category slugs
-  const getAllDescendantSlugs = (category: any): string[] => {
+  const getAllDescendantSlugs = (category: { slug: string; children?: any[] }): string[] => {
     const slugs = [category.slug];
     if (category.children && category.children.length > 0) {
-      category.children.forEach((child: any) => {
+      category.children.forEach((child: { slug: string; children?: any[] }) => {
         slugs.push(...getAllDescendantSlugs(child));
       });
     }
@@ -63,7 +64,7 @@ const Search = async ({ searchParams }: SearchProps) => {
 
   // Build a map of parent category slug -> all descendant slugs (including itself)
   const categorySlugMap = new Map<string, string[]>();
-  dbCategories.forEach((category: any) => {
+  dbCategories.forEach((category: { slug: string; children?: any[] }) => {
     const allSlugs = getAllDescendantSlugs(category);
     categorySlugMap.set(category.slug, allSlugs);
   });
@@ -74,7 +75,7 @@ const Search = async ({ searchParams }: SearchProps) => {
   // Filter by search query
   if (q) {
     const searchLower = q.toLowerCase();
-    filteredProducts = filteredProducts.filter(product =>
+    filteredProducts = filteredProducts.filter((product: ProductWithVariants) =>
       product.name?.toLowerCase().includes(searchLower) ||
       product.description?.toLowerCase().includes(searchLower) ||
       product.category?.toLowerCase().includes(searchLower)
@@ -83,7 +84,7 @@ const Search = async ({ searchParams }: SearchProps) => {
 
   // Filter by categories (including subcategories)
   if (categories.length > 0) {
-    filteredProducts = filteredProducts.filter(product => {
+    filteredProducts = filteredProducts.filter((product: ProductWithVariants) => {
       if (!product.category) return false;
 
       // Check if product category is in any of the selected category hierarchies
@@ -96,7 +97,7 @@ const Search = async ({ searchParams }: SearchProps) => {
 
   // Filter by tags
   if (tags.length > 0) {
-    filteredProducts = filteredProducts.filter(product =>
+    filteredProducts = filteredProducts.filter((product: ProductWithVariants) =>
       product.tags && Array.isArray(product.tags) &&
       tags.some(tag => product.tags.map((t: string) => t.toLowerCase()).includes(tag.toLowerCase()))
     );
@@ -104,13 +105,13 @@ const Search = async ({ searchParams }: SearchProps) => {
 
   // Filter by finishes
   if (finishes.length > 0) {
-    filteredProducts = filteredProducts.filter(product => {
+    filteredProducts = filteredProducts.filter((product: ProductWithVariants) => {
       // Check base product finish
       if (product.finish && finishes.includes(product.finish)) return true;
 
       // Check variant finishes
       if (product.variants && product.variants.length > 0) {
-        return product.variants.some((variant: any) =>
+        return product.variants.some((variant: { finish?: string }) =>
           variant.finish && finishes.includes(variant.finish)
         );
       }
@@ -121,13 +122,13 @@ const Search = async ({ searchParams }: SearchProps) => {
 
   // Filter by colors
   if (colors.length > 0) {
-    filteredProducts = filteredProducts.filter(product => {
+    filteredProducts = filteredProducts.filter((product: ProductWithVariants) => {
       // Check base product color
       if (product.color && colors.includes(product.color)) return true;
 
       // Check variant colors
       if (product.variants && product.variants.length > 0) {
-        return product.variants.some((variant: any) =>
+        return product.variants.some((variant: { color?: string }) =>
           variant.color && colors.includes(variant.color)
         );
       }
@@ -138,7 +139,7 @@ const Search = async ({ searchParams }: SearchProps) => {
 
   // Filter by room types (stored in tags)
   if (roomTypes.length > 0) {
-    filteredProducts = filteredProducts.filter(product =>
+    filteredProducts = filteredProducts.filter((product: ProductWithVariants) =>
       product.tags && Array.isArray(product.tags) &&
       roomTypes.some(rt => product.tags.map((t: string) => t.toLowerCase()).includes(rt.toLowerCase()))
     );
@@ -146,10 +147,10 @@ const Search = async ({ searchParams }: SearchProps) => {
 
   // Filter by sizes
   if (sizes.length > 0) {
-    filteredProducts = filteredProducts.filter(product => {
+    filteredProducts = filteredProducts.filter((product: ProductWithVariants) => {
       // Check variants for sizes
       if (product.variants && product.variants.length > 0) {
-        return product.variants.some((variant: any) => {
+        return product.variants.some((variant: { size?: string; sizes?: string[] }) => {
           if (variant.size && sizes.includes(variant.size)) return true;
           if (variant.sizes && Array.isArray(variant.sizes)) {
             return variant.sizes.some((s: string) => sizes.includes(s));
@@ -163,7 +164,7 @@ const Search = async ({ searchParams }: SearchProps) => {
 
   // Filter by price range
   if (minPrice !== undefined || maxPrice !== undefined) {
-    filteredProducts = filteredProducts.filter(product => {
+    filteredProducts = filteredProducts.filter((product: ProductWithVariants) => {
       const price = product.price || 0;
       if (minPrice !== undefined && price < minPrice) return false;
       if (maxPrice !== undefined && price > maxPrice) return false;
