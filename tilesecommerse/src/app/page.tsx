@@ -10,7 +10,8 @@ import {
   ClassicProducts,
   BestSeller,
   LimitedEdition,
-  Testimonials,
+  BlogSection,
+  // Testimonials, // Temporarily disabled - will add back later
 } from "@/components/home";
 
 const Home = async () => {
@@ -46,8 +47,11 @@ const Home = async () => {
       {/* Limited Edition Products */}
       <LimitedEdition />
 
-      {/* Testimonials */}
-      <Testimonials />
+      {/* Blog Section */}
+      <BlogSection />
+
+      {/* Testimonials - Temporarily disabled */}
+      {/* <Testimonials /> */}
     </main>
   );
 };

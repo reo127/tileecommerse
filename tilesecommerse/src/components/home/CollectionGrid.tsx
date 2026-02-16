@@ -113,7 +113,7 @@ export const CollectionGrid = async () => {
         {collections.map((collection: any, index: number) => (
           <Link
             key={index}
-            href={`/search?tags=${collection.tag}`}
+            href={`/search?roomType=${collection.tag}`}
             className="group relative overflow-hidden rounded-2xl bg-white shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2"
           >
             <div className="relative h-64 overflow-hidden">

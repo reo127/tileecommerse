@@ -38,7 +38,7 @@ export const FilterSidebar = ({
   const [openSections, setOpenSections] = useState<string[]>([
     "Categories",
     "Tags",
-    "Room Type",
+    "Shop by Room",
     "Finish Type",
     "Color",
   ]);
@@ -137,10 +137,14 @@ export const FilterSidebar = ({
         });
       }
 
-      // Count room types
-      if (product.roomType) {
-        product.roomType.forEach((rt: string) => {
-          roomTypes.set(rt, (roomTypes.get(rt) || 0) + 1);
+      // Count room types from tags (only specific room type tags)
+      const roomTypeTags = ['kitchen', 'bathroom', 'living-room', 'bedroom', 'outdoor', 'commercial'];
+      if (product.tags && Array.isArray(product.tags)) {
+        product.tags.forEach((tag: string) => {
+          const tagLower = tag.toLowerCase();
+          if (roomTypeTags.includes(tagLower)) {
+            roomTypes.set(tagLower, (roomTypes.get(tagLower) || 0) + 1);
+          }
         });
       }
     });
@@ -374,6 +378,102 @@ export const FilterSidebar = ({
             )}
           </div>
         )}
+
+        {/* Shop by Room Filter */}
+        <div className="mb-6 pb-6 border-b border-gray-200">
+          <button
+            onClick={() => toggleSection("Shop by Room")}
+            className="flex items-center justify-between w-full mb-3"
+          >
+            <h3 className="font-semibold text-slate-800">Shop by Room</h3>
+            {openSections.includes("Shop by Room") ? (
+              <FaChevronUp className="text-slate-600 text-sm" />
+            ) : (
+              <FaChevronDown className="text-slate-600 text-sm" />
+            )}
+          </button>
+          {openSections.includes("Shop by Room") && (
+            <div className="grid grid-cols-2 gap-3">
+              {/* Kitchen */}
+              <label className="flex items-center gap-2 p-3 bg-slate-50 rounded-lg border border-slate-200 hover:bg-amber-50 hover:border-amber-300 transition-all cursor-pointer group">
+                <input
+                  type="checkbox"
+                  checked={selectedRoomTypes.includes("kitchen")}
+                  onChange={(e) => updateFilters('roomType', 'kitchen', e.target.checked)}
+                  className="w-4 h-4 text-amber-600 bg-white border-slate-300 rounded focus:ring-2 focus:ring-amber-500 cursor-pointer"
+                />
+                <span className="text-sm font-medium text-slate-700 group-hover:text-amber-700">
+                  Kitchen
+                </span>
+              </label>
+
+              {/* Bathroom */}
+              <label className="flex items-center gap-2 p-3 bg-slate-50 rounded-lg border border-slate-200 hover:bg-cyan-50 hover:border-cyan-300 transition-all cursor-pointer group">
+                <input
+                  type="checkbox"
+                  checked={selectedRoomTypes.includes("bathroom")}
+                  onChange={(e) => updateFilters('roomType', 'bathroom', e.target.checked)}
+                  className="w-4 h-4 text-cyan-600 bg-white border-slate-300 rounded focus:ring-2 focus:ring-cyan-500 cursor-pointer"
+                />
+                <span className="text-sm font-medium text-slate-700 group-hover:text-cyan-700">
+                  Bathroom
+                </span>
+              </label>
+
+              {/* Living Room */}
+              <label className="flex items-center gap-2 p-3 bg-slate-50 rounded-lg border border-slate-200 hover:bg-indigo-50 hover:border-indigo-300 transition-all cursor-pointer group">
+                <input
+                  type="checkbox"
+                  checked={selectedRoomTypes.includes("living-room")}
+                  onChange={(e) => updateFilters('roomType', 'living-room', e.target.checked)}
+                  className="w-4 h-4 text-indigo-600 bg-white border-slate-300 rounded focus:ring-2 focus:ring-indigo-500 cursor-pointer"
+                />
+                <span className="text-sm font-medium text-slate-700 group-hover:text-indigo-700">
+                  Living Room
+                </span>
+              </label>
+
+              {/* Bedroom */}
+              <label className="flex items-center gap-2 p-3 bg-slate-50 rounded-lg border border-slate-200 hover:bg-violet-50 hover:border-violet-300 transition-all cursor-pointer group">
+                <input
+                  type="checkbox"
+                  checked={selectedRoomTypes.includes("bedroom")}
+                  onChange={(e) => updateFilters('roomType', 'bedroom', e.target.checked)}
+                  className="w-4 h-4 text-violet-600 bg-white border-slate-300 rounded focus:ring-2 focus:ring-violet-500 cursor-pointer"
+                />
+                <span className="text-sm font-medium text-slate-700 group-hover:text-violet-700">
+                  Bedroom
+                </span>
+              </label>
+
+              {/* Outdoor */}
+              <label className="flex items-center gap-2 p-3 bg-slate-50 rounded-lg border border-slate-200 hover:bg-emerald-50 hover:border-emerald-300 transition-all cursor-pointer group">
+                <input
+                  type="checkbox"
+                  checked={selectedRoomTypes.includes("outdoor")}
+                  onChange={(e) => updateFilters('roomType', 'outdoor', e.target.checked)}
+                  className="w-4 h-4 text-emerald-600 bg-white border-slate-300 rounded focus:ring-2 focus:ring-emerald-500 cursor-pointer"
+                />
+                <span className="text-sm font-medium text-slate-700 group-hover:text-emerald-700">
+                  Outdoor
+                </span>
+              </label>
+
+              {/* Commercial */}
+              <label className="flex items-center gap-2 p-3 bg-slate-50 rounded-lg border border-slate-200 hover:bg-gray-50 hover:border-gray-400 transition-all cursor-pointer group">
+                <input
+                  type="checkbox"
+                  checked={selectedRoomTypes.includes("commercial")}
+                  onChange={(e) => updateFilters('roomType', 'commercial', e.target.checked)}
+                  className="w-4 h-4 text-gray-600 bg-white border-slate-300 rounded focus:ring-2 focus:ring-gray-500 cursor-pointer"
+                />
+                <span className="text-sm font-medium text-slate-700 group-hover:text-gray-900">
+                  Commercial
+                </span>
+              </label>
+            </div>
+          )}
+        </div>
 
         {/* Finish Filter */}
         {filterOptions.finishes.length > 0 && (

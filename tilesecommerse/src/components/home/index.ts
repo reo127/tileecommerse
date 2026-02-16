@@ -11,3 +11,4 @@ export { ExclusiveProducts } from "./ExclusiveProducts";
 export { ClassicProducts } from "./ClassicProducts";
 export { BestSeller } from "./BestSeller";
 export { LimitedEdition } from "./LimitedEdition";
+export { BlogSection } from "./BlogSection";
