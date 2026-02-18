@@ -864,8 +864,8 @@ export const CheckoutForm = () => {
                     </div>
                   </label>
 
-                  {/* UPI Option */}
-                  <label className={`block p-4 border-2 rounded-xl cursor-pointer transition-all ${paymentMethod === 'upi'
+                  {/* UPI Option - COMMENTED OUT (To enable: uncomment this section) */}
+                  {/* <label className={`block p-4 border-2 rounded-xl cursor-pointer transition-all ${paymentMethod === 'upi'
                     ? 'border-orange-500 bg-orange-50'
                     : 'border-slate-200 hover:border-slate-300'
                     }`}>
@@ -902,10 +902,10 @@ export const CheckoutForm = () => {
                         </p>
                       </div>
                     )}
-                  </label>
+                  </label> */}
 
-                  {/* COD Option */}
-                  <label className={`block p-4 border-2 rounded-xl cursor-pointer transition-all ${paymentMethod === 'cod'
+                  {/* COD Option - COMMENTED OUT (To enable: uncomment this section) */}
+                  {/* <label className={`block p-4 border-2 rounded-xl cursor-pointer transition-all ${paymentMethod === 'cod'
                     ? 'border-orange-500 bg-orange-50'
                     : 'border-slate-200 hover:border-slate-300'
                     }`}>
@@ -926,7 +926,7 @@ export const CheckoutForm = () => {
                         <p className="text-xs text-slate-600">Pay when you receive</p>
                       </div>
                     </div>
-                  </label>
+                  </label> */}
                 </div>
               </div>
 
