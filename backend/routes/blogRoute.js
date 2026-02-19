@@ -23,11 +23,11 @@ router.route('/blog/slug/:slug').get(getBlogBySlug);
 router.route('/blog/:id/related').get(getRelatedBlogs);
 
 // Admin Routes
-router.route('/admin/blogs').get(isAuthenticatedUser, authorizeRoles('admin'), getAllBlogsAdmin);
-router.route('/admin/blog/new').post(isAuthenticatedUser, authorizeRoles('admin'), createBlog);
+router.route('/admin/blogs').get(isAuthenticatedUser, authorizeRoles('admin', 'superadmin'), getAllBlogsAdmin);
+router.route('/admin/blog/new').post(isAuthenticatedUser, authorizeRoles('admin', 'superadmin'), createBlog);
 router.route('/admin/blog/:id')
-    .get(isAuthenticatedUser, authorizeRoles('admin'), getBlogById)
-    .put(isAuthenticatedUser, authorizeRoles('admin'), updateBlog)
-    .delete(isAuthenticatedUser, authorizeRoles('admin'), deleteBlog);
+    .get(isAuthenticatedUser, authorizeRoles('admin', 'superadmin'), getBlogById)
+    .put(isAuthenticatedUser, authorizeRoles('admin', 'superadmin'), updateBlog)
+    .delete(isAuthenticatedUser, authorizeRoles('admin', 'superadmin'), deleteBlog);
 
 module.exports = router;
