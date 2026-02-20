@@ -74,7 +74,7 @@ export const TopBar = ({ editProfileManager }: { editProfileManager: Manager }) 
                 />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-white">SLN TILES SHOWROOM</h1>
+                <h1 className="md:text-xl text-lg leading-5 font-bold text-white ">SLN TILES SHOWROOM</h1>
                 <p className="text-xs text-white">Trusted by Builders and Homeowners</p>
               </div>
             </Link>

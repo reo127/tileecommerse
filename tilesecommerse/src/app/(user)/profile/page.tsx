@@ -358,35 +358,32 @@ export default function ProfilePage() {
           <div className="flex border-b border-slate-200 overflow-x-auto">
             <button
               onClick={() => setActiveTab("profile")}
-              className={`flex items-center gap-2 px-6 py-4 font-medium transition-colors whitespace-nowrap ${
-                activeTab === "profile"
+              className={`flex items-center gap-1.5 px-4 sm:px-6 py-3 sm:py-4 text-sm font-medium transition-colors whitespace-nowrap ${activeTab === "profile"
                   ? "text-orange-500 border-b-2 border-orange-500"
                   : "text-slate-600 hover:text-slate-900"
-              }`}
+                }`}
             >
-              <HiUser className="w-5 h-5" />
+              <HiUser className="w-4 h-4" />
               Profile
             </button>
             <button
               onClick={() => setActiveTab("addresses")}
-              className={`flex items-center gap-2 px-6 py-4 font-medium transition-colors whitespace-nowrap ${
-                activeTab === "addresses"
+              className={`flex items-center gap-1.5 px-4 sm:px-6 py-3 sm:py-4 text-sm font-medium transition-colors whitespace-nowrap ${activeTab === "addresses"
                   ? "text-orange-500 border-b-2 border-orange-500"
                   : "text-slate-600 hover:text-slate-900"
-              }`}
+                }`}
             >
-              <HiLocationMarker className="w-5 h-5" />
+              <HiLocationMarker className="w-4 h-4" />
               Addresses
             </button>
             <button
               onClick={() => setActiveTab("orders")}
-              className={`flex items-center gap-2 px-6 py-4 font-medium transition-colors whitespace-nowrap ${
-                activeTab === "orders"
+              className={`flex items-center gap-1.5 px-4 sm:px-6 py-3 sm:py-4 text-sm font-medium transition-colors whitespace-nowrap ${activeTab === "orders"
                   ? "text-orange-500 border-b-2 border-orange-500"
                   : "text-slate-600 hover:text-slate-900"
-              }`}
+                }`}
             >
-              <HiClipboardList className="w-5 h-5" />
+              <HiClipboardList className="w-4 h-4" />
               Orders ({orders.length})
             </button>
           </div>
@@ -579,11 +576,10 @@ export default function ProfilePage() {
                           {["home", "work", "other"].map((type) => (
                             <label
                               key={type}
-                              className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 border-2 rounded-xl cursor-pointer transition-all ${
-                                addressFormData.addressType === type
+                              className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 border-2 rounded-xl cursor-pointer transition-all ${addressFormData.addressType === type
                                   ? "border-orange-500 bg-orange-50 text-orange-700"
                                   : "border-slate-200 hover:border-slate-300"
-                              }`}
+                                }`}
                             >
                               <input
                                 type="radio"
@@ -639,9 +635,8 @@ export default function ProfilePage() {
                   {user.addresses.map((address) => (
                     <div
                       key={address._id}
-                      className={`bg-white rounded-xl shadow-sm border-2 p-6 transition-all ${
-                        address.isDefault ? "border-orange-500" : "border-slate-200"
-                      }`}
+                      className={`bg-white rounded-xl shadow-sm border-2 p-6 transition-all ${address.isDefault ? "border-orange-500" : "border-slate-200"
+                        }`}
                     >
                       <div className="flex items-start justify-between mb-4">
                         <div className="flex items-center gap-2">
