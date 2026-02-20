@@ -52,7 +52,7 @@ export const ProductCartInfo = ({
   );
 
   return (
-    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+    <div className="flex flex-wrap items-center gap-3">
       {/* Variant Info */}
       <div className="flex items-center gap-3 text-sm text-slate-600 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100">
         <div className="flex items-center gap-2">

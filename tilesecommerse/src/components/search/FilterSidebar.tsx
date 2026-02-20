@@ -35,13 +35,7 @@ export const FilterSidebar = ({
   // Fetch main categories from API (same as navbar)
   const { categories: dbCategories } = useCategories(false); // Only active categories
 
-  const [openSections, setOpenSections] = useState<string[]>([
-    "Categories",
-    "Tags",
-    "Shop by Room",
-    "Finish Type",
-    "Color",
-  ]);
+  const [openSections, setOpenSections] = useState<string[]>([]);
   const [priceRange, setPriceRange] = useState({
     min: initialMinPrice?.toString() || "",
     max: initialMaxPrice?.toString() || "",

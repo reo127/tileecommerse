@@ -101,7 +101,7 @@ export const CartProducts = ({
     };
 
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 py-8 px-4 sm:px-6 lg:px-8">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 py-8 px-4 sm:px-6 lg:px-8 overflow-x-hidden">
         <div className="max-w-7xl mx-auto">
           {/* Header */}
           <div className="mb-8">
@@ -113,7 +113,7 @@ export const CartProducts = ({
             </p>
           </div>
 
-          <div className="grid lg:grid-cols-3 gap-8">
+          <div className="flex flex-col lg:grid lg:grid-cols-3 gap-8">
             {/* Cart Items */}
             <div className="lg:col-span-2 space-y-4">
               {cartProductsWithInfo.map(({ product, cartItem, variant }) => (

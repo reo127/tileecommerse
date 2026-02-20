@@ -20,12 +20,12 @@ export const ProductDetailsTabs = ({ product }: ProductDetailsTabsProps) => {
   return (
     <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
       {/* Tab Headers */}
-      <div className="flex border-b border-gray-200 bg-slate-50">
+      <div className="flex border-b border-gray-200 bg-slate-50 overflow-x-auto">
         {tabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`flex-1 px-6 py-4 font-semibold transition-colors ${activeTab === tab.id
+            className={`flex-1 min-w-max px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm font-semibold transition-colors whitespace-nowrap ${activeTab === tab.id
               ? "bg-white text-orange-500 border-b-2 border-orange-500"
               : "text-slate-600 hover:text-slate-800"
               }`}
