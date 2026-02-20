@@ -44,6 +44,12 @@ const MATERIAL_TYPES = [
   'Solar Glass', 'Silicon (Solar Grade)', 'Rubber'
 ];
 
+// Unit types for tiles and products
+const Unit = [
+  'Box', 'Pcs', 'Sq.ft', 'Sq.m', 'Cartoon', 'MM', 'CM', 'Inches', 'Feet', 'Meters', 'Kg',
+  'Gram', 'Set', 'Pair', 'ML', 'Litre', 'Bag', 'Bucket', 'Unit'
+];
+
 interface EditProductPageProps {
   params: Promise<{ id: string }>;
 }
@@ -770,10 +776,11 @@ export default function EditProductPage({ params }: EditProductPageProps) {
                 {/* Unit */}
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">Unit</label>
-                  <select name="unit" defaultValue={product.unit || 'inches'} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all">
-                    <option value="inches">Inches</option>
-                    <option value="cm">CM</option>
-                    <option value="mm">MM</option>
+                  <select name="unit" defaultValue={product.unit || ''} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all">
+                    <option value="">Select unit</option>
+                    {Unit.map((unit) => (
+                      <option key={unit} value={unit}>{unit}</option>
+                    ))}
                   </select>
                 </div>
 
@@ -1024,7 +1031,12 @@ export default function EditProductPage({ params }: EditProductPageProps) {
                               </div>
                               <div>
                                 <label className="block text-xs font-medium text-slate-600 mb-1">Unit</label>
-                                <input type="text" value={variant.unit} onChange={(e) => updateVariant(variant.id, 'unit', e.target.value)} placeholder="inches, cm, sqft..." className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
+                                <select value={variant.unit} onChange={(e) => updateVariant(variant.id, 'unit', e.target.value)} className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all">
+                                  <option value="">Select unit</option>
+                                  {Unit.map((unit) => (
+                                    <option key={unit} value={unit}>{unit}</option>
+                                  ))}
+                                </select>
                               </div>
                               <div>
                                 <label className="block text-xs font-medium text-slate-600 mb-1">Price (₹)</label>
