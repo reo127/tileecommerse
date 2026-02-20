@@ -54,11 +54,13 @@ export const ProductInfo = ({ product, onVariantChange }: ProductInfoProps) => {
     ];
   }, [product]);
 
+  // All unique colors across all variants
   const uniqueColors = useMemo(() =>
     Array.from(new Set(allVariantOptions.map((v: any) => v.color))).filter(Boolean),
     [allVariantOptions]
   );
 
+  // All unique sizes across all variants
   const uniqueSizes = useMemo(() =>
     Array.from(new Set(
       allVariantOptions.flatMap((v: any) =>
@@ -67,6 +69,26 @@ export const ProductInfo = ({ product, onVariantChange }: ProductInfoProps) => {
     )),
     [allVariantOptions]
   );
+
+  // Sizes available for the currently selected color
+  const sizesForSelectedColor = useMemo(() => {
+    if (!selectedColor) return uniqueSizes as string[];
+    const matching = allVariantOptions.filter((v: any) => v.color === selectedColor);
+    return Array.from(new Set(
+      matching.flatMap((v: any) =>
+        (v.sizes && v.sizes.length > 0) ? v.sizes : [v.size]
+      ).filter(Boolean)
+    )) as string[];
+  }, [allVariantOptions, selectedColor, uniqueSizes]);
+
+  // Colors available for the currently selected size
+  const colorsForSelectedSize = useMemo(() => {
+    if (!selectedSize) return uniqueColors as string[];
+    return (allVariantOptions.filter((v: any) => {
+      const variantSizes = (v.sizes && v.sizes.length > 0) ? v.sizes : [v.size];
+      return variantSizes.includes(selectedSize);
+    }).map((v: any) => v.color).filter(Boolean)) as string[];
+  }, [allVariantOptions, selectedSize, uniqueColors]);
 
   const uniqueFinishes = useMemo(() =>
     Array.from(new Set(allVariantOptions.map((v: any) => v.finish))).filter(Boolean),
@@ -279,35 +301,51 @@ export const ProductInfo = ({ product, onVariantChange }: ProductInfoProps) => {
               console.log(`🎨 ${color}: FINAL IMAGE:`, variantImage);
               console.log(`========================================\n`);
 
+              // Is this color available for the currently selected size?
+              const isColorAvailable = colorsForSelectedSize.includes(color);
+
               return (
                 <button
                   key={color}
                   onClick={() => {
                     setSelectedColor(color);
+                    // If selected size is not available for this color, reset size
+                    const sizesForThisColor = allVariantOptions
+                      .filter((v: any) => v.color === color)
+                      .flatMap((v: any) => (v.sizes && v.sizes.length > 0) ? v.sizes : [v.size])
+                      .filter(Boolean);
+                    if (selectedSize && !sizesForThisColor.includes(selectedSize)) {
+                      setSelectedSize(sizesForThisColor[0] || "");
+                    }
                   }}
+                  title={!isColorAvailable ? `${color} - Not available in selected size` : color}
                   className={`relative group transition-all rounded-lg ${selectedColor === color
-                    ? "ring-3 ring-orange-500 ring-offset-2"
-                    : "hover:ring-2 hover:ring-orange-300 hover:ring-offset-2"
+                      ? "ring-3 ring-orange-500 ring-offset-2"
+                      : isColorAvailable
+                        ? "hover:ring-2 hover:ring-orange-300 hover:ring-offset-2"
+                        : "opacity-50 cursor-pointer"
                     }`}
                   style={{ width: '100px', height: '100px' }}
                 >
                   {/* Variant Image */}
-                  <div className="w-full h-full rounded-lg overflow-hidden border-2 border-gray-200">
+                  <div className={`w-full h-full rounded-lg overflow-hidden border-2 ${!isColorAvailable ? 'border-gray-300 grayscale' : 'border-gray-200'
+                    }`}>
                     <img
                       src={variantImage}
                       alt={`${color} variant`}
                       className="w-full h-full object-cover"
                       onError={(e) => {
-                        console.error(`❌ Image failed to load for ${color}:`, variantImage);
-                        // Fallback to placeholder on error
                         (e.target as HTMLImageElement).src = '/placeholder-image.jpg';
                       }}
                     />
                   </div>
 
                   {/* Color Label */}
-                  <div className="absolute bottom-0 left-0 right-0 bg-black/70 text-white text-xs py-1 px-2 text-center rounded-b-lg">
-                    {color}
+                  <div className={`absolute bottom-0 left-0 right-0 text-white text-xs py-1 px-2 text-center rounded-b-lg ${!isColorAvailable ? 'bg-red-700/80' : 'bg-black/70'
+                    }`}>
+                    {!isColorAvailable ? (
+                      <span className="text-red-200 text-[10px] leading-tight block">Unavailable<br /><span className="text-white">{color}</span></span>
+                    ) : color}
                   </div>
 
                   {/* Selected Checkmark */}
@@ -332,21 +370,43 @@ export const ProductInfo = ({ product, onVariantChange }: ProductInfoProps) => {
         <div>
           <h3 className="text-sm font-semibold text-slate-800 mb-3">Available Sizes</h3>
           <div className="flex flex-wrap gap-2">
-            {uniqueSizes.map((size: any) => (
-              <button
-                key={size}
-                onClick={() => {
-                  console.log('📏 Size Selected:', size);
-                  setSelectedSize(size);
-                }}
-                className={`px-6 py-3 rounded-lg border-2 font-medium transition-all ${selectedSize === size
-                  ? "border-orange-500 bg-orange-50 text-orange-600"
-                  : "border-gray-300 text-slate-700 hover:border-orange-300"
-                  }`}
-              >
-                {size}"
-              </button>
-            ))}
+            {uniqueSizes.map((size: any) => {
+              const isSizeAvailable = sizesForSelectedColor.includes(size);
+              return (
+                <button
+                  key={size}
+                  onClick={() => {
+                    setSelectedSize(size);
+                    // If selected color doesn't have this size, switch to first color that does
+                    if (!isSizeAvailable) {
+                      const firstColorWithSize = allVariantOptions.find((v: any) => {
+                        const vs = (v.sizes && v.sizes.length > 0) ? v.sizes : [v.size];
+                        return vs.includes(size);
+                      });
+                      if (firstColorWithSize?.color) {
+                        setSelectedColor(firstColorWithSize.color);
+                      }
+                    }
+                  }}
+                  disabled={!isSizeAvailable && false} // still clickable but styled differently
+                  className={`relative px-6 py-3 rounded-lg border-2 font-medium transition-all ${selectedSize === size
+                      ? "border-orange-500 bg-orange-50 text-orange-600"
+                      : isSizeAvailable
+                        ? "border-gray-300 text-slate-700 hover:border-orange-300"
+                        : "border-gray-200 text-gray-400 bg-gray-50 cursor-pointer"
+                    }`}
+                  title={!isSizeAvailable ? `${size} - Not available in ${selectedColor}` : size}
+                >
+                  {/* Diagonal strikethrough line for unavailable sizes */}
+                  {!isSizeAvailable && (
+                    <span className="absolute inset-0 overflow-hidden rounded-lg pointer-events-none">
+                      <span className="absolute top-1/2 left-0 w-full h-[1.5px] bg-gray-400 transform -rotate-[20deg] origin-center" />
+                    </span>
+                  )}
+                  {size}&quot;
+                </button>
+              );
+            })}
           </div>
         </div>
       )}

@@ -47,6 +47,12 @@ const MATERIAL_TYPES = [
   'Solar Glass', 'Silicon (Solar Grade)', 'Rubber'
 ];
 
+// Unit types for tiles and products
+const Unit = [
+  'Box', 'Pcs', 'Sq.ft', 'Sq.m', 'Cartoon', 'MM', 'CM', 'Inches', 'Feet', 'Meters', 'Kg',
+  'Gram', 'Set', 'Pair', 'ML', 'Litre', 'Bag', 'Bucket', 'Unit'
+];
+
 import { colorMapping } from "@/constants/colors";
 
 // Safe UUID generator with fallback for older browsers
@@ -722,9 +728,10 @@ export function SimpleProductForm() {
                     onChange={(e) => setMainFormValues({ ...mainFormValues, unit: e.target.value })}
                     className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
                   >
-                    <option value="inches">Inches</option>
-                    <option value="cm">CM</option>
-                    <option value="mm">MM</option>
+                    <option value="">Select unit</option>
+                    {Unit.map((unit) => (
+                      <option key={unit} value={unit}>{unit}</option>
+                    ))}
                   </select>
                 </div>
 
@@ -1026,9 +1033,10 @@ export function SimpleProductForm() {
                                   onChange={(e) => updateVariant(variant.id, 'unit', e.target.value)}
                                   className="w-full px-3 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
                                 >
-                                  <option value="inches">Inches</option>
-                                  <option value="cm">CM</option>
-                                  <option value="mm">MM</option>
+                                  <option value="">Select unit</option>
+                                  {Unit.map((unit) => (
+                                    <option key={unit} value={unit}>{unit}</option>
+                                  ))}
                                 </select>
                               </div>
 
