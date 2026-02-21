@@ -39,6 +39,40 @@ interface Address {
   isDefault: boolean;
 }
 
+/**
+ * Returns the correct price for a given size by searching through product variants.
+ * Falls back to the base product price if no size-specific variant is found.
+ */
+const getPriceForSize = (product: any, size: string): number => {
+  if (!product) return 0;
+  // Search through all variants for one that contains this size
+  if (product.variants && product.variants.length > 0) {
+    for (const variant of product.variants) {
+      const variantSizes: string[] =
+        variant.sizes && variant.sizes.length > 0
+          ? variant.sizes
+          : variant.size
+            ? [variant.size]
+            : [];
+      if (variantSizes.includes(size)) {
+        return variant.price ?? product.price ?? 0;
+      }
+    }
+  }
+  // Also check the base product itself
+  const baseSizes: string[] =
+    product.sizes && product.sizes.length > 0
+      ? product.sizes
+      : product.size
+        ? [product.size]
+        : [];
+  if (baseSizes.includes(size)) {
+    return product.price ?? 0;
+  }
+  // Fallback: return base product price
+  return product.price ?? 0;
+};
+
 export const CheckoutForm = () => {
   const router = useRouter();
   const { items } = useCart();
@@ -185,9 +219,10 @@ export const CheckoutForm = () => {
         return {
           product: item.productId,
           name: product?.name || "Unknown Product",
-          price: product?.price || 0,
+          price: getPriceForSize(product, item.size),
           quantity: item.quantity,
           image: product?.img || "",
+          size: item.size,
         };
       });
 
@@ -229,9 +264,10 @@ export const CheckoutForm = () => {
       return {
         product: item.productId,
         name: product?.name || "Unknown Product",
-        price: product?.price || 0,
+        price: getPriceForSize(product, item.size),
         quantity: item.quantity,
         image: product?.img || "",
+        size: item.size,
       };
     });
 
@@ -286,9 +322,10 @@ export const CheckoutForm = () => {
         return {
           product: item.productId,
           name: product?.name || "Unknown Product",
-          price: product?.price || 0,
+          price: getPriceForSize(product, item.size),
           quantity: item.quantity,
           image: product?.img || "",
+          size: item.size,
         };
       });
 
@@ -576,14 +613,14 @@ export const CheckoutForm = () => {
                       key={address._id}
                       onClick={() => handleSelectAddress(address)}
                       className={`relative p-4 border-2 rounded-xl cursor-pointer transition-all ${selectedAddressId === address._id
-                          ? 'border-orange-500 bg-orange-50'
-                          : 'border-slate-200 hover:border-slate-300'
+                        ? 'border-orange-500 bg-orange-50'
+                        : 'border-slate-200 hover:border-slate-300'
                         }`}
                     >
                       <div className="flex items-start gap-3">
                         <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5 ${selectedAddressId === address._id
-                            ? 'border-orange-500 bg-orange-500'
-                            : 'border-slate-300'
+                          ? 'border-orange-500 bg-orange-500'
+                          : 'border-slate-300'
                           }`}>
                           {selectedAddressId === address._id && (
                             <HiCheck className="w-3 h-3 text-white" />

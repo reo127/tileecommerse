@@ -13,6 +13,29 @@ import { CartProduct } from "./CartProduct";
 import type { ProductWithVariants } from "@/schemas";
 import { HiShoppingCart, HiArrowRight, HiTag, HiX } from "react-icons/hi";
 
+/**
+ * Returns the correct price for a given size by searching through product variants.
+ * Falls back to the base product price if no size-specific variant is found.
+ */
+const getPriceForSize = (product: any, size: string): number => {
+  if (!product) return 0;
+  if (product.variants && product.variants.length > 0) {
+    for (const variant of product.variants) {
+      const variantSizes: string[] =
+        variant.sizes && variant.sizes.length > 0
+          ? variant.sizes
+          : variant.size
+            ? [variant.size]
+            : [];
+      if (variantSizes.includes(size)) {
+        return variant.price ?? product.price ?? 0;
+      }
+    }
+  }
+  return product.price ?? 0;
+};
+
+
 export const CartProducts = ({
   allProducts,
 }: {
@@ -54,7 +77,8 @@ export const CartProducts = ({
       .filter((item): item is NonNullable<typeof item> => item !== null);
 
     const subtotal = cartProductsWithInfo.reduce(
-      (sum, { product, cartItem }) => sum + product.price * cartItem.quantity,
+      (sum, { product, cartItem }) =>
+        sum + getPriceForSize(product, cartItem.size) * cartItem.quantity,
       0
     );
 
@@ -63,8 +87,11 @@ export const CartProducts = ({
     const tax = subtotalAfterDiscount * 0.18; // 18% GST
     const totalPrice = subtotalAfterDiscount + tax;
     const savings = cartProductsWithInfo.reduce(
-      (sum, { product, cartItem }) =>
-        sum + ((product.cuttedPrice || product.price) - product.price) * cartItem.quantity,
+      (sum, { product, cartItem }) => {
+        const sizePrice = getPriceForSize(product, cartItem.size);
+        const mrp = product.cuttedPrice || sizePrice;
+        return sum + (mrp - sizePrice) * cartItem.quantity;
+      },
       0
     );
 

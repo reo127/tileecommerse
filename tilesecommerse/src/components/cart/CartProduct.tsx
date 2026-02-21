@@ -6,6 +6,27 @@ import { ProductCartInfo } from "./ProductCartInfo";
 /** TYPES */
 import type { CartItem, ProductVariant, ProductWithVariants } from "@/schemas";
 
+/**
+ * Returns the correct price for a given size by searching through product variants.
+ */
+const getPriceForSize = (product: any, size: string): number => {
+  if (!product) return 0;
+  if (product.variants && product.variants.length > 0) {
+    for (const variant of product.variants) {
+      const variantSizes: string[] =
+        variant.sizes && variant.sizes.length > 0
+          ? variant.sizes
+          : variant.size
+            ? [variant.size]
+            : [];
+      if (variantSizes.includes(size)) {
+        return variant.price ?? product.price ?? 0;
+      }
+    }
+  }
+  return product.price ?? 0;
+};
+
 interface CartProductProps {
   product: ProductWithVariants;
   cartItemId: CartItem["id"];
@@ -21,11 +42,11 @@ export const CartProduct = ({
   quantity,
   variant,
 }: CartProductProps) => {
-  const { name, price, category, id, cuttedPrice } = product;
+  const { name, cuttedPrice, category, id } = product;
   const productLink = `/${category}/${id}?variant=${variant.color}`;
 
-  // Calculate discount if cuttedPrice exists
-  const discount = cuttedPrice ? Math.round(((cuttedPrice - price) / cuttedPrice) * 100) : 0;
+  // Get the size-specific price
+  const price = getPriceForSize(product, size);
 
   return (
     <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm transition-all hover:shadow-md overflow-hidden">
