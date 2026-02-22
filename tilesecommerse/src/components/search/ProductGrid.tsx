@@ -5,7 +5,7 @@ import { ProductItem } from "@/components/products";
 import { useState, useMemo } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { FaTh, FaBars } from "react-icons/fa";
-import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
+import { FiChevronLeft, FiChevronRight, FiSearch, FiX } from "react-icons/fi";
 
 interface ProductGridProps {
   products: ProductWithVariants[];
@@ -28,6 +28,7 @@ export const ProductGrid = ({
 
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [sortBy, setSortBy] = useState("featured");
+  const [searchInput, setSearchInput] = useState(searchQuery || "");
 
   // Get current limit from URL or default to 12
   const itemsPerPage = parseInt(searchParams.get('limit') || '12');
@@ -83,6 +84,28 @@ export const ProductGrid = ({
     });
   };
 
+  // Handle search submit
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const params = new URLSearchParams(searchParams);
+    if (searchInput.trim()) {
+      params.set('q', searchInput.trim());
+    } else {
+      params.delete('q');
+    }
+    params.set('page', '1'); // Reset to page 1 on new search
+    router.push(`${pathname}?${params.toString()}`);
+  };
+
+  // Handle clear search
+  const handleClearSearch = () => {
+    setSearchInput("");
+    const params = new URLSearchParams(searchParams);
+    params.delete('q');
+    params.set('page', '1');
+    router.push(`${pathname}?${params.toString()}`);
+  };
+
   // Generate page numbers to display
   const getPageNumbers = () => {
     const pages = [];
@@ -118,6 +141,38 @@ export const ProductGrid = ({
 
   return (
     <div className="flex-1">
+      {/* Search Box */}
+      <div className="mb-6">
+        <form onSubmit={handleSearchSubmit} className="relative">
+          <div className="relative">
+            <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+            <input
+              type="text"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              placeholder="Search for tiles, sanitary ware, products..."
+              className="w-full pl-12 pr-24 py-3 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white shadow-sm"
+            />
+            {searchInput && (
+              <button
+                type="button"
+                onClick={handleClearSearch}
+                className=" mr-3 absolute right-20 top-1/2 -translate-y-1/2 p-1 hover:bg-slate-100 rounded-full transition-colors"
+                title="Clear search"
+              >
+                <FiX className="w-5 h-5 text-slate-400 hover:text-slate-600" />
+              </button>
+            )}
+            <button
+              type="submit"
+              className="absolute right-2 top-1/2 -translate-y-1/2 px-4 py-1.5 bg-orange-500 text-white rounded-md hover:bg-orange-600 transition-colors text-sm font-medium"
+            >
+              Search
+            </button>
+          </div>
+        </form>
+      </div>
+
       {/* Header with Results Count and Sort */}
       <div className="flex flex-col gap-4 mb-6">
         {/* Title and Count */}
