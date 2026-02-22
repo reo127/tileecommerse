@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { HiPlus, HiPencil, HiShoppingBag, HiTrash } from "react-icons/hi";
+import { FiChevronLeft, FiChevronRight, FiSearch, FiX } from "react-icons/fi";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000/api/v1';
 
@@ -53,6 +54,14 @@ export default function AdminProductsPage() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [successTimeoutId, setSuccessTimeoutId] = useState<NodeJS.Timeout | null>(null);
 
+  // Search and Pagination state
+  const [searchInput, setSearchInput] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalProducts, setTotalProducts] = useState(0);
+  const [itemsPerPage, setItemsPerPage] = useState(12);
+  const [totalPages, setTotalPages] = useState(1);
+
   useEffect(() => {
     fetchProducts();
 
@@ -62,22 +71,47 @@ export default function AdminProductsPage() {
         clearTimeout(successTimeoutId);
       }
     };
-  }, [successTimeoutId]);
+  }, [searchQuery, currentPage, itemsPerPage]);
 
   const fetchProducts = async () => {
     try {
+      setLoading(true);
       const token = localStorage.getItem('auth_token');
+
+      // Fetch ALL products (backend doesn't support pagination)
       const response = await fetch(`${API_BASE_URL}/admin/products`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
         credentials: 'include',
+        cache: 'no-store',
       });
 
       const result = await response.json();
 
       if (result.success) {
-        setProducts(result.products);
+        let allProducts = result.products || [];
+
+        // Client-side filtering by search query
+        if (searchQuery) {
+          const searchLower = searchQuery.toLowerCase();
+          allProducts = allProducts.filter((product: Product) =>
+            product.name?.toLowerCase().includes(searchLower) ||
+            product.description?.toLowerCase().includes(searchLower) ||
+            product.category?.name?.toLowerCase().includes(searchLower) ||
+            product.brand?.name?.toLowerCase().includes(searchLower)
+          );
+        }
+
+        // Client-side pagination
+        const totalCount = allProducts.length;
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        const endIndex = startIndex + itemsPerPage;
+        const paginatedProducts = allProducts.slice(startIndex, endIndex);
+
+        setProducts(paginatedProducts);
+        setTotalProducts(totalCount);
+        setTotalPages(Math.ceil(totalCount / itemsPerPage));
       } else {
         setError(result.message || 'Failed to fetch products');
       }
@@ -129,8 +163,8 @@ export default function AdminProductsPage() {
       const result = await response.json();
 
       if (result.success) {
-        setProducts(products.filter(p => p._id !== productToDelete.id));
         showSuccessMessage(`"${productToDelete.name}" deleted successfully!`);
+        fetchProducts(); // Refresh to update pagination
       } else {
         setError(result.message || 'Failed to delete product');
       }
@@ -142,6 +176,61 @@ export default function AdminProductsPage() {
       setProductToDelete(null);
     }
   };
+
+  // Search handlers
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setSearchQuery(searchInput.trim());
+    setCurrentPage(1); // Reset to page 1 on new search
+  };
+
+  const handleClearSearch = () => {
+    setSearchInput("");
+    setSearchQuery("");
+    setCurrentPage(1);
+  };
+
+  // Pagination handlers
+  const handlePageChange = (newPage: number) => {
+    setCurrentPage(newPage);
+  };
+
+  const handleItemsPerPageChange = (value: number) => {
+    setItemsPerPage(value);
+    setCurrentPage(1); // Reset to page 1 when changing items per page
+  };
+
+  // Generate page numbers to display
+  const getPageNumbers = () => {
+    const pages = [];
+    const maxPagesToShow = 5;
+
+    if (totalPages <= maxPagesToShow) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      if (currentPage <= 3) {
+        for (let i = 1; i <= 4; i++) pages.push(i);
+        pages.push('...');
+        pages.push(totalPages);
+      } else if (currentPage >= totalPages - 2) {
+        pages.push(1);
+        pages.push('...');
+        for (let i = totalPages - 3; i <= totalPages; i++) pages.push(i);
+      } else {
+        pages.push(1);
+        pages.push('...');
+        for (let i = currentPage - 1; i <= currentPage + 1; i++) pages.push(i);
+        pages.push('...');
+        pages.push(totalPages);
+      }
+    }
+
+    return pages;
+  };
+
+  const itemsPerPageOptions = [6, 12, 18, 24, 30];
 
   if (loading) {
     return (
@@ -161,7 +250,7 @@ export default function AdminProductsPage() {
         <div>
           <h1 className="text-3xl font-bold text-slate-900">Products Management</h1>
           <p className="text-slate-600 mt-1">
-            Manage all your tile products and inventory ({products.length} products)
+            Manage all your tile products and inventory ({totalProducts} products)
           </p>
         </div>
         <Link
@@ -171,6 +260,59 @@ export default function AdminProductsPage() {
           <HiPlus className="w-5 h-5" />
           <span className="font-medium">Add Product</span>
         </Link>
+      </div>
+
+      {/* Search Box */}
+      <div className="bg-white rounded-xl shadow-md border border-slate-200 p-4">
+        <form onSubmit={handleSearchSubmit} className="relative">
+          <div className="relative">
+            <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+            <input
+              type="text"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              placeholder="Search products by name..."
+              className="w-full pl-12 pr-24 py-3 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white"
+            />
+            {searchInput && (
+              <button
+                type="button"
+                onClick={handleClearSearch}
+                className="mr-3 absolute right-20 top-1/2 -translate-y-1/2 p-1 hover:bg-slate-100 rounded-full transition-colors"
+                title="Clear search"
+              >
+                <FiX className="w-5 h-5 text-slate-400 hover:text-slate-600" />
+              </button>
+            )}
+            <button
+              type="submit"
+              className="absolute right-2 top-1/2 -translate-y-1/2 px-4 py-1.5 bg-orange-500 text-white rounded-md hover:bg-orange-600 transition-colors text-sm font-medium"
+            >
+              Search
+            </button>
+          </div>
+        </form>
+      </div>
+
+      {/* Items Per Page Selector */}
+      <div className="flex items-center gap-2">
+        <span className="text-sm text-slate-600 font-medium whitespace-nowrap">Show:</span>
+        <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-lg p-1 shadow-sm">
+          {itemsPerPageOptions.map((option) => (
+            <button
+              key={option}
+              onClick={() => handleItemsPerPageChange(option)}
+              className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all duration-200 ${
+                itemsPerPage === option
+                  ? "bg-orange-500 text-white shadow-sm"
+                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+              }`}
+            >
+              {option}
+            </button>
+          ))}
+        </div>
+        <span className="text-sm text-slate-600 whitespace-nowrap">per page</span>
       </div>
 
       {/* Error Message */}
@@ -186,18 +328,20 @@ export default function AdminProductsPage() {
           <div className="text-center py-20">
             <HiShoppingBag className="w-20 h-20 text-slate-300 mx-auto mb-4" />
             <h3 className="text-xl font-semibold text-slate-900 mb-2">
-              No Products Yet
+              {searchQuery ? 'No Products Found' : 'No Products Yet'}
             </h3>
             <p className="text-slate-600 mb-6">
-              Start adding products to your tile inventory
+              {searchQuery ? 'Try adjusting your search terms' : 'Start adding products to your tile inventory'}
             </p>
-            <Link
-              href="/admin/products/create"
-              className="inline-flex items-center gap-2 px-6 py-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
-            >
-              <HiPlus className="w-5 h-5" />
-              <span className="font-medium">Add Your First Product</span>
-            </Link>
+            {!searchQuery && (
+              <Link
+                href="/admin/products/create"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
+              >
+                <HiPlus className="w-5 h-5" />
+                <span className="font-medium">Add Your First Product</span>
+              </Link>
+            )}
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
@@ -354,6 +498,62 @@ export default function AdminProductsPage() {
           </div>
         )}
       </div>
+
+      {/* Pagination */}
+      {totalProducts > 0 && totalPages > 1 && (
+        <div className="bg-white rounded-xl shadow-md border border-slate-200 p-6">
+          {/* Page Navigation */}
+          <div className="flex items-center justify-center gap-2">
+            {/* Previous Button */}
+            <button
+              onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
+              disabled={currentPage === 1}
+              className="flex items-center gap-1 px-4 py-2 border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent transition-colors"
+            >
+              <FiChevronLeft className="w-4 h-4" />
+              <span className="hidden sm:inline">Previous</span>
+            </button>
+
+            {/* Page Numbers */}
+            <div className="flex items-center gap-1">
+              {getPageNumbers().map((page, index) => (
+                page === '...' ? (
+                  <span key={`ellipsis-${index}`} className="px-2 text-slate-400">
+                    ...
+                  </span>
+                ) : (
+                  <button
+                    key={page}
+                    onClick={() => handlePageChange(page as number)}
+                    className={`min-w-[40px] h-10 px-3 rounded-lg text-sm font-medium transition-all duration-200 ${
+                      currentPage === page
+                        ? "bg-orange-500 text-white shadow-sm"
+                        : "border border-slate-300 text-slate-700 hover:bg-slate-50"
+                    }`}
+                  >
+                    {page}
+                  </button>
+                )
+              ))}
+            </div>
+
+            {/* Next Button */}
+            <button
+              onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
+              disabled={currentPage === totalPages}
+              className="flex items-center gap-1 px-4 py-2 border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent transition-colors"
+            >
+              <span className="hidden sm:inline">Next</span>
+              <FiChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+
+          {/* Page Info */}
+          <div className="text-center text-sm text-slate-500 mt-4">
+            Page {currentPage} of {totalPages}
+          </div>
+        </div>
+      )}
 
       {/* Delete Confirmation Modal */}
       {showDeleteModal && productToDelete && (

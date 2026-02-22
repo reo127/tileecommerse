@@ -131,7 +131,7 @@ export default function BlogsPage() {
             </div>
 
             <h1 className="text-5xl md:text-6xl font-bold mb-6 tracking-tight">
-              MyTyles Blog
+              SLN Tiles showroom blogs
             </h1>
             <p className="text-xl text-slate-300 mb-10 leading-relaxed">
               Expert advice, design inspiration, and the latest trends in tile design

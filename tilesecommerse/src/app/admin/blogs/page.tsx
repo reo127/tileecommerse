@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { HiPlus, HiPencil, HiTrash, HiX, HiCheck, HiNewspaper, HiEye, HiCalendar, HiUser, HiTag, HiUpload } from "react-icons/hi";
+import { FiChevronLeft, FiChevronRight, FiSearch } from "react-icons/fi";
 import Image from "next/image";
 import { TipTapEditor } from "@/components/admin/TipTapEditor";
 
@@ -58,6 +59,14 @@ export default function BlogsPage() {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
 
+  // Search and Pagination state
+  const [searchInput, setSearchInput] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalBlogs, setTotalBlogs] = useState(0);
+  const [itemsPerPage, setItemsPerPage] = useState(12);
+  const [totalPages, setTotalPages] = useState(1);
+
   // Form state
   const [formData, setFormData] = useState({
     title: '',
@@ -74,17 +83,20 @@ export default function BlogsPage() {
 
   useEffect(() => {
     fetchBlogs();
-  }, []);
+  }, [searchQuery, currentPage, itemsPerPage]);
 
   const fetchBlogs = async () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('auth_token');
+
+      // Fetch ALL blogs (backend doesn't support pagination)
       const response = await fetch(`${API_BASE_URL}/admin/blogs`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
         credentials: 'include',
+        cache: 'no-store',
       });
 
       const data = await response.json();
@@ -93,7 +105,28 @@ export default function BlogsPage() {
         throw new Error(data.message || 'Failed to fetch blogs');
       }
 
-      setBlogs(data.blogs);
+      let allBlogs = data.blogs || [];
+
+      // Client-side filtering by search query
+      if (searchQuery) {
+        const searchLower = searchQuery.toLowerCase();
+        allBlogs = allBlogs.filter((blog: Blog) =>
+          blog.title?.toLowerCase().includes(searchLower) ||
+          blog.excerpt?.toLowerCase().includes(searchLower) ||
+          blog.category?.toLowerCase().includes(searchLower) ||
+          blog.author?.toLowerCase().includes(searchLower)
+        );
+      }
+
+      // Client-side pagination
+      const totalCount = allBlogs.length;
+      const startIndex = (currentPage - 1) * itemsPerPage;
+      const endIndex = startIndex + itemsPerPage;
+      const paginatedBlogs = allBlogs.slice(startIndex, endIndex);
+
+      setBlogs(paginatedBlogs);
+      setTotalBlogs(totalCount);
+      setTotalPages(Math.ceil(totalCount / itemsPerPage));
     } catch (error) {
       console.error('Error fetching blogs:', error);
       showAlert('error', error instanceof Error ? error.message : 'Failed to fetch blogs');
@@ -295,6 +328,61 @@ export default function BlogsPage() {
     setFormData({ ...formData, tags: formData.tags.filter(t => t !== tag) });
   };
 
+  // Search handlers
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setSearchQuery(searchInput.trim());
+    setCurrentPage(1);
+  };
+
+  const handleClearSearch = () => {
+    setSearchInput("");
+    setSearchQuery("");
+    setCurrentPage(1);
+  };
+
+  // Pagination handlers
+  const handlePageChange = (newPage: number) => {
+    setCurrentPage(newPage);
+  };
+
+  const handleItemsPerPageChange = (value: number) => {
+    setItemsPerPage(value);
+    setCurrentPage(1);
+  };
+
+  // Generate page numbers
+  const getPageNumbers = () => {
+    const pages = [];
+    const maxPagesToShow = 5;
+
+    if (totalPages <= maxPagesToShow) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      if (currentPage <= 3) {
+        for (let i = 1; i <= 4; i++) pages.push(i);
+        pages.push('...');
+        pages.push(totalPages);
+      } else if (currentPage >= totalPages - 2) {
+        pages.push(1);
+        pages.push('...');
+        for (let i = totalPages - 3; i <= totalPages; i++) pages.push(i);
+      } else {
+        pages.push(1);
+        pages.push('...');
+        for (let i = currentPage - 1; i <= currentPage + 1; i++) pages.push(i);
+        pages.push('...');
+        pages.push(totalPages);
+      }
+    }
+
+    return pages;
+  };
+
+  const itemsPerPageOptions = [6, 12, 18, 24, 30];
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -313,7 +401,7 @@ export default function BlogsPage() {
         <div>
           <h1 className="text-3xl font-bold text-slate-900">Blog Management</h1>
           <p className="text-slate-600 mt-1">
-            Create and manage blog posts ({blogs.length} posts)
+            Create and manage blog posts ({totalBlogs} posts)
           </p>
         </div>
         <button
@@ -323,6 +411,59 @@ export default function BlogsPage() {
           <HiPlus className="w-5 h-5" />
           <span className="font-medium">New Blog Post</span>
         </button>
+      </div>
+
+      {/* Search Box */}
+      <div className="bg-white rounded-xl shadow-md border border-slate-200 p-4">
+        <form onSubmit={handleSearchSubmit} className="relative">
+          <div className="relative">
+            <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+            <input
+              type="text"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              placeholder="Search blogs by title..."
+              className="w-full pl-12 pr-24 py-3 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white"
+            />
+            {searchInput && (
+              <button
+                type="button"
+                onClick={handleClearSearch}
+                className="mr-3 absolute right-20 top-1/2 -translate-y-1/2 p-1 hover:bg-slate-100 rounded-full transition-colors"
+                title="Clear search"
+              >
+                <HiX className="w-5 h-5 text-slate-400 hover:text-slate-600" />
+              </button>
+            )}
+            <button
+              type="submit"
+              className="absolute right-2 top-1/2 -translate-y-1/2 px-4 py-1.5 bg-orange-500 text-white rounded-md hover:bg-orange-600 transition-colors text-sm font-medium"
+            >
+              Search
+            </button>
+          </div>
+        </form>
+      </div>
+
+      {/* Items Per Page Selector */}
+      <div className="flex items-center gap-2">
+        <span className="text-sm text-slate-600 font-medium whitespace-nowrap">Show:</span>
+        <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-lg p-1 shadow-sm">
+          {itemsPerPageOptions.map((option) => (
+            <button
+              key={option}
+              onClick={() => handleItemsPerPageChange(option)}
+              className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all duration-200 ${
+                itemsPerPage === option
+                  ? "bg-orange-500 text-white shadow-sm"
+                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+              }`}
+            >
+              {option}
+            </button>
+          ))}
+        </div>
+        <span className="text-sm text-slate-600 whitespace-nowrap">per page</span>
       </div>
 
       {/* Alert */}
@@ -512,6 +653,62 @@ export default function BlogsPage() {
           </div>
         )}
       </div>
+
+      {/* Pagination */}
+      {totalBlogs > 0 && totalPages > 1 && (
+        <div className="bg-white rounded-xl shadow-md border border-slate-200 p-6">
+          {/* Page Navigation */}
+          <div className="flex items-center justify-center gap-2">
+            {/* Previous Button */}
+            <button
+              onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
+              disabled={currentPage === 1}
+              className="flex items-center gap-1 px-4 py-2 border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent transition-colors"
+            >
+              <FiChevronLeft className="w-4 h-4" />
+              <span className="hidden sm:inline">Previous</span>
+            </button>
+
+            {/* Page Numbers */}
+            <div className="flex items-center gap-1">
+              {getPageNumbers().map((page, index) => (
+                page === '...' ? (
+                  <span key={`ellipsis-${index}`} className="px-2 text-slate-400">
+                    ...
+                  </span>
+                ) : (
+                  <button
+                    key={page}
+                    onClick={() => handlePageChange(page as number)}
+                    className={`min-w-[40px] h-10 px-3 rounded-lg text-sm font-medium transition-all duration-200 ${
+                      currentPage === page
+                        ? "bg-orange-500 text-white shadow-sm"
+                        : "border border-slate-300 text-slate-700 hover:bg-slate-50"
+                    }`}
+                  >
+                    {page}
+                  </button>
+                )
+              ))}
+            </div>
+
+            {/* Next Button */}
+            <button
+              onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
+              disabled={currentPage === totalPages}
+              className="flex items-center gap-1 px-4 py-2 border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent transition-colors"
+            >
+              <span className="hidden sm:inline">Next</span>
+              <FiChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+
+          {/* Page Info */}
+          <div className="text-center text-sm text-slate-500 mt-4">
+            Page {currentPage} of {totalPages}
+          </div>
+        </div>
+      )}
 
       {/* Modal */}
       {showModal && (
