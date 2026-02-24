@@ -131,7 +131,7 @@ export default function BlogsPage() {
             </div>
 
             <h1 className="text-5xl md:text-6xl font-bold mb-6 tracking-tight">
-              SLN Tiles showroom blogs
+              SLN Tiles showroom blogs 
             </h1>
             <p className="text-xl text-slate-300 mb-10 leading-relaxed">
               Expert advice, design inspiration, and the latest trends in tile design
@@ -161,7 +161,7 @@ export default function BlogsPage() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 py-16">
-        {/* Category Filter - Cleaner Design */}
+        {/* Category Filter - Cleaner Design for filter */}
         <div className="mb-12">
           <div className="flex items-center gap-2 mb-6">
             <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wider">Filter by Category</h2>
