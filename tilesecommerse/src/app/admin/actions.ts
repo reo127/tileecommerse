@@ -38,9 +38,11 @@ export async function getAdminDashboardStats() {
         const products = productsData.products || [];
         const orders = ordersData.orders || [];
 
-        // Calculate stats
         const totalProducts = products.length;
         const totalOrders = orders.length;
+
+        // Count low stock products (stock < 10)
+        const lowStockCount = products.filter((p: any) => (p.stock ?? 0) < 10).length;
 
         // Calculate total revenue
         const totalRevenue = orders.reduce((sum: number, order: any) => {
@@ -61,6 +63,7 @@ export async function getAdminDashboardStats() {
             totalOrders,
             totalRevenue,
             totalCustomers,
+            lowStockCount,
             recentOrders,
         };
     } catch (error) {
@@ -70,6 +73,7 @@ export async function getAdminDashboardStats() {
             totalOrders: 0,
             totalRevenue: 0,
             totalCustomers: 0,
+            lowStockCount: 0,
             recentOrders: [],
         };
     }

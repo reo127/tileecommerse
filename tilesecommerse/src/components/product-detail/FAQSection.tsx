@@ -8,30 +8,30 @@ export const FAQSection = () => {
 
   const faqs = [
     {
-      question: "How much coverage should I expect per box?",
-      answer: "Each box covers approximately 12 square feet. We recommend ordering 10% extra to account for cutting and wastage during installation.",
+      question: "How do you ensure the quality of your products?",
+      answer: "At SLN Tiles Showroom, every product is sourced directly from trusted manufacturers and undergoes thorough quality checks before reaching our shelves. We partner with leading brands known for precision engineering, durability, and consistent finishes — so you get nothing but the best for your home or project.",
     },
     {
-      question: "What is the warranty on this tile?",
-      answer: "We offer a manufacturer's warranty of 10 years against manufacturing defects. This does not cover damage from improper installation or maintenance.",
+      question: "Do you offer delivery and installation support?",
+      answer: "Yes! We provide doorstep delivery across Bengaluru and surrounding areas. While we don&apos;t offer in-house installation, our team can recommend trusted, experienced installers from our professional network who are familiar with our products and can ensure a flawless finish.",
     },
     {
-      question: "Does it require grout/joint filler?",
-      answer: "Yes, grout is essential for proper installation. We recommend using high-quality epoxy grout for best results and longevity.",
+      question: "What is your return and exchange policy?",
+      answer: "We accept returns or exchanges within 7 days of purchase for unused, unopened products in original packaging. In case of any manufacturing defects, we work directly with the brand to ensure a swift replacement. Please contact our team with your purchase details and we'll sort it out promptly.",
     },
     {
-      question: "Can I use these tiles outdoors?",
-      answer: "Yes, these tiles are suitable for both indoor and outdoor use. They have excellent weather resistance and are frost-proof.",
+      question: "Can your team help me choose the right products for my project?",
+      answer: "Absolutely! Our in-store design consultants are available at both our Bengaluru branches to guide you through material selection, finish combinations, sizing, and more. Whether you're renovating a bathroom, kitchen, or an entire home, we'll help you find the perfect fit for your style and budget.",
     },
     {
-      question: "Can this tile be used on my floor?",
-      answer: "Absolutely! These tiles are designed for both floor and wall applications. They have high breaking strength and are perfect for high-traffic areas.",
+      question: "Can I visit your showroom to see products in person?",
+      answer: "We strongly encourage a showroom visit — seeing and touching the products in person makes all the difference! Visit us at our Horamavu branch (321/1, 80ft Road, K Channasandra Main Rd) any day of the week. Our friendly staff will walk you through our full range of tiles, sanitary ware, fittings, and more.",
     },
   ];
 
   return (
     <div className="bg-slate-900 text-white rounded-lg p-6">
-      <h2 className="text-2xl font-bold mb-6">FAQ's</h2>
+      <h2 className="text-2xl font-bold mb-6">FAQ&apos;s</h2>
       <div className="space-y-3">
         {faqs.map((faq, index) => (
           <div key={index} className="border border-slate-700 rounded-lg overflow-hidden">
