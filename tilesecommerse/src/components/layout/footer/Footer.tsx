@@ -35,7 +35,7 @@ export const Footer = () => {
             </div>
             <h3 className="text-xl font-bold mb-4 bg-gradient-to-r from-red-500 to-orange-500 bg-clip-text text-transparent">SLN TILES SHOWROOM</h3>
             <p className="text-white text-sm mb-4">
-              Your trusted partner for premium quality tiles in Bengaluru. Transforming spaces with innovative designs and exceptional service.
+              Your trusted partner for premium quality interior products in Bengaluru. Transforming spaces with innovative designs and exceptional service.
             </p>
             <div className="flex gap-4 mt-6">
               <a
@@ -99,16 +99,7 @@ export const Footer = () => {
                   My Orders
                 </Link>
               </li>
-              <li className={liStyles}>
-                <Link href="#" className={linkStyles}>
-                  Size Guide
-                </Link>
-              </li>
-              <li className={liStyles}>
-                <Link href="#" className={linkStyles}>
-                  Installation Guide
-                </Link>
-              </li>
+
             </ul>
           </div>
 
@@ -197,7 +188,15 @@ export const Footer = () => {
         <div className="border-t border-white/10 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-gray-400 text-sm text-center md:text-left">
-              © {new Date().getFullYear()} SLN TILES SHOWROOM. All rights reserved.
+              © {new Date().getFullYear()} SLN TILES SHOWROOM. All rights reserved. | Developed by{" "}
+              <a
+                href="https://digistrivemedia.com/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-orange-400 hover:text-orange-300 transition-colors"
+              >
+                Digistrive Media
+              </a>
             </p>
             <div className="flex flex-wrap gap-6 text-sm">
               <Link href="/legal/privacy" className={linkStyles}>
