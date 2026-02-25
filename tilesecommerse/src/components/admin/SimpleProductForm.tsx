@@ -132,7 +132,6 @@ export function SimpleProductForm() {
     color: '',
     size: '',
     unit: 'inches',
-    thickness: '',
     price: '',
     cuttedPrice: '',
     stock: '100'
@@ -343,7 +342,6 @@ export function SimpleProductForm() {
       const color = formData.get('color') as string;
       const size = formData.get('size') as string;
       const unit = formData.get('unit') as string;
-      const thickness = formData.get('thickness') as string;
 
       const roomType = formData.getAll('roomType') as string[];
       const highlight1 = formData.get('highlight1') as string;
@@ -396,7 +394,7 @@ export function SimpleProductForm() {
       if (finish) requestBody.finish = finish;
       if (color) requestBody.color = color;
       if (size) requestBody.size = size;
-      if (thickness) requestBody.thickness = Number(thickness);
+
 
       requestBody.hasVariants = hasVariants;
       if (hasVariants && variants.length > 0) {
@@ -469,7 +467,6 @@ export function SimpleProductForm() {
         color: '',
         size: '',
         unit: 'inches',
-        thickness: '',
         price: '',
         cuttedPrice: '',
         stock: '100'
@@ -733,18 +730,6 @@ export function SimpleProductForm() {
                       <option key={unit} value={unit}>{unit}</option>
                     ))}
                   </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">Thickness (mm)</label>
-                  <input
-                    name="thickness"
-                    type="number"
-                    placeholder="8"
-                    value={mainFormValues.thickness}
-                    onChange={(e) => setMainFormValues({ ...mainFormValues, thickness: e.target.value })}
-                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
-                  />
                 </div>
 
                 <div>
