@@ -36,7 +36,7 @@ exports.getAllProducts = asyncErrorHandler(async (req, res, next) => {
 
 // Get All Products ---Product Sliders
 exports.getProducts = asyncErrorHandler(async (req, res, next) => {
-    const products = await Product.find().populate('category subcategory', 'name slug');
+    const products = await Product.find().sort({ createdAt: -1 }).populate('category subcategory', 'name slug');
 
     res.status(200).json({
         success: true,
@@ -61,7 +61,7 @@ exports.getProductDetails = asyncErrorHandler(async (req, res, next) => {
 
 // Get All Products ---ADMIN
 exports.getAdminProducts = asyncErrorHandler(async (req, res, next) => {
-    const products = await Product.find().populate('category subcategory', 'name slug');
+    const products = await Product.find().sort({ createdAt: -1 }).populate('category subcategory', 'name slug');
 
     res.status(200).json({
         success: true,
