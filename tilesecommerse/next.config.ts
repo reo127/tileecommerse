@@ -28,6 +28,11 @@ const nextConfig: NextConfig = {
     // Allow all external images for blog posts
     unoptimized: false,
   },
+  experimental: {
+    serverActions: {
+      bodySizeLimit: '25mb', // Allow up to 25MB for slider videos/images
+    },
+  },
   reactStrictMode: true,
 };
 

@@ -1,14 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { HiCog, HiTruck, HiCreditCard } from "react-icons/hi";
+import { HiCog, HiTruck, HiCreditCard, HiPhotograph } from "react-icons/hi";
+import { SliderManagement } from "@/components/admin/SliderManagement";
 
-type TabType = "general" | "shipping" | "payments";
+type TabType = "general" | "shipping" | "payments" | "slider";
 
 export default function AdminSettingsPage() {
-  const [activeTab, setActiveTab] = useState<TabType>("general");
+  const [activeTab, setActiveTab] = useState<TabType>("slider");
 
   const tabs = [
+    { id: "slider" as TabType, name: "Hero Slider", icon: HiPhotograph },
     { id: "general" as TabType, name: "General", icon: HiCog },
     { id: "shipping" as TabType, name: "Shipping", icon: HiTruck },
     { id: "payments" as TabType, name: "Payments", icon: HiCreditCard },
@@ -47,6 +49,8 @@ export default function AdminSettingsPage() {
 
         {/* Tab Content */}
         <div className="p-6">
+          {activeTab === "slider" && <SliderManagement />}
+
           {activeTab === "general" && (
             <div className="text-center py-12 text-slate-600">
               <HiCog className="w-12 h-12 mx-auto mb-4 text-slate-400" />

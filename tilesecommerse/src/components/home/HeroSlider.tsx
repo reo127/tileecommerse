@@ -1,51 +1,97 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
+import { FaChevronLeft, FaChevronRight, FaVolumeMute, FaVolumeUp } from "react-icons/fa";
+import { getAllSliders } from "@/app/actions/sliderActions";
 
-const slides = [
+// Default slides (fallback)
+const defaultSlides = [
   {
     id: 1,
-    image: "https://images.unsplash.com/photo-1615971677499-5467cbab01c0?q=80&w=2000",
+    mediaType: "image" as const,
+    image: { url: "https://images.unsplash.com/photo-1615971677499-5467cbab01c0?q=80&w=2000" },
     title: "Complete Tiles & Sanitary Solutions Showroom",
     subtitle: "From vitrified tiles to designer bathware, discover quality, durability, and style in every product.",
-    cta: "Explore Collection",
+    ctaText: "Explore Collection",
     ctaLink: "/search",
   },
   {
     id: 2,
-    image: "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?q=80&w=2000",
+    mediaType: "image" as const,
+    image: { url: "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?q=80&w=2000" },
     title: "Your Trusted Destination for Tiles & Bathware",
     subtitle: "Wide range. Competitive pricing. Expert guidance. Everything you need for your project.",
-    cta: "Explore Collection",
-    ctaLink: "/search",
-  },
-  {
-    id: 3,
-    image: "https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?q=80&w=2000",
-    title: "Luxury Tiles & Bathware for Modern Spaces",
-    subtitle: "Elevate every floor and wall with curated designs, superior finishes, and trusted brands — all under one roof.",
-    cta: "Explore Collection",
+    ctaText: "Explore Collection",
     ctaLink: "/search",
   },
 ];
 
+interface SliderItem {
+  _id?: string;
+  id?: number;
+  title: string;
+  subtitle: string;
+  ctaText: string;
+  ctaLink: string;
+  mediaType: 'image' | 'video';
+  image?: { url: string };
+  video?: { url: string };
+}
+
 export const HeroSlider = () => {
+  const [slides, setSlides] = useState<SliderItem[]>(defaultSlides);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
+  const [isMuted, setIsMuted] = useState(true);
+  const [loading, setLoading] = useState(true);
+  const videoRefs = useRef<{ [key: number]: HTMLVideoElement | null }>({});
+
+  // Fetch sliders on mount
+  useEffect(() => {
+    const fetchSliders = async () => {
+      try {
+        const sliders = await getAllSliders();
+        if (sliders && sliders.length > 0) {
+          setSlides(sliders);
+        }
+      } catch (error) {
+        console.error("Error fetching sliders:", error);
+        // Keep default slides on error
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSliders();
+  }, []);
 
   // Auto-play slider
   useEffect(() => {
-    if (!isAutoPlaying) return;
+    if (!isAutoPlaying || loading) return;
 
     const interval = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % slides.length);
     }, 5000);
 
     return () => clearInterval(interval);
-  }, [isAutoPlaying]);
+  }, [isAutoPlaying, slides.length, loading]);
+
+  // Handle video playback
+  useEffect(() => {
+    const currentVideo = videoRefs.current[currentSlide];
+    if (currentVideo && slides[currentSlide].mediaType === 'video') {
+      currentVideo.play().catch(err => console.error("Video play error:", err));
+    }
+
+    // Pause other videos
+    Object.entries(videoRefs.current).forEach(([index, video]) => {
+      if (video && parseInt(index) !== currentSlide) {
+        video.pause();
+      }
+    });
+  }, [currentSlide, slides]);
 
   const goToSlide = (index: number) => {
     setCurrentSlide(index);
@@ -62,48 +108,95 @@ export const HeroSlider = () => {
     setIsAutoPlaying(false);
   };
 
+  const toggleMute = () => {
+    const currentVideo = videoRefs.current[currentSlide];
+    if (currentVideo) {
+      currentVideo.muted = !isMuted;
+      setIsMuted(!isMuted);
+    }
+  };
+
+  if (loading) {
+    return <div className="h-screen w-screen bg-slate-100 animate-pulse" />;
+  }
+
   return (
     <section className="relative h-screen w-screen overflow-hidden bg-white -mx-12 sm:-mx-12 lg:-mx-12 xl:-mx-12" style={{ marginLeft: 'calc(-50vw + 50%)', marginRight: 'calc(-50vw + 50%)', width: '100vw', maxWidth: '100vw' }}>
       {/* Slides */}
-      {slides.map((slide, index) => (
-        <div
-          key={slide.id}
-          className={`absolute inset-0 transition-opacity duration-700 ${index === currentSlide ? "opacity-100 z-10" : "opacity-0 z-0"
-            }`}
-        >
-          {/* Background Image */}
-          <div className="absolute inset-0">
-            <Image
-              src={slide.image}
-              alt={slide.title}
-              fill
-              className="object-cover"
-              priority={index === 0}
-            />
-            <div className="absolute inset-0 bg-gradient-to-r from-slate-900/40 to-slate-900/20" />
-          </div>
+      {slides.map((slide, index) => {
+        const slideId = slide._id || slide.id;
+        return (
+          <div
+            key={slideId}
+            className={`absolute inset-0 transition-opacity duration-700 ${index === currentSlide ? "opacity-100 z-10" : "opacity-0 z-0"
+              }`}
+          >
+            {/* Background Media */}
+            <div className="absolute inset-0">
+              {slide.mediaType === 'image' && slide.image ? (
+                <>
+                  <Image
+                    src={slide.image.url}
+                    alt={slide.title}
+                    fill
+                    className="object-cover"
+                    priority={index === 0}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-r from-slate-900/40 to-slate-900/20" />
+                </>
+              ) : slide.mediaType === 'video' && slide.video ? (
+                <>
+                  <video
+                    ref={(el) => { videoRefs.current[index] = el; }}
+                    src={slide.video.url}
+                    className="w-full h-full object-cover"
+                    loop
+                    muted={isMuted}
+                    playsInline
+                    autoPlay={index === currentSlide}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-r from-slate-900/50 to-slate-900/30" />
 
-          {/* Content */}
-          <div className="relative h-full w-full px-4 sm:px-6 lg:px-12 xl:px-16 flex items-center">
-            <div className="max-w-2xl">
-              <h1 className="text-4xl md:text-6xl font-bold text-white mb-6 leading-tight animate-fade-in drop-shadow-lg">
-                {slide.title}
-              </h1>
-              <p className="text-lg md:text-xl text-gray-200 mb-8 animate-fade-in-delay drop-shadow-md">
-                {slide.subtitle}
-              </p>
-              <div className="flex flex-wrap gap-4 animate-fade-in-delay-2">
-                <Link
-                  href={slide.ctaLink}
-                  className="px-8 py-3 bg-yellow-500 hover:bg-yellow-600 text-white font-semibold rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl hover:shadow-yellow-500/50 hover:scale-105 transform"
-                >
-                  {slide.cta}
-                </Link>
+                  {/* Mute/Unmute Button for Videos */}
+                  {index === currentSlide && (
+                    <button
+                      onClick={toggleMute}
+                      className="absolute top-4 right-4 z-30 bg-black/50 hover:bg-black/70 backdrop-blur-sm p-3 rounded-full transition-colors duration-200"
+                      aria-label={isMuted ? "Unmute" : "Mute"}
+                    >
+                      {isMuted ? (
+                        <FaVolumeMute className="text-white text-xl" />
+                      ) : (
+                        <FaVolumeUp className="text-white text-xl" />
+                      )}
+                    </button>
+                  )}
+                </>
+              ) : null}
+            </div>
+
+            {/* Content */}
+            <div className="relative h-full w-full px-4 sm:px-6 lg:px-12 xl:px-16 flex items-center">
+              <div className="max-w-2xl">
+                <h1 className="text-4xl md:text-6xl font-bold text-white mb-6 leading-tight animate-fade-in drop-shadow-lg">
+                  {slide.title}
+                </h1>
+                <p className="text-lg md:text-xl text-gray-200 mb-8 animate-fade-in-delay drop-shadow-md">
+                  {slide.subtitle}
+                </p>
+                <div className="flex flex-wrap gap-4 animate-fade-in-delay-2">
+                  <Link
+                    href={slide.ctaLink}
+                    className="px-8 py-3 bg-yellow-500 hover:bg-yellow-600 text-white font-semibold rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl hover:shadow-yellow-500/50 hover:scale-105 transform"
+                  >
+                    {slide.ctaText}
+                  </Link>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
 
       {/* Navigation Arrows */}
       <button
