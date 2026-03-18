@@ -131,7 +131,7 @@ export const Footer = () => {
             {/* Map */}
             <div className="mt-4 rounded-lg overflow-hidden border border-slate-700 shadow-lg">
               <iframe
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3886.8!2d77.6!3d13.0!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMTPCsDAwJzAwLjAiTiA3N8KwMzYnMDAuMCJF!5e0!3m2!1sen!2sin!4v1234567890"
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3886.9690678227907!2d77.676273!3d13.0376409!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3bae114a42f5a7bd%3A0xc3132e4f76fbb40a!2sSRI%20LAKSHMI%20NARASIMHA%20TRADERS%20(BEST%20SHOWROOM%20FOR%20TILES%20AND%20SANITARYWARE%20IN%20BANGALORE)!5e0!3m2!1sen!2sin!4v1773831318469!5m2!1sen!2sin"
                 width="100%"
                 height="180"
                 style={{ border: 0 }}
@@ -172,7 +172,7 @@ export const Footer = () => {
             {/* Map */}
             <div className="mt-4 rounded-lg overflow-hidden border border-slate-700 shadow-lg">
               <iframe
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3886.8!2d77.6!3d13.0!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMTPCsDAwJzAwLjAiTiA3N8KwMzYnMDAuMCJF!5e0!3m2!1sen!2sin!4v1234567890"
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3886.2674453238083!2d77.68620489999999!3d13.0822293!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3bae1b6e681ae261%3A0x584ec49e6f0b6a61!2sSRI%20LAKSHMI%20NARASIMHA%20TRADERS-YERAPPANAHALLI!5e0!3m2!1sen!2sin!4v1773831372858!5m2!1sen!2sin"
                 width="100%"
                 height="180"
                 style={{ border: 0 }}
