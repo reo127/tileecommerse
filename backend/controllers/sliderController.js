@@ -165,7 +165,7 @@ exports.updateSlider = asyncErrorHandler(async (req, res, next) => {
         return next(new ErrorHandler('Slider Not Found', 404));
     }
 
-    const { title, subtitle, ctaText, ctaLink, order, isActive } = req.body;
+    const { title, subtitle, ctaText, ctaLink, order, isActive, image, video } = req.body;
 
     // Update basic fields
     if (title) slider.title = title;
@@ -175,12 +175,96 @@ exports.updateSlider = asyncErrorHandler(async (req, res, next) => {
     if (order !== undefined) slider.order = order;
     if (isActive !== undefined) slider.isActive = isActive;
 
-    await slider.save();
+    let uploadResult;
+    try {
+        // Update image if provided
+        if (image && slider.mediaType === 'image') {
+            // Delete old image from cloudinary
+            if (slider.image && slider.image.public_id) {
+                await cloudinary.v2.uploader.destroy(slider.image.public_id);
+            }
 
-    res.status(200).json({
-        success: true,
-        slider,
-    });
+            // Upload new image
+            uploadResult = await cloudinary.v2.uploader.upload(image, {
+                folder: 'sliders',
+                resource_type: 'image',
+                transformation: [
+                    { width: 1920, height: 800, crop: 'fill', gravity: 'center' },
+                    { quality: 'auto:good' }
+                ]
+            });
+
+            slider.image = {
+                public_id: uploadResult.public_id,
+                url: uploadResult.secure_url,
+            };
+        }
+
+        // Update video if provided
+        if (video && slider.mediaType === 'video') {
+            // Delete old video from cloudinary
+            if (slider.video && slider.video.public_id) {
+                await cloudinary.v2.uploader.destroy(slider.video.public_id, { resource_type: 'video' });
+            }
+
+            // Check file size
+            const estimatedSize = (video.length * 3) / 4;
+            if (estimatedSize > MAX_VIDEO_SIZE) {
+                return next(new ErrorHandler(`Video size must be less than ${MAX_VIDEO_SIZE / (1024 * 1024)}MB`, 400));
+            }
+
+            // Upload new video
+            uploadResult = await cloudinary.v2.uploader.upload(video, {
+                folder: 'sliders',
+                resource_type: 'video',
+                transformation: [
+                    {
+                        width: 1920,
+                        height: 800,
+                        crop: 'fill',
+                        gravity: 'center',
+                        quality: 'auto:good'
+                    }
+                ]
+            });
+
+            // Check video duration
+            if (uploadResult.duration && uploadResult.duration > MAX_VIDEO_DURATION) {
+                await cloudinary.v2.uploader.destroy(uploadResult.public_id, { resource_type: 'video' });
+                return next(new ErrorHandler(`Video duration must be less than ${MAX_VIDEO_DURATION} seconds`, 400));
+            }
+
+            // Validate format
+            const format = uploadResult.format || '';
+            if (!ALLOWED_VIDEO_FORMATS.includes(format.toLowerCase())) {
+                await cloudinary.v2.uploader.destroy(uploadResult.public_id, { resource_type: 'video' });
+                return next(new ErrorHandler(`Video format must be one of: ${ALLOWED_VIDEO_FORMATS.join(', ')}`, 400));
+            }
+
+            slider.video = {
+                public_id: uploadResult.public_id,
+                url: uploadResult.secure_url,
+                duration: uploadResult.duration || 0,
+                format: uploadResult.format || '',
+            };
+        }
+
+        await slider.save();
+
+        res.status(200).json({
+            success: true,
+            slider,
+        });
+    } catch (error) {
+        // Clean up uploaded file if update fails
+        if (uploadResult && uploadResult.public_id) {
+            await cloudinary.v2.uploader.destroy(
+                uploadResult.public_id,
+                { resource_type: slider.mediaType === 'video' ? 'video' : 'image' }
+            );
+        }
+        throw error;
+    }
 });
 
 // Delete Slider (Admin)
