@@ -9,12 +9,15 @@ export default function TileCalculator() {
     const [measurementType, setMeasurementType] = useState("dimensions");
     const [walls, setWalls] = useState([{ length: "", width: "" }]);
     const [tileSize, setTileSize] = useState("");
+    const [customTileWidth, setCustomTileWidth] = useState("");
+    const [customTileHeight, setCustomTileHeight] = useState("");
     const [addWaste, setAddWaste] = useState(true);
     const [wastePercentage, setWastePercentage] = useState("10");
     const [addGrout, setAddGrout] = useState(true);
     const [groutWidth, setGroutWidth] = useState("3");
     const [totalArea, setTotalArea] = useState(0);
     const [totalTiles, setTotalTiles] = useState(0);
+    const [groutWeight, setGroutWeight] = useState(0);
     const [calculated, setCalculated] = useState(false);
 
     const addWall = () => {
@@ -34,6 +37,16 @@ export default function TileCalculator() {
     // Get tile dimensions in inches
     const getTileDimensions = () => {
         if (!tileSize) return null;
+
+        // Handle custom size
+        if (tileSize === "custom") {
+            const width = parseFloat(customTileWidth) || 0;
+            const height = parseFloat(customTileHeight) || 0;
+            if (width > 0 && height > 0) {
+                return { width, height };
+            }
+            return null;
+        }
 
         const sizes: { [key: string]: { width: number; height: number } } = {
             "12x12": { width: 12, height: 12 },
@@ -91,12 +104,39 @@ export default function TileCalculator() {
         return tilesNeeded;
     };
 
+    // Calculate grout weight in kg
+    const calculateGroutWeight = () => {
+        if (!addGrout) return 0;
+
+        const tileDims = getTileDimensions();
+        if (!tileDims) return 0;
+
+        const area = calculateTotalArea();
+        const groutWidthMm = parseFloat(groutWidth) || 0;
+
+        // Approximate grout weight calculation
+        // Formula: Area (sq ft) × Grout width (mm) × 0.15 (approximate factor for kg)
+        const groutWeightKg = area * (groutWidthMm / 10) * 0.15;
+
+        return groutWeightKg;
+    };
+
     // Handle calculate button click
     const handleCalculate = () => {
         // Validation
         if (!roomType || !spaceType || !tileSize) {
             alert("Please fill in all required fields (Room Type, Space Type, and Tile Size)");
             return;
+        }
+
+        // Validate custom tile size if selected
+        if (tileSize === "custom") {
+            const width = parseFloat(customTileWidth) || 0;
+            const height = parseFloat(customTileHeight) || 0;
+            if (width <= 0 || height <= 0) {
+                alert("Please enter valid custom tile dimensions (width and height)");
+                return;
+            }
         }
 
         const hasValidWall = walls.some(wall =>
@@ -111,9 +151,11 @@ export default function TileCalculator() {
         // Calculate results
         const area = calculateTotalArea();
         const tiles = calculateTiles();
+        const grout = calculateGroutWeight();
 
         setTotalArea(area);
         setTotalTiles(tiles);
+        setGroutWeight(grout);
         setCalculated(true);
 
         // Scroll to results on mobile
@@ -133,12 +175,15 @@ export default function TileCalculator() {
         setSpaceType("");
         setWalls([{ length: "", width: "" }]);
         setTileSize("");
+        setCustomTileWidth("");
+        setCustomTileHeight("");
         setAddWaste(true);
         setWastePercentage("10");
         setAddGrout(true);
         setGroutWidth("3");
         setTotalArea(0);
         setTotalTiles(0);
+        setGroutWeight(0);
         setCalculated(false);
     };
 
@@ -277,7 +322,7 @@ export default function TileCalculator() {
                                                 <div className="relative">
                                                     <input
                                                         type="number"
-                                                        placeholder="Enter in Inch"
+                                                        placeholder="Enter in Feet"
                                                         value={wall.width}
                                                         onChange={(e) => updateWall(index, "width", e.target.value)}
                                                         className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all"
@@ -315,6 +360,36 @@ export default function TileCalculator() {
                                     <option value="24x48">24" x 48"</option>
                                     <option value="custom">Custom Size</option>
                                 </select>
+
+                                {/* Custom Size Inputs */}
+                                {tileSize === "custom" && (
+                                    <div className="mt-4 grid grid-cols-2 gap-4 p-4 bg-orange-50 border border-orange-200 rounded-lg">
+                                        <div>
+                                            <label className="block text-xs text-gray-600 mb-1">
+                                                Width <span className="text-red-500">*</span>
+                                            </label>
+                                            <input
+                                                type="number"
+                                                placeholder="Enter in inches"
+                                                value={customTileWidth}
+                                                onChange={(e) => setCustomTileWidth(e.target.value)}
+                                                className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs text-gray-600 mb-1">
+                                                Height <span className="text-red-500">*</span>
+                                            </label>
+                                            <input
+                                                type="number"
+                                                placeholder="Enter in inches"
+                                                value={customTileHeight}
+                                                onChange={(e) => setCustomTileHeight(e.target.value)}
+                                                className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all"
+                                            />
+                                        </div>
+                                    </div>
+                                )}
                             </div>
 
                             {/* Additional Options */}
@@ -413,6 +488,17 @@ export default function TileCalculator() {
                                     </p>
                                     <p className="text-sm text-gray-500 mt-1 text-center">Sq. ft.</p>
                                 </div>
+
+                                {addGrout && (
+                                    <div className="border-t border-gray-200 pt-6">
+                                        <p className="text-sm text-gray-500 mb-2 text-center">Grout Weight</p>
+                                        <p className={`text-3xl font-bold text-center transition-all duration-500 ${calculated ? 'text-orange-500 scale-110' : 'text-gray-300'
+                                            }`}>
+                                            {groutWeight.toFixed(2)}
+                                        </p>
+                                        <p className="text-sm text-gray-500 mt-1 text-center">kg</p>
+                                    </div>
+                                )}
 
                                 {calculated ? (
                                     <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-4 border border-green-200">
