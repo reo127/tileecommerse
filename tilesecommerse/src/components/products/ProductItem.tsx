@@ -1,14 +1,21 @@
+"use client";
+
 /** COMPONENTS */
 import { ProductImage } from "./ProductImage";
 import Link from "next/link";
 /** FUNCTIONALITY */
 import { cn } from "@/lib/utils";
 import dynamic from "next/dynamic";
+import { useState } from "react";
 /** TYPES */
 import type { ProductWithVariants } from "@/schemas";
 
 const WishlistButton = dynamic(
   () => import("../wishlist/WishlistButton")
+);
+
+const EnquiryModal = dynamic(
+  () => import("../product-detail/EnquiryModal").then((mod) => ({ default: mod.EnquiryModal }))
 );
 
 interface ProductItemProps {
@@ -17,6 +24,7 @@ interface ProductItemProps {
 
 export const ProductItem = ({ product }: ProductItemProps) => {
   const { name, id, img, price, category, variants } = product;
+  const [isEnquiryOpen, setIsEnquiryOpen] = useState(false);
 
   const productLink = `/${category}/${id}?variant=${variants[0].color}`;
 
@@ -33,6 +41,20 @@ export const ProductItem = ({ product }: ProductItemProps) => {
             sizes="(max-width: 640px) 100vw, (max-width: 1154px) 33vw, (max-width: 1536px) 25vw, 20vw"
           />
           <div className="absolute inset-0 bg-black opacity-0 group-hover:opacity-10 transition-opacity duration-300" />
+        </div>
+
+        {/* Enquire Button - Overlay on Image (Top Left) */}
+        <div className="absolute top-3 left-3 z-10">
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setIsEnquiryOpen(true);
+            }}
+            className="px-3 py-1.5 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-300 text-xs font-semibold shadow-lg"
+          >
+            Enquire Now
+          </button>
         </div>
 
         {/* Wishlist Button - Overlay on Image */}
@@ -106,6 +128,18 @@ export const ProductItem = ({ product }: ProductItemProps) => {
           </button>
         </Link>
       </div>
+
+      {/* Enquiry Modal */}
+      <EnquiryModal
+        isOpen={isEnquiryOpen}
+        onClose={() => setIsEnquiryOpen(false)}
+        product={{
+          id: id,
+          name: name,
+          price: price,
+          img: img,
+        }}
+      />
     </div>
   );
 };
