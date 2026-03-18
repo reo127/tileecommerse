@@ -26,7 +26,9 @@ export const ProductItem = ({ product }: ProductItemProps) => {
   const { name, id, img, price, category, variants } = product;
   const [isEnquiryOpen, setIsEnquiryOpen] = useState(false);
 
-  const productLink = `/${category}/${id}?variant=${variants[0].color}`;
+  // Safely get the first variant color
+  const firstVariantColor = variants && variants.length > 0 ? variants[0].color : 'default';
+  const productLink = `/${category}/${id}?variant=${firstVariantColor}`;
 
   return (
     <div className="group bg-white rounded-lg shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-200">
@@ -98,7 +100,7 @@ export const ProductItem = ({ product }: ProductItemProps) => {
         </div>
 
         {/* Color Variants */}
-        {variants.length > 0 && (
+        {variants && variants.length > 0 && (
           <div className="mt-3 pt-3 border-t border-gray-100">
             <p className="text-xs text-gray-600 mb-2">{variants.length} Variant{variants.length > 1 ? 's' : ''} Available</p>
             <div className="flex flex-wrap gap-1.5">

@@ -55,6 +55,7 @@ async function getPopularProducts() {
                 variantId: product.variants?.[0]?.id || product.id,
                 stripeId: product.stripeId || product.variants?.[0]?.stripeId,
                 size: product.size || 'default',
+                variants: product.variants || [],
             };
 
             // Debug: Log if product should show Add to Cart

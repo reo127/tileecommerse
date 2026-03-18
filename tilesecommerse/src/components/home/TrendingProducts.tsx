@@ -47,6 +47,7 @@ async function getTrendingProducts() {
             variantId: product.variants?.[0]?.id || product.id,
             stripeId: product.stripeId || product.variants?.[0]?.stripeId,
             size: product.size || 'default',
+            variants: product.variants || [],
         }));
     } catch (error) {
         console.error('Error fetching trending products:', error);

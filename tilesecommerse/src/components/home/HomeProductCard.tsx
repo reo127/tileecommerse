@@ -19,11 +19,42 @@ interface HomeProductCardProps {
         price: number;
         cuttedPrice?: number;
         slug: string;
+        variants?: any[];
     };
 }
 
 export const HomeProductCard = ({ product }: HomeProductCardProps) => {
     const [isEnquiryOpen, setIsEnquiryOpen] = useState(false);
+    const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+    // Collect all images: main product image + variant images
+    const allImages: string[] = [product.image];
+
+    // Add variant images if they exist
+    if (product.variants && product.variants.length > 0) {
+        product.variants.forEach((variant: any) => {
+            if (variant.images && Array.isArray(variant.images)) {
+                variant.images.forEach((img: any) => {
+                    const imageUrl = typeof img === 'string' ? img : img.url;
+                    if (imageUrl && !allImages.includes(imageUrl)) {
+                        allImages.push(imageUrl);
+                    }
+                });
+            }
+        });
+    }
+
+    const handleNextImage = (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setCurrentImageIndex((prev) => (prev + 1) % allImages.length);
+    };
+
+    const handlePrevImage = (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setCurrentImageIndex((prev) => (prev - 1 + allImages.length) % allImages.length);
+    };
 
     return (
         <>
@@ -31,11 +62,42 @@ export const HomeProductCard = ({ product }: HomeProductCardProps) => {
                 {/* Image Container */}
                 <div className="relative h-64 overflow-hidden bg-gray-100">
                     <Image
-                        src={product.image}
+                        src={allImages[currentImageIndex]}
                         alt={product.name}
                         fill
                         className="object-cover group-hover:scale-110 transition-transform duration-500"
                     />
+
+                    {/* Image Navigation Arrows - Show only if multiple images */}
+                    {allImages.length > 1 && (
+                        <>
+                            <button
+                                onClick={handlePrevImage}
+                                className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-black/50 hover:bg-black/70 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-20"
+                            >
+                                ‹
+                            </button>
+                            <button
+                                onClick={handleNextImage}
+                                className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-black/50 hover:bg-black/70 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-20"
+                            >
+                                ›
+                            </button>
+                            {/* Image Indicators */}
+                            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1 z-20">
+                                {allImages.map((_, index) => (
+                                    <div
+                                        key={index}
+                                        className={`w-1.5 h-1.5 rounded-full transition-all ${
+                                            index === currentImageIndex
+                                                ? 'bg-white w-3'
+                                                : 'bg-white/50'
+                                        }`}
+                                    />
+                                ))}
+                            </div>
+                        </>
+                    )}
 
                     {/* Enquire Button - Top Left (always show) */}
                     <div className="absolute top-3 left-3 z-10">
