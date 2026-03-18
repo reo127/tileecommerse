@@ -7,6 +7,7 @@ import {
   HiUsers,
   HiPlus,
   HiArrowRight,
+  HiExclamation,
 } from "react-icons/hi";
 import { getAdminDashboardStats } from "./actions";
 
@@ -20,6 +21,15 @@ export default async function AdminDashboard() {
       icon: HiShoppingBag,
       color: "bg-blue-500",
       href: "/admin/products",
+      isLowStock: false,
+    },
+    {
+      title: "Low Stock",
+      value: stats.lowStockCount,
+      icon: HiExclamation,
+      color: "bg-amber-500",
+      href: null,
+      isLowStock: true,
     },
     {
       title: "Total Orders",
@@ -27,6 +37,7 @@ export default async function AdminDashboard() {
       icon: HiClipboardList,
       color: "bg-green-500",
       href: "/admin/orders",
+      isLowStock: false,
     },
     {
       title: "Total Revenue",
@@ -37,6 +48,7 @@ export default async function AdminDashboard() {
       icon: HiCurrencyRupee,
       color: "bg-orange-500",
       href: "/admin/orders",
+      isLowStock: false,
     },
     {
       title: "Total Customers",
@@ -44,6 +56,7 @@ export default async function AdminDashboard() {
       icon: HiUsers,
       color: "bg-purple-500",
       href: "/admin/customers",
+      isLowStock: false,
     },
   ];
 
@@ -67,13 +80,33 @@ export default async function AdminDashboard() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
         {statCards.map((stat) => {
           const Icon = stat.icon;
+
+          // Low Stock card — non-clickable, amber warning style
+          if (stat.isLowStock) {
+            return (
+              <div
+                key={stat.title}
+                className="bg-white rounded-xl shadow-md p-6 border-2 border-amber-300 relative overflow-hidden"
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <div className="w-12 h-12 bg-amber-500 rounded-lg flex items-center justify-center">
+                    <Icon className="w-6 h-6 text-white" />
+                  </div>
+                </div>
+                <h3 className="text-sm font-medium text-slate-600 mb-1">{stat.title}</h3>
+                <p className="text-2xl font-bold text-slate-900">{stat.value}</p>
+                <p className="text-xs text-amber-500 font-medium mt-1">stock &lt; 10 units</p>
+              </div>
+            );
+          }
+
           return (
             <Link
               key={stat.title}
-              href={stat.href}
+              href={stat.href!}
               className="bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 p-6 border border-slate-200 hover:border-slate-300 group"
             >
               <div className="flex items-center justify-between mb-4">
@@ -157,10 +190,10 @@ export default async function AdminDashboard() {
                     </td>
                     <td className="py-3 px-4 text-sm">
                       <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${order.orderStatus === 'Delivered'
-                          ? 'bg-green-100 text-green-800'
-                          : order.orderStatus === 'Shipped'
-                            ? 'bg-blue-100 text-blue-800'
-                            : 'bg-yellow-100 text-yellow-800'
+                        ? 'bg-green-100 text-green-800'
+                        : order.orderStatus === 'Shipped'
+                          ? 'bg-blue-100 text-blue-800'
+                          : 'bg-yellow-100 text-yellow-800'
                         }`}>
                         {order.orderStatus}
                       </span>

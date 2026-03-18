@@ -1,7 +1,6 @@
 import {
   SingleProduct,
   SingleProductSkeleton,
-  SuspenseRandomProducts,
 } from "@/components/product";
 import { getProduct } from "@/app/actions";
 import { Suspense } from "react";
@@ -40,7 +39,6 @@ export default async function ProductPage({ params, searchParams }: PageProps) {
         <SingleProduct id={id} selectedVariantColor={selectedVariantColor} />
       </Suspense>
 
-      <SuspenseRandomProducts productIdToExclude={Number(id)} />
     </section>
   );
 }

@@ -406,7 +406,6 @@ export default function EditProductPage({ params }: EditProductPageProps) {
         color: formData.get('color') as string || undefined,
         productId: formData.get('productId') as string || undefined,
         size: formData.get('size') as string || undefined,
-        thickness: formData.get('thickness') ? Number(formData.get('thickness')) : undefined,
       };
 
       // Add tags if selected
@@ -782,12 +781,6 @@ export default function EditProductPage({ params }: EditProductPageProps) {
                       <option key={unit} value={unit}>{unit}</option>
                     ))}
                   </select>
-                </div>
-
-                {/* Thickness */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">Thickness (mm)</label>
-                  <input name="thickness" type="number" defaultValue={product.thickness} placeholder="8" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all" />
                 </div>
 
                 {/* Price */}

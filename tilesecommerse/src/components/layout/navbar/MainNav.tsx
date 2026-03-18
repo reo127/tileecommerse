@@ -43,11 +43,11 @@ export const MainNav = () => {
       slug: category.slug,
       subcategories: (category.children || []).map((child: any) => ({
         name: child.name,
-        href: `/search?category=${category.slug}&subcategory=${child.slug}`,
+        href: `/search?subcategory=${child.slug}`,
         slug: child.slug,
         children: (child.children || []).map((subChild: any) => ({
           name: subChild.name,
-          href: `/search?category=${category.slug}&subcategory=${child.slug}&subsubcategory=${subChild.slug}`,
+          href: `/search?subsubcategory=${subChild.slug}`,
           slug: subChild.slug,
         })),
       })),

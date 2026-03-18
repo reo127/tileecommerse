@@ -29,7 +29,8 @@ export const BlogSection = () => {
                 setLoading(true);
                 setError(false);
 
-                const response = await fetch(`${API_BASE_URL}/blogs/latest?limit=3`);
+                // Fetch more blogs so we can shuffle and show different ones each refresh
+                const response = await fetch(`${API_BASE_URL}/blogs/latest?limit=20`);
 
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
@@ -42,8 +43,15 @@ export const BlogSection = () => {
 
                 const data = await response.json();
 
-                if (data.success && data.blogs) {
-                    setBlogs(data.blogs);
+                if (data.success && data.blogs && data.blogs.length > 0) {
+                    // Fisher-Yates shuffle for random order on every page load
+                    const shuffled = [...data.blogs];
+                    for (let i = shuffled.length - 1; i > 0; i--) {
+                        const j = Math.floor(Math.random() * (i + 1));
+                        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+                    }
+                    // Show 3 random blogs
+                    setBlogs(shuffled.slice(0, 3));
                 } else {
                     setBlogs([]);
                 }

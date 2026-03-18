@@ -13,6 +13,8 @@ interface SearchProps {
   searchParams: Promise<{
     q?: string;
     category?: string | string[];
+    subcategory?: string | string[];
+    subsubcategory?: string | string[];
     tags?: string | string[];
     finish?: string | string[];
     color?: string | string[];
@@ -35,6 +37,9 @@ const Search = async ({ searchParams }: SearchProps) => {
 
   // Get filter params
   const categories = params.category ? (Array.isArray(params.category) ? params.category : [params.category]) : [];
+  // Also read subcategory and subsubcategory sent by navbar links
+  const subcategories = params.subcategory ? (Array.isArray(params.subcategory) ? params.subcategory : [params.subcategory]) : [];
+  const subsubcategories = params.subsubcategory ? (Array.isArray(params.subsubcategory) ? params.subsubcategory : [params.subsubcategory]) : [];
   const tags = params.tags ? (Array.isArray(params.tags) ? params.tags : [params.tags]) : [];
   const finishes = params.finish ? (Array.isArray(params.finish) ? params.finish : [params.finish]) : [];
   const colors = params.color ? (Array.isArray(params.color) ? params.color : [params.color]) : [];
@@ -51,23 +56,39 @@ const Search = async ({ searchParams }: SearchProps) => {
   const categoriesData = await categoriesResponse.json();
   const dbCategories = categoriesData.categories || [];
 
+  // Helper type for category tree nodes
+  type CategoryNode = { slug: string; children?: CategoryNode[] };
+
   // Helper function to recursively get all descendant category slugs
-  const getAllDescendantSlugs = (category: { slug: string; children?: any[] }): string[] => {
+  const getAllDescendantSlugs = (category: CategoryNode): string[] => {
     const slugs = [category.slug];
     if (category.children && category.children.length > 0) {
-      category.children.forEach((child: { slug: string; children?: any[] }) => {
+      category.children.forEach((child: CategoryNode) => {
         slugs.push(...getAllDescendantSlugs(child));
       });
     }
     return slugs;
   };
 
-  // Build a map of parent category slug -> all descendant slugs (including itself)
+  // Build a slug map at ALL levels (parent, subcategory, sub-subcategory)
+  // so that a slug passed at any level resolves correctly
   const categorySlugMap = new Map<string, string[]>();
-  dbCategories.forEach((category: { slug: string; children?: any[] }) => {
-    const allSlugs = getAllDescendantSlugs(category);
-    categorySlugMap.set(category.slug, allSlugs);
-  });
+  const buildSlugMap = (cat: CategoryNode) => {
+    categorySlugMap.set(cat.slug, getAllDescendantSlugs(cat));
+    if (cat.children) {
+      cat.children.forEach((child: CategoryNode) => buildSlugMap(child));
+    }
+  };
+  dbCategories.forEach((cat: CategoryNode) => buildSlugMap(cat));
+
+  // Merge all selected category slugs from navbar params:
+  // subsubcategory is most specific → subcategory next → category last
+  // Use the most specific one that is present
+  const allSelectedSlugs = [
+    ...subsubcategories,
+    ...subcategories,
+    ...categories,
+  ];
 
   // Client-side filtering
   let filteredProducts = allProducts;
@@ -82,15 +103,15 @@ const Search = async ({ searchParams }: SearchProps) => {
     );
   }
 
-  // Filter by categories (including subcategories)
-  if (categories.length > 0) {
+  // Filter by categories — uses the merged slug list (handles navbar subcategory/subsubcategory clicks)
+  if (allSelectedSlugs.length > 0) {
     filteredProducts = filteredProducts.filter((product: ProductWithVariants) => {
       if (!product.category) return false;
 
-      // Check if product category is in any of the selected category hierarchies
-      return categories.some(selectedCategory => {
-        const categorySlugs = categorySlugMap.get(selectedCategory) || [selectedCategory];
-        return categorySlugs.includes(product.category);
+      // Check if the product's category slug is within any selected slug's hierarchy
+      return allSelectedSlugs.some(selectedSlug => {
+        const slugsInHierarchy = categorySlugMap.get(selectedSlug) || [selectedSlug];
+        return slugsInHierarchy.includes(product.category);
       });
     });
   }
