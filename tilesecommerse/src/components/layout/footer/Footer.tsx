@@ -112,19 +112,19 @@ export const Footer = () => {
                 <span>
                   321/1, 80 ft road, K Channasandra Main Rd,<br />
                   near canara bank, horamavu post,<br />
-                  Kalkere, Bengaluru, Karnataka 560113
+                  Kalkere, Bengaluru, Karnataka 560043
                 </span>
               </li>
               <li className="flex items-center gap-2 text-gray-400 text-sm">
                 <FaPhone className="text-red-500 flex-shrink-0 text-xs" />
                 <a href="tel:+919738522119" className={linkStyles}>
-                  097385 22119
+                  +91 97385 22119
                 </a>
               </li>
               <li className="flex items-center gap-2 text-gray-400 text-sm">
                 <FaEnvelope className="text-red-500 flex-shrink-0 text-xs" />
-                <a href="mailto:info@slntilesshowroom.com" className={linkStyles}>
-                  info@slntilesshowroom.com
+                <a href="mailto:slntraders.kalkere@gmail.com" className={linkStyles}>
+                  slntraders.kalkere@gmail.com
                 </a>
               </li>
             </ul>
@@ -145,26 +145,27 @@ export const Footer = () => {
 
           {/* Branch 2 - Second Location */}
           <div>
-            <h3 className="text-lg font-semibold mb-4 bg-gradient-to-r from-red-500 to-orange-500 bg-clip-text text-transparent">Branch 2 - Location</h3>
+            <h3 className="text-lg font-semibold mb-4 bg-gradient-to-r from-red-500 to-orange-500 bg-clip-text text-transparent">Branch 2 - Yarapanahalli</h3>
             <ul className="space-y-3">
               <li className="flex items-start gap-2 text-gray-400 text-sm">
                 <FaMapMarkerAlt className="mt-1 text-red-500 flex-shrink-0 text-xs" />
                 <span>
-                  321/1, 80 ft road, K Channasandra Main Rd,<br />
-                  near canara bank, horamavu post,<br />
-                  Kalkere, Bengaluru, Karnataka 560113
+                  42/13, Yerappanahalli Main Rd,<br />
+                  Karnataka D Group Employees Layout,<br />
+                  Doddenahalli, Yerappanahalli,<br />
+                  Bengaluru, Karnataka 562149
                 </span>
               </li>
               <li className="flex items-center gap-2 text-gray-400 text-sm">
                 <FaPhone className="text-red-500 flex-shrink-0 text-xs" />
-                <a href="tel:+919XXXXXXXXX" className={linkStyles}>
-                  09876 54321
+                <a href="tel:+919738522119" className={linkStyles}>
+                  +91 97385 22119
                 </a>
               </li>
               <li className="flex items-center gap-2 text-gray-400 text-sm">
                 <FaEnvelope className="text-red-500 flex-shrink-0 text-xs" />
-                <a href="mailto:branch2@slntilesshowroom.com" className={linkStyles}>
-                  branch2@slntilesshowroom.com
+                <a href="mailto:slntraders.yarapanahalli@gmail.com" className={linkStyles}>
+                  slntraders.yarapanahalli@gmail.com
                 </a>
               </li>
             </ul>
