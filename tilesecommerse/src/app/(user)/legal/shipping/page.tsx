@@ -206,7 +206,7 @@ export default function ShippingPolicy() {
                             <ul className="list-disc list-inside text-slate-600 space-y-2 ml-4 mb-4">
                                 <li>Note damage on delivery receipt</li>
                                 <li>Take clear photos of damaged items and packaging</li>
-                                <li>Contact us immediately at shipping@slntiles.com</li>
+                                <li>Contact us immediately at slntraders.kalkere@gmail.com or slntraders.yarapanahalli@gmail.com</li>
                                 <li>We will arrange replacement or refund within 48 hours</li>
                             </ul>
 
@@ -263,11 +263,28 @@ export default function ShippingPolicy() {
                                 For shipping and delivery inquiries:
                             </p>
                             <div className="bg-slate-50 p-6 rounded-lg border border-slate-200">
-                                <p className="text-slate-700 font-medium mb-2">SLN Tiles Showroom - Shipping Department</p>
-                                <p className="text-slate-600">Email: shipping@slntiles.com</p>
-                                <p className="text-slate-600">Phone: +91 XXX XXX XXXX</p>
-                                <p className="text-slate-600">WhatsApp: +91 XXX XXX XXXX</p>
-                                <p className="text-slate-600">Hours: Monday - Saturday, 9:00 AM - 6:00 PM</p>
+                                <p className="text-slate-700 font-medium mb-3">SLN Tiles Showroom - Shipping Department</p>
+
+                                <div className="mb-4">
+                                    <p className="text-slate-700 font-medium text-sm mb-1">Branch 1 - Horamavu</p>
+                                    <p className="text-slate-600 text-sm">321/1, 80 ft road, K Channasandra Main Rd,</p>
+                                    <p className="text-slate-600 text-sm">near canara bank, horamavu post,</p>
+                                    <p className="text-slate-600 text-sm">Kalkere, Bengaluru, Karnataka 560043</p>
+                                    <p className="text-slate-600 text-sm mt-1"><strong>Email:</strong> slntraders.kalkere@gmail.com</p>
+                                </div>
+
+                                <div className="mb-3">
+                                    <p className="text-slate-700 font-medium text-sm mb-1">Branch 2 - Yarapanahalli</p>
+                                    <p className="text-slate-600 text-sm">42/13, Yerappanahalli Main Rd,</p>
+                                    <p className="text-slate-600 text-sm">Karnataka D Group Employees Layout,</p>
+                                    <p className="text-slate-600 text-sm">Doddenahalli, Yerappanahalli,</p>
+                                    <p className="text-slate-600 text-sm">Bengaluru, Karnataka 562149</p>
+                                    <p className="text-slate-600 text-sm mt-1"><strong>Email:</strong> slntraders.yarapanahalli@gmail.com</p>
+                                </div>
+
+                                <p className="text-slate-600 text-sm mb-1"><strong>Phone:</strong> +91 97385 22119</p>
+                                <p className="text-slate-600 text-sm mb-1"><strong>WhatsApp:</strong> +91 97385 22119</p>
+                                <p className="text-slate-600 text-sm"><strong>Hours:</strong> Monday - Saturday, 9:00 AM - 6:00 PM</p>
                             </div>
                         </section>
                     </div>
