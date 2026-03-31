@@ -147,14 +147,24 @@ export default function ReturnsAndRefunds() {
 
                             <h3 className="text-xl font-medium text-slate-700 mb-3 mt-6">6.2 Manufacturing Defects</h3>
                             <p className="text-slate-600 leading-relaxed mb-4">
-                                For manufacturing defects discovered before installation:
+                                <strong>Important Policy:</strong> Contact us immediately when material is delivered if damaged tiles exceed more than 2-3%.
                             </p>
-                            <ul className="list-disc list-inside text-slate-600 space-y-2 ml-4">
-                                <li>Contact us within 7 days of delivery</li>
-                                <li>Provide clear photos of the defect</li>
-                                <li>Keep defective tiles in original packaging</li>
-                                <li>We will arrange pickup and replacement</li>
-                            </ul>
+
+                            <div className="bg-blue-50 border-l-4 border-blue-400 p-4 mb-4">
+                                <p className="text-slate-700 font-medium mb-2">Delivery by Our Partner</p>
+                                <p className="text-slate-600 text-sm leading-relaxed">
+                                    If the material is delivered by our delivery partner, inspect immediately upon delivery.
+                                    Report any damage exceeding 2-3% before accepting the delivery.
+                                </p>
+                            </div>
+
+                            <div className="bg-orange-50 border-l-4 border-orange-400 p-4">
+                                <p className="text-slate-700 font-medium mb-2">Customer Pickup from Store</p>
+                                <p className="text-slate-600 text-sm leading-relaxed">
+                                    If the material is picked up by the customer from our store, products will be checked and loaded at the store premises.
+                                    Once loaded and taken by the customer, it will be their responsibility thereafter.
+                                </p>
+                            </div>
                         </section>
 
                         <section className="mb-8">

@@ -44,55 +44,73 @@ export default function ShippingPolicy() {
                         <section className="mb-8">
                             <h2 className="text-2xl font-semibold text-slate-800 mb-4">3. Delivery Timeline</h2>
 
-                            <h3 className="text-xl font-medium text-slate-700 mb-3 mt-6">3.1 Processing Time</h3>
-                            <ul className="list-disc list-inside text-slate-600 space-y-2 ml-4 mb-4">
-                                <li><strong>In-Stock Items:</strong> 1-2 business days for order processing</li>
-                                <li><strong>Custom Orders:</strong> 5-7 business days for processing</li>
-                                <li><strong>Bulk Orders:</strong> 3-5 business days for processing</li>
-                            </ul>
-
-                            <h3 className="text-xl font-medium text-slate-700 mb-3 mt-6">3.2 Shipping Time</h3>
-                            <div className="bg-slate-50 p-6 rounded-lg border border-slate-200 mb-4">
-                                <table className="w-full text-left">
-                                    <thead>
-                                        <tr className="border-b border-slate-300">
-                                            <th className="pb-3 text-slate-700 font-semibold">Location</th>
-                                            <th className="pb-3 text-slate-700 font-semibold">Delivery Time</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="text-slate-600">
-                                        <tr className="border-b border-slate-200">
-                                            <td className="py-3">Metro Cities</td>
-                                            <td className="py-3">3-5 business days</td>
-                                        </tr>
-                                        <tr className="border-b border-slate-200">
-                                            <td className="py-3">Tier-2 Cities</td>
-                                            <td className="py-3">5-7 business days</td>
-                                        </tr>
-                                        <tr className="border-b border-slate-200">
-                                            <td className="py-3">Tier-3 Cities</td>
-                                            <td className="py-3">7-10 business days</td>
-                                        </tr>
-                                        <tr>
-                                            <td className="py-3">Remote Areas</td>
-                                            <td className="py-3">10-15 business days</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                            <p className="text-sm text-slate-500 italic">
-                                * Delivery times are estimates and may vary during peak seasons, festivals, or due to unforeseen circumstances.
+                            <p className="text-slate-600 leading-relaxed mb-4">
+                                At SLN Tiles Showroom, we understand that timely delivery is crucial for your project planning.
+                                To provide you with the most accurate delivery schedule based on your location, order size, and product availability,
+                                our team will coordinate the exact timeline with you.
                             </p>
+
+                            <div className="bg-gradient-to-r from-orange-50 to-red-50 border-l-4 border-orange-500 p-6 rounded-r-lg mb-6">
+                                <p className="text-slate-800 font-semibold mb-2 text-lg">📋 Delivery Schedule Confirmation</p>
+                                <p className="text-slate-700 leading-relaxed mb-3">
+                                    Delivery timelines will be <strong>confirmed by our store incharge</strong> at the time of order confirmation.
+                                    This ensures we provide you with realistic delivery dates based on:
+                                </p>
+                                <ul className="list-disc list-inside text-slate-700 space-y-1.5 ml-4 text-sm">
+                                    <li>Current product availability and stock levels</li>
+                                    <li>Your delivery location and distance from our store</li>
+                                    <li>Order quantity and special requirements</li>
+                                    <li>Current logistics and delivery partner schedules</li>
+                                </ul>
+                            </div>
+
+                            <h3 className="text-xl font-medium text-slate-700 mb-3 mt-6">3.1 How to Get Your Delivery Timeline</h3>
+                            <div className="bg-slate-50 p-5 rounded-lg border border-slate-200 mb-4">
+                                <ol className="list-decimal list-inside text-slate-600 space-y-3">
+                                    <li className="leading-relaxed">
+                                        <strong>Place Your Order:</strong> Complete your order through our website or visit our store
+                                    </li>
+                                    <li className="leading-relaxed">
+                                        <strong>Order Review:</strong> Our store incharge will review your order details
+                                    </li>
+                                    <li className="leading-relaxed">
+                                        <strong>Timeline Confirmation:</strong> You will receive a call/email with confirmed delivery date and time slot
+                                    </li>
+                                    <li className="leading-relaxed">
+                                        <strong>Tracking Updates:</strong> Stay updated with real-time notifications about your delivery
+                                    </li>
+                                </ol>
+                            </div>
+
+                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                                <p className="text-blue-900 font-medium mb-1 text-sm">💡 Need Urgent Delivery?</p>
+                                <p className="text-slate-700 text-sm leading-relaxed">
+                                    If you have specific project deadlines, please inform our store incharge during order confirmation.
+                                    We'll do our best to accommodate urgent delivery requests based on availability.
+                                </p>
+                            </div>
                         </section>
 
                         <section className="mb-8">
                             <h2 className="text-2xl font-semibold text-slate-800 mb-4">4. Shipping Charges</h2>
 
                             <h3 className="text-xl font-medium text-slate-700 mb-3 mt-6">4.1 Standard Shipping</h3>
+
+                            <div className="bg-green-50 border-l-4 border-green-500 p-4 mb-4">
+                                <p className="text-green-800 font-semibold mb-1">✓ Free Shipping Offer</p>
+                                <p className="text-slate-700 text-sm">
+                                    Enjoy <strong>FREE SHIPPING up to 10 km</strong> from our store locations on all orders above <strong>₹50,000</strong>
+                                </p>
+                            </div>
+
+                            <p className="text-slate-600 leading-relaxed mb-3 text-sm">
+                                Standard shipping charges for other orders:
+                            </p>
                             <ul className="list-disc list-inside text-slate-600 space-y-2 ml-4 mb-4">
-                                <li><strong>Free Shipping:</strong> On orders above ₹50,000</li>
-                                <li><strong>Orders ₹25,000 - ₹49,999:</strong> ₹500 shipping fee</li>
-                                <li><strong>Orders below ₹25,000:</strong> ₹800 shipping fee</li>
+                                <li><strong>Orders above ₹50,000:</strong> FREE shipping within 10 km radius</li>
+                                <li><strong>Orders ₹25,000 - ₹49,999:</strong> ₹500 shipping fee (within city limits)</li>
+                                <li><strong>Orders below ₹25,000:</strong> ₹800 shipping fee (within city limits)</li>
+                                <li><strong>Beyond 10 km:</strong> Additional charges based on distance and weight</li>
                             </ul>
 
                             <h3 className="text-xl font-medium text-slate-700 mb-3 mt-6">4.2 Express Shipping</h3>
@@ -165,7 +183,7 @@ export default function ShippingPolicy() {
                                     <li>Check the number of boxes against the invoice</li>
                                     <li>Inspect outer packaging for visible damage</li>
                                     <li>Open boxes and check for broken or damaged tiles</li>
-                                    <li>Note any discrepancies on the delivery receipt</li>
+                                    <li><strong>Report immediately</strong> only if it is delivered by our delivery partners and damage exceeds more than 2-3%</li>
                                     <li>Take photos if damage is found</li>
                                     <li>Do not accept delivery if major damage is visible</li>
                                 </ul>
