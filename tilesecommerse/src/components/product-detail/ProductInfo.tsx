@@ -226,7 +226,7 @@ export const ProductInfo = ({ product, onVariantChange }: ProductInfoProps) => {
           )}
         </div>
         {/* Stock Count */}
-        {currentStock !== undefined && (
+        {currentStock !== undefined && currentStock > 0 && (
           <div className="flex items-center gap-2 mt-2">
             <span className="text-xs text-slate-600">Stock:</span>
             <span className={`text-xs font-semibold ${currentStock > 50 ? 'text-green-600' :
@@ -235,6 +235,19 @@ export const ProductInfo = ({ product, onVariantChange }: ProductInfoProps) => {
               }`}>
               {currentStock} units available
             </span>
+          </div>
+        )}
+        {currentStock === 0 && (
+          <div className="mt-3 pt-3 border-t border-orange-200">
+            <button
+              onClick={() => setIsEnquiryModalOpen(true)}
+              className="w-full flex items-center justify-center gap-2 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+              </svg>
+              Enquire Now
+            </button>
           </div>
         )}
       </div>
@@ -495,19 +508,19 @@ export const ProductInfo = ({ product, onVariantChange }: ProductInfoProps) => {
           )}
         </button>
 
-        {/* Enquire Now - 40% width (or 90% if no price) */}
+        {/* Enquire Now - 40% width (or 90% if no price or no stock) */}
         <button
           onClick={() => setIsEnquiryModalOpen(true)}
-          className={`${!product.price || product.price === 0 ? 'w-[90%] bg-orange-500 hover:bg-orange-600' : 'w-[40%] bg-blue-600 hover:bg-blue-700'} text-white py-4 rounded-lg transition-colors font-semibold text-lg flex items-center justify-center gap-2`}
+          className={`${!product.price || product.price === 0 || currentStock === 0 ? 'w-[90%] bg-orange-500 hover:bg-orange-600' : 'w-[40%] bg-blue-600 hover:bg-blue-700'} text-white py-4 rounded-lg transition-colors font-semibold text-lg flex items-center justify-center gap-2`}
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
           </svg>
-          {!product.price || product.price === 0 ? 'Enquire for Price' : 'Enquire Now'}
+          {!product.price || product.price === 0 ? 'Enquire for Price' : currentStock === 0 ? 'Enquire Now' : 'Enquire Now'}
         </button>
 
-        {/* Add to Cart - 50% width - Only shown if price is available */}
-        {product.price && product.price > 0 ? (
+        {/* Add to Cart - 50% width - Only shown if price is available and stock > 0 */}
+        {product.price && product.price > 0 && currentStock !== 0 ? (
           <button
             onClick={handleAddToCart}
             disabled={isAdding}
