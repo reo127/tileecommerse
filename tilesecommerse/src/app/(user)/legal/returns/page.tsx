@@ -158,11 +158,19 @@ export default function ReturnsAndRefunds() {
                                 </p>
                             </div>
 
-                            <div className="bg-orange-50 border-l-4 border-orange-400 p-4">
+                            <div className="bg-orange-50 border-l-4 border-orange-400 p-4 mb-4">
                                 <p className="text-slate-700 font-medium mb-2">Customer Pickup from Store</p>
                                 <p className="text-slate-600 text-sm leading-relaxed">
                                     If the material is picked up by the customer from our store, products will be checked and loaded at the store premises.
                                     Once loaded and taken by the customer, it will be their responsibility thereafter.
+                                </p>
+                            </div>
+
+                            <div className="bg-red-50 border-l-4 border-red-400 p-4">
+                                <p className="text-slate-700 font-medium mb-2">Sanitaryware &amp; Other Products</p>
+                                <p className="text-slate-600 text-sm leading-relaxed">
+                                    For sanitaryware and all other non-tile products, the customer must inspect and verify the items <strong>immediately at the time of delivery</strong>.
+                                    Once the delivery is accepted without raising a concern, it will be considered the customer&apos;s responsibility thereafter.
                                 </p>
                             </div>
                         </section>

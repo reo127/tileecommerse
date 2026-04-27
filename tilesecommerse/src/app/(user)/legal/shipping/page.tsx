@@ -189,6 +189,14 @@ export default function ShippingPolicy() {
                                 </ul>
                             </div>
 
+                            <div className="bg-red-50 border-l-4 border-red-400 p-6">
+                                <p className="text-slate-700 font-medium mb-2">⚠️ Sanitaryware &amp; Other Products</p>
+                                <p className="text-slate-600 text-sm leading-relaxed">
+                                    For sanitaryware and all other non-tile products, customers must inspect and verify items <strong>immediately at the time of delivery</strong>.
+                                    Once delivery is accepted without raising a concern, it will be considered the customer&apos;s responsibility thereafter.
+                                </p>
+                            </div>
+
                             <h3 className="text-xl font-medium text-slate-700 mb-3 mt-6">7.3 After Delivery</h3>
                             <ul className="list-disc list-inside text-slate-600 space-y-2 ml-4">
                                 <li>Store tiles in a dry, flat area</li>

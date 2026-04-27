@@ -102,13 +102,21 @@ export default function TermsAndConditions() {
                             <p className="text-slate-600 leading-relaxed mb-4">
                                 Customers must inspect products upon delivery:
                             </p>
-                            <ul className="list-disc list-inside text-slate-600 space-y-2 ml-4">
+                            <ul className="list-disc list-inside text-slate-600 space-y-2 ml-4 mb-4">
                                 <li>Check for visible damage, defects, or incorrect items</li>
                                 <li>Report any issues immediately to the delivery personnel</li>
                                 <li>Note discrepancies on the delivery receipt</li>
                                 <li>Claims for damaged or defective products must be made within 48 hours of delivery</li>
                                 <li>Products installed or used cannot be returned for quality issues</li>
                             </ul>
+
+                            <div className="bg-red-50 border-l-4 border-red-400 p-4">
+                                <p className="text-slate-700 font-medium mb-2">Sanitaryware &amp; Other Products</p>
+                                <p className="text-slate-600 text-sm leading-relaxed">
+                                    For sanitaryware and all other non-tile products, customers must inspect and verify items <strong>immediately at the time of delivery</strong>.
+                                    Once delivery is accepted without raising a concern, it will be considered the customer&apos;s responsibility thereafter.
+                                </p>
+                            </div>
                         </section>
 
                         <section className="mb-8">
