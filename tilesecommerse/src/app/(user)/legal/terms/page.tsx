@@ -106,7 +106,7 @@ export default function TermsAndConditions() {
                                 <li>Check for visible damage, defects, or incorrect items</li>
                                 <li>Report any issues immediately to the delivery personnel</li>
                                 <li>Note discrepancies on the delivery receipt</li>
-                                <li>Claims for damaged or defective products must be made within 48 hours of delivery</li>
+                                <li>Claims for damaged or defective products must be made within 24 hours of delivery</li>
                                 <li>Products installed or used cannot be returned for quality issues</li>
                             </ul>
 
