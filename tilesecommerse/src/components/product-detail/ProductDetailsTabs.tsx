@@ -153,6 +153,10 @@ export const ProductDetailsTabs = ({ product }: ProductDetailsTabsProps) => {
             <p className="bg-blue-50 border-l-4 border-blue-500 p-4 mt-4">
               <strong>Tip:</strong> Regular maintenance will keep your tiles looking new for years.
             </p>
+            <p className="font-semibold text-slate-800 mt-6">Sanitaryware &amp; Other Products</p>
+            <p className="bg-orange-50 border-l-4 border-orange-500 p-4">
+              Inspect all sanitaryware and non-tile products at the time of delivery. Any concerns must be raised immediately — items accepted without complaint become the customer&apos;s responsibility.
+            </p>
           </div>
         )}
       </div>
