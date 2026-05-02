@@ -46,7 +46,7 @@ export const ProductImageGallery = ({ images, productName }: ProductImageGallery
             src={imageList[selectedImage]}
             alt={productName}
             fill
-            className="object-cover"
+            className="object-contain"
             priority
             sizes="(max-width: 768px) 100vw, 50vw"
           />

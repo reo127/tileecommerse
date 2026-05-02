@@ -32,7 +32,7 @@ export const ProductImage = ({
       src={imageSrc}
       alt={name}
       priority={priority}
-      className={`w-full h-full object-cover brightness-90 ${className || ''}`}
+      className={`w-full h-full object-contain brightness-90 ${className || ''}`}
       sizes={sizes}
     />
   );
