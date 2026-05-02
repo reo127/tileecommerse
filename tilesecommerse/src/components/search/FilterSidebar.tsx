@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FaChevronDown, FaChevronUp, FaChevronRight, FaTimes, FaFilter } from "react-icons/fa";
 import type { ProductWithVariants } from "@/schemas";
@@ -125,6 +125,18 @@ export const FilterSidebar = ({
 
   // Fetch main categories from API (same as navbar)
   const { categories: dbCategories } = useCategories(false); // Only active categories
+
+  const [isLoading, setIsLoading] = useState(false);
+  const prevSearchParams = useRef(searchParams.toString());
+
+  // Reset loading when navigation completes (searchParams change)
+  useEffect(() => {
+    const current = searchParams.toString();
+    if (current !== prevSearchParams.current) {
+      prevSearchParams.current = current;
+      setIsLoading(false);
+    }
+  }, [searchParams]);
 
   const [openSections, setOpenSections] = useState<string[]>([]);
   const [priceRange, setPriceRange] = useState({
@@ -303,12 +315,13 @@ export const FilterSidebar = ({
         .forEach(v => params.append(filterType, v));
     }
 
+    setIsLoading(true);
     router.push(`/search?${params.toString()}`);
   };
 
   // Handler for category tree node toggles — uses depth-based param name
   const handleCategoryToggle = (slug: string, depth: number, checked: boolean) => {
-    updateFilters(depthToParam(depth), slug, checked);
+    updateFilters(depthToParam(depth), slug, checked); // setIsLoading is called inside updateFilters
   };
 
   const applyPriceFilter = () => {
@@ -326,11 +339,13 @@ export const FilterSidebar = ({
       params.delete('maxPrice');
     }
 
+    setIsLoading(true);
     router.push(`/search?${params.toString()}`);
   };
 
   const clearAllFilters = () => {
     setPriceRange({ min: "", max: "" });
+    setIsLoading(true);
     router.push('/search');
   };
 
@@ -759,6 +774,19 @@ export const FilterSidebar = ({
 
   return (
     <>
+      {/* ── LOADING OVERLAY ── */}
+      {isLoading && (
+        <div className="fixed inset-0 z-50 pointer-events-none">
+          {/* Covers only the right/content area visually */}
+          <div className="absolute inset-0 bg-white/60 flex items-center justify-center">
+            <div className="flex flex-col items-center gap-3 bg-white rounded-xl shadow-lg px-8 py-6 pointer-events-auto">
+              <div className="w-10 h-10 border-4 border-orange-500 border-t-transparent rounded-full animate-spin" />
+              <span className="text-sm font-medium text-slate-700">Applying filters…</span>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── DESKTOP SIDEBAR (lg+) ── */}
       <aside className="hidden lg:block w-64 flex-shrink-0 bg-white border-r border-gray-200 self-start sticky top-4">
         <div className="overflow-y-auto max-h-[calc(100vh-6rem)]">
