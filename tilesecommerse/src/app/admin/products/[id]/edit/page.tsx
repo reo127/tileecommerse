@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/accordion";
 import { useCategories } from "@/hooks/category/queries/useCategories";
 import { colorMapping } from "@/constants/colors";
+import { revalidateProducts } from "@/app/actions";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000/api/v1';
 
@@ -118,6 +119,65 @@ export default function EditProductPage({ params }: EditProductPageProps) {
     });
   }, [params]);
 
+  // Initialize category dropdowns once BOTH product and categories are loaded
+  useEffect(() => {
+    if (!product || categories.length === 0) return;
+
+    const productCategoryId = product.category?._id || product.category || '';
+    const productSubcategoryId = product.subcategory?._id || product.subcategory || '';
+
+    // Check if productCategoryId is a top-level category
+    const topLevel = categories.find((cat: any) => cat._id === productCategoryId);
+    if (topLevel) {
+      setSelectedCategory(topLevel._id);
+
+      if (productSubcategoryId) {
+        // Check if it's a direct child (Brand level)
+        const brand = topLevel.children?.find((c: any) => c._id === productSubcategoryId);
+        if (brand) {
+          setSelectedSubcategory(brand._id);
+        } else {
+          // Check if it's a grandchild (Sub-category level)
+          for (const child of (topLevel.children || [])) {
+            const subSub = child.children?.find((c: any) => c._id === productSubcategoryId);
+            if (subSub) {
+              setSelectedSubcategory(child._id);
+              setSelectedSubSubcategory(subSub._id);
+              break;
+            }
+          }
+        }
+      }
+    } else {
+      // Legacy: product.category was saved as a deeper level — walk the tree to restore all levels
+      for (const parent of categories) {
+        if (parent._id === productCategoryId) {
+          setSelectedCategory(parent._id);
+          break;
+        }
+        if (parent.children) {
+          for (const child of parent.children) {
+            if (child._id === productCategoryId) {
+              setSelectedCategory(parent._id);
+              setSelectedSubcategory(child._id);
+              break;
+            }
+            if (child.children) {
+              for (const subChild of child.children) {
+                if (subChild._id === productCategoryId) {
+                  setSelectedCategory(parent._id);
+                  setSelectedSubcategory(child._id);
+                  setSelectedSubSubcategory(subChild._id);
+                  break;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }, [product, categories]);
+
   const fetchProduct = async (id: string) => {
     try {
       const token = localStorage.getItem('auth_token');
@@ -132,46 +192,6 @@ export default function EditProductPage({ params }: EditProductPageProps) {
 
       if (result.success) {
         setProduct(result.product);
-
-        // Initialize category selections based on product's category
-        const productCategoryId = result.product.category?._id || result.product.category || '';
-
-        // Find which level this category belongs to and set all parent levels
-        if (productCategoryId && categories.length > 0) {
-          for (const parent of categories) {
-            // Level 0 - Parent category
-            if (parent._id === productCategoryId) {
-              setSelectedCategory(parent._id);
-              break;
-            }
-
-            // Level 1 - Subcategory
-            if (parent.children) {
-              for (const child of parent.children) {
-                if (child._id === productCategoryId) {
-                  setSelectedCategory(parent._id);
-                  setSelectedSubcategory(child._id);
-                  break;
-                }
-
-                // Level 2 - Sub-subcategory
-                if (child.children) {
-                  for (const subChild of child.children) {
-                    if (subChild._id === productCategoryId) {
-                      setSelectedCategory(parent._id);
-                      setSelectedSubcategory(child._id);
-                      setSelectedSubSubcategory(subChild._id);
-                      break;
-                    }
-                  }
-                }
-              }
-            }
-          }
-        } else {
-          // Fallback if categories not loaded yet
-          setSelectedCategory(productCategoryId);
-        }
 
         // Set existing images
         if (result.product.images && result.product.images.length > 0) {
@@ -385,17 +405,14 @@ export default function EditProductPage({ params }: EditProductPageProps) {
       const subcategoryValue = formData.get('subcategory') as string;
       const subSubcategoryValue = formData.get('subSubcategory') as string;
 
-      // Use the deepest selected category level
-      const finalCategory = subSubcategoryValue || subcategoryValue || categoryValue;
-
       const requestBody: any = {
         name: formData.get('name') as string,
         description: formData.get('description') as string,
         shortDescription: formData.get('shortDescription') as string,
         price: Number(formData.get('price')),
         cuttedPrice: Number(formData.get('cuttedPrice')),
-        category: finalCategory,
-        subcategory: subcategoryValue || undefined,
+        category: categoryValue,
+        subcategory: subSubcategoryValue || subcategoryValue || undefined,
         brandname: formData.get('brandname') as string,
         stock: Number(formData.get('stock')),
         warranty: Number(formData.get('warranty')),
@@ -516,6 +533,7 @@ export default function EditProductPage({ params }: EditProductPageProps) {
 
       setSuccess('Product updated successfully!');
       setUploadProgress('');
+      await revalidateProducts(productId);
       setTimeout(() => {
         router.push('/admin/products');
       }, 1500);

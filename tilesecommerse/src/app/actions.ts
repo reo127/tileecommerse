@@ -284,10 +284,7 @@ export async function searchProducts(query: string) {
 }
 
 export async function revalidateProducts(productId?: string) {
-  // Revalidate the homepage and product pages
-  revalidatePath('/');
-  if (productId) {
-    revalidatePath(`/product/${productId}`);
-  }
+  // Revalidate all dynamic product and category pages
+  revalidatePath('/', 'layout');
   return { success: true };
 }

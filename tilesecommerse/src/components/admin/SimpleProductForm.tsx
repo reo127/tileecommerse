@@ -10,6 +10,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { useCategories } from "@/hooks/category/queries/useCategories";
+import { revalidateProducts } from "@/app/actions";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000/api/v1';
 
@@ -371,9 +372,6 @@ export function SimpleProductForm() {
         images.push(base64);
       }
 
-      // Use the deepest selected category level
-      const finalCategory = subSubcategory || subcategory || category;
-
       const requestBody: any = {
         name,
         description,
@@ -381,8 +379,8 @@ export function SimpleProductForm() {
         productId: productId || undefined,
         price: Number(price),
         cuttedPrice: Number(cuttedPrice),
-        category: finalCategory,
-        subcategory: subcategory || undefined,
+        category: category,
+        subcategory: subSubcategory || subcategory || undefined,
         images,
         featuredImageIndex,
         highlights,
@@ -454,6 +452,7 @@ export function SimpleProductForm() {
 
       setSuccess('Product created successfully!');
       setUploadProgress('');
+      await revalidateProducts();
       (e.target as HTMLFormElement).reset();
       setImagePreviews([]);
       setVariants([]);
