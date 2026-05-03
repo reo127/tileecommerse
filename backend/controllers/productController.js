@@ -102,6 +102,13 @@ exports.createProduct = asyncErrorHandler(async (req, res, next) => {
     });
     req.body.specifications = specs;
 
+    // Handle care instructions
+    if (req.body.careInstructions && Array.isArray(req.body.careInstructions)) {
+        req.body.careInstructions = req.body.careInstructions.map(c =>
+            typeof c === 'string' ? JSON.parse(c) : c
+        );
+    }
+
     // Handle tags (if it's a string, convert to array)
     if (req.body.tags && typeof req.body.tags === 'string') {
         req.body.tags = JSON.parse(req.body.tags);
@@ -262,6 +269,13 @@ exports.updateProduct = asyncErrorHandler(async (req, res, next) => {
             }
         });
         req.body.specifications = specs;
+    }
+
+    // Handle care instructions
+    if (req.body.careInstructions && Array.isArray(req.body.careInstructions)) {
+        req.body.careInstructions = req.body.careInstructions.map(c =>
+            typeof c === 'string' ? JSON.parse(c) : c
+        );
     }
 
     // Handle tiles-specific fields

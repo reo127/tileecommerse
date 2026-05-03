@@ -23,6 +23,20 @@ const productSchema = new mongoose.Schema({
             trim: true
         }
     ],
+    careInstructions: [
+        {
+            title: {
+                type: String,
+                required: false,
+                trim: true
+            },
+            description: {
+                type: String,
+                required: false,
+                trim: true
+            }
+        }
+    ],
     specifications: [
         {
             title: {
