@@ -370,6 +370,71 @@ export default function EditProductPage({ params }: EditProductPageProps) {
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
+    // ── Client-side validation ──────────────────────────────────────────────
+    const formData_check = new FormData(e.currentTarget);
+    const name_check = (formData_check.get('name') as string || '').trim();
+    const description_check = (formData_check.get('description') as string || '').trim();
+    const category_check = (formData_check.get('category') as string || '').trim();
+    const price_check = Number(formData_check.get('price'));
+    const cuttedPrice_check = Number(formData_check.get('cuttedPrice'));
+    const stock_check = Number(formData_check.get('stock'));
+
+    if (!name_check) {
+      setError('Product name is required.');
+      return;
+    }
+    if (name_check.length < 3) {
+      setError('Product name must be at least 3 characters long.');
+      return;
+    }
+    if (!description_check) {
+      setError('Product description is required.');
+      return;
+    }
+    if (!category_check) {
+      setError('Please select a category for this product.');
+      return;
+    }
+    if (imagePreviews.length === 0) {
+      setError('Please upload at least one product image before saving.');
+      return;
+    }
+    if (price_check < 0) {
+      setError('Price cannot be negative. Enter 0 if the price is shown on request.');
+      return;
+    }
+    if (cuttedPrice_check > 0 && price_check > 0 && cuttedPrice_check <= price_check) {
+      setError('MRP must be higher than the selling price.');
+      return;
+    }
+    if (stock_check < 0) {
+      setError('Stock quantity cannot be negative.');
+      return;
+    }
+    if (hasVariants && variants.length === 0) {
+      setError('Variants are enabled but none have been added. Please add at least one variant or disable the variants toggle.');
+      return;
+    }
+    if (hasVariants && variants.length > 0) {
+      for (let i = 0; i < variants.length; i++) {
+        if (!variants[i].color) {
+          setError(`Variant ${i + 1} is missing a color. Please select a color for it.`);
+          return;
+        }
+      }
+    }
+    // Validate specification pairs
+    for (let i = 1; i <= specCount; i++) {
+      const title = (formData_check.get(`specTitle${i}`) as string || '').trim();
+      const desc = (formData_check.get(`specDesc${i}`) as string || '').trim();
+      if ((title && !desc) || (!title && desc)) {
+        setError(`Specification ${i}: both the title and description must be filled, or leave both empty.`);
+        return;
+      }
+    }
+    // ── End validation ──────────────────────────────────────────────────────
+
     setSaving(true);
     setError('');
     setSuccess('');
@@ -538,9 +603,15 @@ export default function EditProductPage({ params }: EditProductPageProps) {
         router.push('/admin/products');
       }, 1500);
 
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error:', err);
-      setError('An unexpected error occurred');
+      if (err?.message?.toLowerCase().includes('network') || err?.message?.toLowerCase().includes('fetch')) {
+        setError('Network error — please check your internet connection and try again.');
+      } else if (err?.message) {
+        setError(err.message);
+      } else {
+        setError('Failed to update product. Please try again or contact support if the issue persists.');
+      }
       setUploadProgress('');
     } finally {
       setSaving(false);

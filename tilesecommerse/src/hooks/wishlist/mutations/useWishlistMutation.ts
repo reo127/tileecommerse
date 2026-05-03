@@ -103,9 +103,10 @@ export const useWishlistMutation = () => {
       }
 
       console.error("Error adding to wishlist:", error);
-      // Only show error toast if it's not an auth error
-      if (error.message !== "Unauthorized") {
-        toast.error("Error adding to wishlist");
+      if (error.message === "Unauthorized") {
+        toast.error("Please log in to save items to your wishlist.");
+      } else {
+        toast.error(error.message || "Could not add item to wishlist. Please try again.");
       }
     },
   });
@@ -165,7 +166,7 @@ export const useWishlistMutation = () => {
       }
 
       console.error("Error removing from wishlist:", error);
-      toast.error("Error removing from wishlist");
+      toast.error((error as any)?.message || "Could not remove item from wishlist. Please try again.");
     },
   });
 

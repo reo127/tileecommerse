@@ -104,10 +104,12 @@ export function ProductForm({ mode, initialData, onSuccess }: ProductFormProps) 
       if (result.success && result.data && onSuccess) {
         onSuccess(result.data);
       }
-    } catch (error) {
+    } catch (error: any) {
       setState({
         success: false,
-        message: "An unexpected error occurred",
+        message: error?.message?.toLowerCase().includes('network') || error?.message?.toLowerCase().includes('fetch')
+          ? "Network error — please check your internet connection and try again."
+          : error?.message || "Failed to save product. Please try again or contact support.",
         errors: undefined,
       });
     }

@@ -129,7 +129,7 @@ export const useCartMutation = () => {
       }
 
       console.error("Error adding to cart:", error);
-      toast.error("Error adding to cart");
+      toast.error((error as any)?.message || "Could not add item to cart. Please try again.");
     },
   });
 
@@ -201,7 +201,7 @@ export const useCartMutation = () => {
       }
 
       console.error("Error updating cart:", error);
-      toast.error("Error updating cart");
+      toast.error((error as any)?.message || "Could not update cart quantity. Please try again.");
     },
   });
 
@@ -265,7 +265,7 @@ export const useCartMutation = () => {
       }
 
       console.error("Error removing from cart:", error);
-      toast.error("Error removing from cart");
+      toast.error((error as any)?.message || "Could not remove item from cart. Please try again.");
     },
   });
 
@@ -313,7 +313,7 @@ export const useCartMutation = () => {
       }
 
       console.error("Error clearing cart:", error);
-      toast.error("Error clearing cart");
+      toast.error((error as any)?.message || "Could not clear cart. Please try again.");
     },
   });
 

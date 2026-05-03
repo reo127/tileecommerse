@@ -42,9 +42,12 @@ export async function createProduct(
       message: "Product created successfully",
       data: result.product,
     };
-  } catch (error) {
+  } catch (error: any) {
     console.error("Unexpected error:", error);
-    return { success: false, message: "Unexpected error creating product" };
+    if (error?.message?.toLowerCase().includes("network") || error?.message?.toLowerCase().includes("fetch")) {
+      return { success: false, message: "Network error — please check your internet connection and try again." };
+    }
+    return { success: false, message: error?.message || "Failed to create product. Please try again." };
   }
 }
 
@@ -78,9 +81,12 @@ export async function updateProduct(
       message: "Product updated successfully",
       data: result.product,
     };
-  } catch (error) {
+  } catch (error: any) {
     console.error("Unexpected error:", error);
-    return { success: false, message: "Unexpected error updating product" };
+    if (error?.message?.toLowerCase().includes("network") || error?.message?.toLowerCase().includes("fetch")) {
+      return { success: false, message: "Network error — please check your internet connection and try again." };
+    }
+    return { success: false, message: error?.message || "Failed to update product. Please try again." };
   }
 }
 

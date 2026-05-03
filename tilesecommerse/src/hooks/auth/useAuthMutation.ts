@@ -40,9 +40,18 @@ export const useAuthMutation = () => {
 
       router.refresh();
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error(error);
-      toast.error("Error signing in");
+      const msg = error?.message || "";
+      if (msg.toLowerCase().includes("invalid") || msg.toLowerCase().includes("password") || msg.toLowerCase().includes("credentials")) {
+        toast.error("Incorrect email or password. Please try again.");
+      } else if (msg.toLowerCase().includes("not found") || msg.toLowerCase().includes("no account")) {
+        toast.error("No account found with this email. Please sign up first.");
+      } else if (msg) {
+        toast.error(msg);
+      } else {
+        toast.error("Sign in failed. Please check your connection and try again.");
+      }
     },
   });
 
@@ -76,9 +85,18 @@ export const useAuthMutation = () => {
       router.push("/");
       router.refresh();
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error(error);
-      toast.error("Error signing up");
+      const msg = error?.message || "";
+      if (msg.toLowerCase().includes("already exists") || msg.toLowerCase().includes("already registered") || msg.toLowerCase().includes("email taken")) {
+        toast.error("An account with this email already exists. Please sign in instead.");
+      } else if (msg.toLowerCase().includes("password")) {
+        toast.error("Password must be at least 8 characters long.");
+      } else if (msg) {
+        toast.error(msg);
+      } else {
+        toast.error("Could not create account. Please check your details and try again.");
+      }
     },
   });
 
@@ -93,9 +111,9 @@ export const useAuthMutation = () => {
       router.push("/");
       router.refresh();
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error(error);
-      toast.error("Error signing in with Google");
+      toast.error(error?.message || "Google sign in failed. Please try again or use email and password.");
     },
   });
 
@@ -107,9 +125,9 @@ export const useAuthMutation = () => {
       router.push("/");
       router.refresh();
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error(error);
-      toast.error("Error signing out");
+      toast.error(error?.message || "Sign out failed. Please refresh the page and try again.");
     },
   });
 
