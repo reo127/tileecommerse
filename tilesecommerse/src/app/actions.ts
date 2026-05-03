@@ -79,6 +79,7 @@ function transformProduct(backendProduct: any) {
     waterAbsorption: backendProduct.waterAbsorption,
     slipResistance: backendProduct.slipResistance,
     highlights: backendProduct.highlights || [],
+    careInstructions: backendProduct.careInstructions || [],
     specifications: backendProduct.specifications || [],
     tags: backendProduct.tags || [],
     hasVariants: backendProduct.hasVariants || false,

@@ -142,21 +142,22 @@ export const ProductDetailsTabs = ({ product }: ProductDetailsTabsProps) => {
 
         {activeTab === "care" && (
           <div className="space-y-4 text-slate-700">
-            <p className="font-semibold text-slate-800">Maintenance Guidelines:</p>
-            <ul className="space-y-3 ml-4">
-              <li><strong>Daily Cleaning:</strong> Sweep or vacuum regularly to remove dust and debris</li>
-              <li><strong>Wet Cleaning:</strong> Mop with mild detergent and warm water</li>
-              <li><strong>Stain Removal:</strong> Use appropriate tile cleaner for stubborn stains</li>
-              <li><strong>Avoid:</strong> Harsh chemicals, abrasive cleaners, and acidic substances</li>
-              <li><strong>Polishing:</strong> Use tile polish occasionally to maintain shine</li>
-            </ul>
-            <p className="bg-blue-50 border-l-4 border-blue-500 p-4 mt-4">
-              <strong>Tip:</strong> Regular maintenance will keep your tiles looking new for years.
-            </p>
-            <p className="font-semibold text-slate-800 mt-6">Sanitaryware &amp; Other Products</p>
-            <p className="bg-orange-50 border-l-4 border-orange-500 p-4">
-              Inspect all sanitaryware and non-tile products at the time of delivery. Any concerns must be raised immediately — items accepted without complaint become the customer&apos;s responsibility.
-            </p>
+            {product.careInstructions && product.careInstructions.length > 0 ? (
+              <>
+                <p className="font-semibold text-slate-800">Care &amp; Maintenance Guidelines:</p>
+                <ul className="space-y-3 ml-4 list-disc">
+                  {product.careInstructions.map((instruction: any, index: number) => (
+                    <li key={index}>
+                      {instruction.title && <strong>{instruction.title}:</strong>}
+                      {instruction.title && instruction.description ? ' ' : ''}
+                      {instruction.description}
+                    </li>
+                  ))}
+                </ul>
+              </>
+            ) : (
+              <p className="text-slate-500 italic">Care instructions are not available for this product.</p>
+            )}
           </div>
         )}
       </div>

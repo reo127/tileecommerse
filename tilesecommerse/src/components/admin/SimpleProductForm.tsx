@@ -123,6 +123,10 @@ export function SimpleProductForm() {
 
 
 
+  const [careItems, setCareItems] = useState<Array<{ id: string; title: string; description: string }>>([
+    { id: generateUUID(), title: '', description: '' },
+  ]);
+
   const [hasVariants, setHasVariants] = useState(false);
   const [variants, setVariants] = useState<Variant[]>([]);
 
@@ -412,6 +416,10 @@ export function SimpleProductForm() {
       const highlight6 = formData.get('highlight6') as string;
       const highlights = [highlight1, highlight2, highlight3, highlight4, highlight5, highlight6].filter(h => h);
 
+      const careInstructions = careItems
+        .filter(c => c.title.trim() || c.description.trim())
+        .map(c => JSON.stringify({ title: c.title.trim(), description: c.description.trim() }));
+
       const tags = formData.getAll('tags') as string[];
 
       const specifications = [];
@@ -450,6 +458,7 @@ export function SimpleProductForm() {
         images,
         featuredImageIndex,
         highlights,
+        careInstructions,
         specifications,
         stock: Number(stock),
       };
@@ -604,7 +613,7 @@ export function SimpleProductForm() {
           </div>
         )}
 
-        <Accordion type="multiple" defaultValue={["basic", "images", "highlights", "specs", "variants", "tags"]} className="space-y-4">
+        <Accordion type="multiple" defaultValue={["basic", "images", "highlights", "specs", "variants", "tags", "care"]} className="space-y-4">
           {/* 1. Basic Information */}
           <AccordionItem value="basic" className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
             <AccordionTrigger className="px-8 py-6 hover:no-underline hover:bg-slate-50 transition-colors">
@@ -1302,10 +1311,59 @@ export function SimpleProductForm() {
             </AccordionContent>
           </AccordionItem>
 
-          {/* 5. Product Tags */}
+          {/* 5. Care Instructions */}
+          <AccordionItem value="care" className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
+            <AccordionTrigger className="px-8 py-6 hover:no-underline hover:bg-slate-50 transition-colors">
+              <h2 className="text-xl font-medium text-slate-900">5. Care Instructions</h2>
+            </AccordionTrigger>
+            <AccordionContent className="px-8 pb-8">
+              <div className="space-y-3 pt-4">
+                <label className="block text-sm font-medium text-slate-700">Care Instructions <span className="text-slate-400 font-normal">(optional)</span></label>
+                <p className="text-xs text-slate-500">Each instruction has a bold title and a description — e.g. Title: "Daily Cleaning", Description: "Sweep or vacuum regularly."</p>
+                {careItems.map((item, index) => (
+                  <div key={item.id} className="flex gap-2 items-start">
+                    <div className="flex-1 grid grid-cols-2 gap-3">
+                      <input
+                        value={item.title}
+                        onChange={e => setCareItems(prev => prev.map(c => c.id === item.id ? { ...c, title: e.target.value } : c))}
+                        placeholder={`Title (e.g. Daily Cleaning)`}
+                        className="px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all font-medium"
+                      />
+                      <input
+                        value={item.description}
+                        onChange={e => setCareItems(prev => prev.map(c => c.id === item.id ? { ...c, description: e.target.value } : c))}
+                        placeholder={`Description (e.g. Sweep or vacuum regularly)`}
+                        className="px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
+                      />
+                    </div>
+                    {careItems.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => setCareItems(prev => prev.filter(c => c.id !== item.id))}
+                        className="mt-1 p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        title="Remove instruction"
+                      >
+                        <FiTrash2 className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => setCareItems(prev => [...prev, { id: generateUUID(), title: '', description: '' }])}
+                  className="w-full py-3 px-4 border-2 border-dashed border-slate-300 text-slate-600 rounded-xl hover:border-slate-400 hover:bg-slate-50 transition-all flex items-center justify-center gap-2 group"
+                >
+                  <FiPlus className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                  <span className="text-sm font-medium">Add Care Instruction</span>
+                </button>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+
+          {/* 6. Product Tags */}
           <AccordionItem value="tags" className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
             <AccordionTrigger className="px-8 py-6 hover:no-underline hover:bg-slate-50 transition-colors">
-              <h2 className="text-xl font-medium text-slate-900">5. Product Tags</h2>
+              <h2 className="text-xl font-medium text-slate-900">6. Product Tags</h2>
             </AccordionTrigger>
             <AccordionContent className="px-8 pb-8">
               <div className="pt-4">

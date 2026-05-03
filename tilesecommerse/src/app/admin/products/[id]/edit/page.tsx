@@ -80,6 +80,9 @@ export default function EditProductPage({ params }: EditProductPageProps) {
   const [featuredImageIndex, setFeaturedImageIndex] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [specCount, setSpecCount] = useState(2);
+  const [careItems, setCareItems] = useState<Array<{ id: string; title: string; description: string }>>([
+    { id: crypto.randomUUID?.() || Math.random().toString(36), title: '', description: '' },
+  ]);
 
   // Variants state
   const [hasVariants, setHasVariants] = useState(false);
@@ -212,6 +215,15 @@ export default function EditProductPage({ params }: EditProductPageProps) {
         // Set spec count based on existing specs
         if (result.product.specifications && result.product.specifications.length > 0) {
           setSpecCount(Math.max(2, result.product.specifications.length));
+        }
+
+        // Set care instructions
+        if (result.product.careInstructions && result.product.careInstructions.length > 0) {
+          setCareItems(result.product.careInstructions.map((c: any) => ({
+            id: crypto.randomUUID?.() || Math.random().toString(36),
+            title: c.title || '',
+            description: c.description || '',
+          })));
         }
 
         // FIX: Load existing variants with all fields including images
@@ -452,6 +464,11 @@ export default function EditProductPage({ params }: EditProductPageProps) {
         }
       }
 
+      // Collect care instructions from controlled state
+      const careInstructions = careItems
+        .filter(c => c.title.trim() || c.description.trim())
+        .map(c => JSON.stringify({ title: c.title.trim(), description: c.description.trim() }));
+
       // Collect specifications
       const specifications = [];
       for (let i = 1; i <= specCount; i++) {
@@ -482,6 +499,7 @@ export default function EditProductPage({ params }: EditProductPageProps) {
         stock: Number(formData.get('stock')),
         warranty: Number(formData.get('warranty')),
         highlights,
+        careInstructions,
         specifications,
         material: formData.get('material') as string || undefined,
         finish: formData.get('finish') as string || undefined,
@@ -686,7 +704,7 @@ export default function EditProductPage({ params }: EditProductPageProps) {
         )}
 
         {/* FIX: Open all sections by default so FormData includes all inputs */}
-        <Accordion type="multiple" defaultValue={["basic", "images", "highlights", "specs", "variants", "tags"]} className="space-y-4">
+        <Accordion type="multiple" defaultValue={["basic", "images", "highlights", "specs", "variants", "tags", "care"]} className="space-y-4">
 
           {/* 1. Basic Information */}
           <AccordionItem value="basic" className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
@@ -1278,10 +1296,59 @@ export default function EditProductPage({ params }: EditProductPageProps) {
             </AccordionContent>
           </AccordionItem>
 
-          {/* 5. Product Tags */}
+          {/* 5. Care Instructions */}
+          <AccordionItem value="care" className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
+            <AccordionTrigger className="px-8 py-6 hover:no-underline hover:bg-slate-50 transition-colors">
+              <h2 className="text-xl font-medium text-slate-900">5. Care Instructions</h2>
+            </AccordionTrigger>
+            <AccordionContent className="px-8 pb-8">
+              <div className="space-y-3 pt-4">
+                <label className="block text-sm font-medium text-slate-700">Care Instructions <span className="text-slate-400 font-normal">(optional)</span></label>
+                <p className="text-xs text-slate-500">Each instruction has a bold title and a description — e.g. Title: "Daily Cleaning", Description: "Sweep or vacuum regularly."</p>
+                {careItems.map((item) => (
+                  <div key={item.id} className="flex gap-2 items-start">
+                    <div className="flex-1 grid grid-cols-2 gap-3">
+                      <input
+                        value={item.title}
+                        onChange={e => setCareItems(prev => prev.map(c => c.id === item.id ? { ...c, title: e.target.value } : c))}
+                        placeholder="Title (e.g. Daily Cleaning)"
+                        className="px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all font-medium"
+                      />
+                      <input
+                        value={item.description}
+                        onChange={e => setCareItems(prev => prev.map(c => c.id === item.id ? { ...c, description: e.target.value } : c))}
+                        placeholder="Description (e.g. Sweep or vacuum regularly)"
+                        className="px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
+                      />
+                    </div>
+                    {careItems.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => setCareItems(prev => prev.filter(c => c.id !== item.id))}
+                        className="mt-1 p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        title="Remove instruction"
+                      >
+                        <FiTrash2 className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => setCareItems(prev => [...prev, { id: crypto.randomUUID?.() || Math.random().toString(36), title: '', description: '' }])}
+                  className="w-full py-3 px-4 border-2 border-dashed border-slate-300 text-slate-600 rounded-xl hover:border-slate-400 hover:bg-slate-50 transition-all flex items-center justify-center gap-2 group"
+                >
+                  <FiPlus className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                  <span className="text-sm font-medium">Add Care Instruction</span>
+                </button>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+
+          {/* 6. Product Tags */}
           <AccordionItem value="tags" className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
             <AccordionTrigger className="px-8 py-6 hover:no-underline hover:bg-slate-50 transition-colors">
-              <h2 className="text-xl font-medium text-slate-900">5. Product Tags</h2>
+              <h2 className="text-xl font-medium text-slate-900">6. Product Tags</h2>
             </AccordionTrigger>
             <AccordionContent className="px-8 pb-8">
               <div className="pt-4">
