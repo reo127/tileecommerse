@@ -1,12 +1,30 @@
 "use client";
 
-import { useCallback, Suspense, useRef, useEffect } from "react";
+import { useCallback, Suspense, useRef, useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 
 function SearchInputContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const [isSearching, setIsSearching] = useState(false);
+  const prevParams = useRef(searchParams.toString());
+
+  // Reset loading when navigation completes
+  useEffect(() => {
+    const current = searchParams.toString();
+    if (current !== prevParams.current) {
+      prevParams.current = current;
+      setIsSearching(false);
+    }
+  }, [searchParams]);
+
+  // Safety timeout — always clear after 8s
+  useEffect(() => {
+    if (!isSearching) return;
+    const timer = setTimeout(() => setIsSearching(false), 8000);
+    return () => clearTimeout(timer);
+  }, [isSearching]);
 
   // Cleanup debounce timer on unmount
   useEffect(() => {
@@ -26,8 +44,12 @@ function SearchInputContent() {
 
       // Set new timer to debounce the navigation
       debounceTimerRef.current = setTimeout(() => {
-        if (term) {
-          router.replace(`/search?q=${encodeURIComponent(term)}`);
+        const currentQ = searchParams.get('q') || '';
+        const newQ = term.trim();
+        if (newQ === currentQ) return; // Same query — skip
+        setIsSearching(true);
+        if (newQ) {
+          router.replace(`/search?q=${encodeURIComponent(newQ)}`);
         } else {
           router.replace("/search");
         }
@@ -37,7 +59,12 @@ function SearchInputContent() {
   );
 
   return (
-    <div className="flex w-full border border-[#2E2E2E] rounded-md overflow-hidden">
+    <div className="flex w-full border border-[#2E2E2E] rounded-md overflow-hidden relative">
+      {isSearching && (
+        <div className="absolute inset-0 bg-white/70 flex items-center justify-center z-10 rounded-md">
+          <div className="w-5 h-5 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
+        </div>
+      )}
       <span className="h-[40px] w-[40px] px-3 flex items-center justify-center">
         <svg
           data-testid="geist-icon"

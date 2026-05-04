@@ -193,6 +193,23 @@ const Search = async ({ searchParams }: SearchProps) => {
     });
   }
 
+  // Resolve the page title from the most specific active category slug
+  const findCategoryName = (cats: any[], slug: string): string | null => {
+    for (const cat of cats) {
+      if (cat.slug === slug) return cat.name;
+      if (cat.children) {
+        const found = findCategoryName(cat.children, slug);
+        if (found) return found;
+      }
+    }
+    return null;
+  };
+  let pageTitle = "All Products";
+  for (const slug of allSelectedSlugs) {
+    const name = findCategoryName(dbCategories, slug);
+    if (name) { pageTitle = name; break; }
+  }
+
   // Calculate pagination
   const totalProducts = filteredProducts.length;
   const totalPages = Math.ceil(totalProducts / limit);
@@ -233,6 +250,7 @@ const Search = async ({ searchParams }: SearchProps) => {
             totalPages={totalPages}
             currentPage={page}
             searchQuery={q}
+            pageTitle={pageTitle}
           />
         </div>
       </div>

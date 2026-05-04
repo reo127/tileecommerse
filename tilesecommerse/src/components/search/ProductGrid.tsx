@@ -2,7 +2,7 @@
 
 import type { ProductWithVariants } from "@/schemas";
 import { ProductItem } from "@/components/products";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { FaTh, FaBars } from "react-icons/fa";
 import { FiChevronLeft, FiChevronRight, FiSearch, FiX } from "react-icons/fi";
@@ -13,6 +13,7 @@ interface ProductGridProps {
   totalPages: number;
   currentPage: number;
   searchQuery?: string;
+  pageTitle?: string;
 }
 
 export const ProductGrid = ({
@@ -20,7 +21,8 @@ export const ProductGrid = ({
   totalProducts,
   totalPages,
   currentPage,
-  searchQuery
+  searchQuery,
+  pageTitle = "All Products",
 }: ProductGridProps) => {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -29,6 +31,24 @@ export const ProductGrid = ({
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [sortBy, setSortBy] = useState("featured");
   const [searchInput, setSearchInput] = useState(searchQuery || "");
+  const [isSearching, setIsSearching] = useState(false);
+  const prevParams = useRef(searchParams.toString());
+
+  // Reset loading when navigation completes
+  useEffect(() => {
+    const current = searchParams.toString();
+    if (current !== prevParams.current) {
+      prevParams.current = current;
+      setIsSearching(false);
+    }
+  }, [searchParams]);
+
+  // Safety timeout — always clear loading after 8s to prevent infinite stuck
+  useEffect(() => {
+    if (!isSearching) return;
+    const timer = setTimeout(() => setIsSearching(false), 8000);
+    return () => clearTimeout(timer);
+  }, [isSearching]);
 
   // Get current limit from URL or default to 12
   const itemsPerPage = parseInt(searchParams.get('limit') || '12');
@@ -88,12 +108,16 @@ export const ProductGrid = ({
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const params = new URLSearchParams(searchParams);
-    if (searchInput.trim()) {
-      params.set('q', searchInput.trim());
+    const newQ = searchInput.trim();
+    const currentQ = searchParams.get('q') || '';
+    if (newQ === currentQ) return; // Same query — no navigation, no loading
+    if (newQ) {
+      params.set('q', newQ);
     } else {
       params.delete('q');
     }
-    params.set('page', '1'); // Reset to page 1 on new search
+    params.set('page', '1');
+    setIsSearching(true);
     router.push(`${pathname}?${params.toString()}`);
   };
 
@@ -141,6 +165,18 @@ export const ProductGrid = ({
 
   return (
     <div className="flex-1">
+      {/* Loading overlay */}
+      {isSearching && (
+        <div className="fixed inset-0 z-50 pointer-events-none">
+          <div className="absolute inset-0 bg-white/60 flex items-center justify-center">
+            <div className="flex flex-col items-center gap-3 bg-white rounded-xl shadow-lg px-8 py-6 pointer-events-auto">
+              <div className="w-10 h-10 border-4 border-orange-500 border-t-transparent rounded-full animate-spin" />
+              <span className="text-sm font-medium text-slate-700">Searching…</span>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Search Box */}
       <div className="mb-6">
         <form onSubmit={handleSearchSubmit} className="relative">
@@ -178,7 +214,7 @@ export const ProductGrid = ({
         {/* Title and Count */}
         <div>
           <h1 className="text-2xl font-bold text-slate-800">
-            {searchQuery ? `Search Results for "${searchQuery}"` : "All Tiles"}
+            {searchQuery ? `Search Results for "${searchQuery}"` : pageTitle}
           </h1>
           <p className="text-sm text-slate-600 mt-1">
             {totalProducts > 0 ? (
