@@ -1,13 +1,53 @@
 "use client";
 
-import { useState } from "react";
-import { HiPlus, HiPencil, HiTrash, HiChevronDown, HiChevronRight, HiX, HiViewGrid } from "react-icons/hi";
+import { useState, useEffect, useRef } from "react";
+import { HiPlus, HiPencil, HiTrash, HiChevronDown, HiChevronRight, HiX, HiViewGrid, HiMenuAlt4 } from "react-icons/hi";
 import { useCategories, useCategoryMutation } from "@/hooks/category";
 import type { Category } from "@/schemas";
 
 export default function CategoryManagement() {
   const { categories, isLoading } = useCategories(true); // Include inactive
-  const { create, update, remove, toggle, isCreating, isUpdating, isDeleting, isToggling } = useCategoryMutation();
+  const { create, update, remove, toggle, reorder, isCreating, isUpdating, isDeleting, isToggling, isReordering } = useCategoryMutation();
+
+  // Local ordered list for drag-and-drop (top-level only)
+  const [orderedCategories, setOrderedCategories] = useState<Category[]>([]);
+  const draggedId = useRef<string | null>(null);
+  const [dragOverId, setDragOverId] = useState<string | null>(null);
+
+  // Sync local order when server data loads/changes
+  useEffect(() => {
+    setOrderedCategories([...categories]);
+  }, [categories]);
+
+  const handleDragStart = (id: string) => {
+    draggedId.current = id;
+  };
+
+  const handleDragOver = (e: React.DragEvent, targetId: string) => {
+    e.preventDefault();
+    if (!draggedId.current || draggedId.current === targetId) return;
+    setDragOverId(targetId);
+    setOrderedCategories(prev => {
+      const dragIdx = prev.findIndex(c => c._id === draggedId.current);
+      const targetIdx = prev.findIndex(c => c._id === targetId);
+      if (dragIdx === -1 || targetIdx === -1) return prev;
+      const next = [...prev];
+      const [moved] = next.splice(dragIdx, 1);
+      next.splice(targetIdx, 0, moved);
+      return next;
+    });
+  };
+
+  const handleDrop = () => {
+    draggedId.current = null;
+    setDragOverId(null);
+    reorder(orderedCategories.map((c, i) => ({ id: c._id, order: i + 1 })));
+  };
+
+  const handleDragEnd = () => {
+    draggedId.current = null;
+    setDragOverId(null);
+  };
 
   const [showModal, setShowModal] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
@@ -125,7 +165,7 @@ export default function CategoryManagement() {
       </div>
 
       {/* Category Tree */}
-      {categories.length === 0 ? (
+      {orderedCategories.length === 0 && !isLoading ? (
         <div className="text-center py-12 bg-slate-50 rounded-lg border-2 border-dashed border-slate-300">
           <HiViewGrid className="w-12 h-12 mx-auto mb-4 text-slate-400" />
           <h3 className="text-lg font-semibold text-slate-900 mb-2">No Categories Yet</h3>
@@ -139,23 +179,40 @@ export default function CategoryManagement() {
           </button>
         </div>
       ) : (
-        <div className="bg-slate-50 rounded-lg border border-slate-200 divide-y divide-slate-200">
-          {categories.map((category) => (
-            <CategoryTreeItem
-              key={category._id}
-              category={category}
-              isExpanded={expandedCategories.has(category._id)}
-              onToggleExpand={toggleExpand}
-              onEdit={handleOpenModal}
-              onDelete={handleDelete}
-              onToggleStatus={handleToggleStatus}
-              onAddChild={handleOpenModal}
-              isDeleting={isDeleting}
-              isToggling={isToggling}
-              expandedCategories={expandedCategories}
-            />
-          ))}
-        </div>
+        <>
+          <p className="text-xs text-slate-500 flex items-center gap-1">
+            <HiMenuAlt4 className="w-4 h-4" />
+            Drag the <HiMenuAlt4 className="w-3.5 h-3.5 inline" /> handle to reorder top-level categories
+            {isReordering && <span className="ml-2 text-orange-500 font-medium">Saving…</span>}
+          </p>
+          <div className="bg-slate-50 rounded-lg border border-slate-200 divide-y divide-slate-200">
+            {orderedCategories.map((category) => (
+              <div
+                key={category._id}
+                draggable
+                onDragStart={() => handleDragStart(category._id)}
+                onDragOver={(e) => handleDragOver(e, category._id)}
+                onDrop={handleDrop}
+                onDragEnd={handleDragEnd}
+                className={`transition-all duration-150 ${dragOverId === category._id ? 'ring-2 ring-inset ring-orange-400 bg-orange-50' : ''} ${draggedId.current === category._id ? 'opacity-40' : ''}`}
+              >
+                <CategoryTreeItem
+                  category={category}
+                  isExpanded={expandedCategories.has(category._id)}
+                  onToggleExpand={toggleExpand}
+                  onEdit={handleOpenModal}
+                  onDelete={handleDelete}
+                  onToggleStatus={handleToggleStatus}
+                  onAddChild={handleOpenModal}
+                  isDeleting={isDeleting}
+                  isToggling={isToggling}
+                  expandedCategories={expandedCategories}
+                  isDraggable={true}
+                />
+              </div>
+            ))}
+          </div>
+        </>
       )}
 
       {/* Modal */}
@@ -276,6 +333,7 @@ function CategoryTreeItem({
   isDeleting,
   isToggling,
   expandedCategories,
+  isDraggable = false,
   depth = 0,
 }: {
   category: Category;
@@ -288,6 +346,7 @@ function CategoryTreeItem({
   isDeleting: boolean;
   isToggling: boolean;
   expandedCategories: Set<string>;
+  isDraggable?: boolean;
   depth?: number;
 }) {
   const hasChildren = category.children && category.children.length > 0;
@@ -315,6 +374,19 @@ function CategoryTreeItem({
   return (
     <div>
       <div className={`flex items-center gap-3 p-4 hover:bg-white transition-colors ${depth > 0 ? 'pl-' + (4 + depth * 8) : ''}`}>
+        {/* Drag handle — only on top-level rows */}
+        {isDraggable && depth === 0 ? (
+          <span
+            className="cursor-grab active:cursor-grabbing text-slate-400 hover:text-slate-600 transition-colors flex-shrink-0 p-1"
+            title="Drag to reorder"
+            onMouseDown={(e) => e.stopPropagation()}
+          >
+            <HiMenuAlt4 className="w-4 h-4" />
+          </span>
+        ) : (
+          depth === 0 && <span className="w-6 flex-shrink-0" />
+        )}
+
         {/* Expand/Collapse Button */}
         <button
           onClick={() => onToggleExpand(category._id)}
