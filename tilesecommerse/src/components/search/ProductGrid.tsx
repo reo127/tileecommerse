@@ -93,11 +93,13 @@ export const ProductGrid = ({
 
   // Handle page change
   const handlePageChange = (newPage: number) => {
+    setIsSearching(true);
     updateURLParams({ page: newPage.toString() });
   };
 
   // Handle items per page change
   const handleItemsPerPageChange = (value: number) => {
+    setIsSearching(true);
     updateURLParams({
       limit: value.toString(),
       page: '1' // Reset to page 1 when changing items per page
@@ -171,7 +173,7 @@ export const ProductGrid = ({
           <div className="absolute inset-0 bg-white/60 flex items-center justify-center">
             <div className="flex flex-col items-center gap-3 bg-white rounded-xl shadow-lg px-8 py-6 pointer-events-auto">
               <div className="w-10 h-10 border-4 border-orange-500 border-t-transparent rounded-full animate-spin" />
-              <span className="text-sm font-medium text-slate-700">Searching…</span>
+              <span className="text-sm font-medium text-slate-700">Loading…</span>
             </div>
           </div>
         </div>
