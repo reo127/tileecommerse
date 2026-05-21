@@ -22,8 +22,25 @@ interface ProductItemProps {
   product: ProductWithVariants;
 }
 
+const tagConfig: Record<string, { color: string; emoji: string }> = {
+  popular:    { color: "bg-blue-100 text-blue-700",   emoji: "⭐" },
+  trending:   { color: "bg-yellow-100 text-yellow-700", emoji: "🔥" },
+  new:        { color: "bg-green-100 text-green-700",  emoji: "✨" },
+  premium:    { color: "bg-purple-100 text-purple-700", emoji: "💎" },
+  exclusive:  { color: "bg-pink-100 text-pink-700",   emoji: "👑" },
+  classic:    { color: "bg-slate-100 text-slate-700",  emoji: "🏛️" },
+  bestseller: { color: "bg-orange-100 text-orange-700", emoji: "🏆" },
+  limited:    { color: "bg-red-100 text-red-700",     emoji: "⏰" },
+};
+
 export const ProductItem = ({ product }: ProductItemProps) => {
   const { name, id, img, price, category, variants } = product;
+  const cuttedPrice = (product as any).cuttedPrice;
+  const tags: string[] = (product as any).tags || [];
+  const shortDescription = (product as any).shortDescription || (product as any).description || "";
+  const discount = price > 0 && cuttedPrice > price
+    ? Math.round(((cuttedPrice - price) / cuttedPrice) * 100)
+    : 0;
   const [isEnquiryOpen, setIsEnquiryOpen] = useState(false);
 
   // Safely get the first variant color
@@ -59,6 +76,15 @@ export const ProductItem = ({ product }: ProductItemProps) => {
           </button>
         </div>
 
+        {/* Discount Badge */}
+        {discount > 0 && (
+          <div className="absolute bottom-3 left-3 z-10">
+            <span className="px-2 py-1 bg-green-500 text-white text-xs font-bold rounded">
+              -{discount}%
+            </span>
+          </div>
+        )}
+
         {/* Wishlist Button - Overlay on Image */}
         <div className="absolute top-3 right-3 z-10">
           <WishlistButton productId={id} />
@@ -78,7 +104,12 @@ export const ProductItem = ({ product }: ProductItemProps) => {
           <div>
             {price > 0 ? (
               <>
-                <p className="text-xl font-bold text-orange-500">₹{price.toFixed(0)}</p>
+                <div className="flex items-baseline gap-2">
+                  <p className="text-xl font-bold text-orange-500">₹{price.toFixed(0)}</p>
+                  {cuttedPrice > price && (
+                    <p className="text-sm text-gray-400 line-through">₹{cuttedPrice.toFixed(0)}</p>
+                  )}
+                </div>
                 <p className="text-xs text-gray-500">per unit</p>
               </>
             ) : (
@@ -122,6 +153,26 @@ export const ProductItem = ({ product }: ProductItemProps) => {
           </div>
         )}
 
+
+        {/* Tags */}
+        {tags.length > 0 && (
+          <div className="mt-3 flex flex-wrap gap-1">
+            {tags.slice(0, 3).map((tag) => {
+              const cfg = tagConfig[tag];
+              if (!cfg) return null;
+              return (
+                <span key={tag} className={`px-2 py-0.5 text-xs font-medium rounded-full ${cfg.color}`}>
+                  {cfg.emoji} {tag.charAt(0).toUpperCase() + tag.slice(1)}
+                </span>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Short Description */}
+        {shortDescription && (
+          <p className="mt-2 text-xs text-gray-500 line-clamp-2">{shortDescription}</p>
+        )}
 
         {/* View Details Button */}
         <Link href={productLink}>
