@@ -106,12 +106,24 @@ const Search = async ({ searchParams }: SearchProps) => {
   // Filter by categories — uses the merged slug list (handles navbar subcategory/subsubcategory clicks)
   if (allSelectedSlugs.length > 0) {
     filteredProducts = filteredProducts.filter((product: ProductWithVariants) => {
-      if (!product.category) return false;
-
-      // Check if the product's category slug is within any selected slug's hierarchy
       return allSelectedSlugs.some(selectedSlug => {
-        const slugsInHierarchy = categorySlugMap.get(selectedSlug) || [selectedSlug];
-        return slugsInHierarchy.includes(product.category);
+        // 1. Check category hierarchy (normal case)
+        if (product.category) {
+          const slugsInHierarchy = categorySlugMap.get(selectedSlug) || [selectedSlug];
+          if (slugsInHierarchy.includes(product.category)) return true;
+        }
+
+        const slugLower = selectedSlug.toLowerCase();
+
+        // 2. Fallback: match against product.brand (e.g. "godrej" from nav dropdown)
+        const brand = (product as any).brand;
+        if (brand && brand.toLowerCase() === slugLower) return true;
+
+        // 3. Fallback: match against product.subcategory slug
+        const subcategory = (product as any).subcategory;
+        if (subcategory && subcategory.toLowerCase() === slugLower) return true;
+
+        return false;
       });
     });
   }
@@ -208,6 +220,9 @@ const Search = async ({ searchParams }: SearchProps) => {
   for (const slug of allSelectedSlugs) {
     const name = findCategoryName(dbCategories, slug);
     if (name) { pageTitle = name; break; }
+    // Fallback: if slug didn't match any category, use the slug itself as title (e.g. brand name)
+    pageTitle = slug.charAt(0).toUpperCase() + slug.slice(1);
+    break;
   }
 
   // Calculate pagination
