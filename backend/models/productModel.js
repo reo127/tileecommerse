@@ -146,6 +146,12 @@ const productSchema = new mongoose.Schema({
         min: [0, "Tiles per box cannot be negative"]
     },
 
+    pricePerSqft: {
+        type: Number,
+        required: false,
+        min: [0, "Price per sq.ft cannot be negative"]
+    },
+
     weight: {
         type: Number, // kg per box
         required: false,
