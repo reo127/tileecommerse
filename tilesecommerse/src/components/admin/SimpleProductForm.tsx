@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect, FormEvent } from "react";
+import { useState, useEffect, useRef, FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { FiUpload, FiCheck, FiX, FiStar, FiTrash2, FiImage, FiPlus } from "react-icons/fi";
+import { FiUpload, FiCheck, FiX, FiStar, FiTrash2, FiImage, FiPlus, FiCopy, FiInfo } from "react-icons/fi";
 import {
   Accordion,
   AccordionContent,
@@ -123,6 +123,10 @@ interface Variant {
 
 export function SimpleProductForm() {
   const router = useRouter();
+  const formRef = useRef<HTMLFormElement>(null);
+  const [jsonInput, setJsonInput] = useState('');
+  const [showJsonFormat, setShowJsonFormat] = useState(false);
+  const [formatCopied, setFormatCopied] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -617,9 +621,210 @@ export function SimpleProductForm() {
     }
   };
 
+  // JSON import handler — fills form fields from pasted JSON
+  const handleJsonImport = () => {
+    if (!jsonInput.trim()) return;
+    let data: any;
+    try {
+      data = JSON.parse(jsonInput.trim());
+    } catch {
+      setError('Invalid JSON format. Please check and try again.');
+      return;
+    }
+    setError('');
+
+    const form = formRef.current;
+    if (!form) return;
+
+    // Helper to set uncontrolled input/textarea value
+    const setField = (name: string, value: string) => {
+      const el = form.elements.namedItem(name) as HTMLInputElement | HTMLTextAreaElement | null;
+      if (el && value !== undefined && value !== null) {
+        // Trigger React's value setter to work with uncontrolled inputs
+        const nativeInputValueSetter = Object.getOwnPropertyDescriptor(
+          el instanceof HTMLTextAreaElement ? window.HTMLTextAreaElement.prototype : window.HTMLInputElement.prototype,
+          'value'
+        )?.set;
+        nativeInputValueSetter?.call(el, String(value));
+        el.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+    };
+
+    // Basic info (uncontrolled)
+    if (data.name) setField('name', data.name);
+    if (data.description) setField('description', data.description);
+    if (data.shortDescription) setField('shortDescription', data.shortDescription);
+
+    // Specifications (controlled via mainFormValues)
+    setMainFormValues(prev => ({
+      ...prev,
+      ...(data.productId !== undefined && { productId: String(data.productId) }),
+      ...(data.material !== undefined && { material: String(data.material) }),
+      ...(data.finish !== undefined && { finish: String(data.finish) }),
+      ...(data.color !== undefined && { color: String(data.color) }),
+      ...(data.size !== undefined && { size: String(data.size) }),
+      ...(data.unit !== undefined && { unit: String(data.unit) }),
+      ...(data.coverage !== undefined && { coverage: String(data.coverage) }),
+      ...(data.tilesPerBox !== undefined && { tilesPerBox: String(data.tilesPerBox) }),
+      ...(data.pricePerSqft !== undefined && { pricePerSqft: String(data.pricePerSqft) }),
+      ...(data.price !== undefined && { price: String(data.price) }),
+      ...(data.cuttedPrice !== undefined && { cuttedPrice: String(data.cuttedPrice) }),
+      ...(data.stock !== undefined && { stock: String(data.stock) }),
+    }));
+
+    // Highlights (uncontrolled)
+    if (Array.isArray(data.highlights)) {
+      data.highlights.forEach((h: string, i: number) => {
+        if (i < 6) setField(`highlight${i + 1}`, h);
+      });
+    }
+
+    // Specifications list (uncontrolled)
+    if (Array.isArray(data.specifications) && data.specifications.length > 0) {
+      setSpecCount(Math.max(2, data.specifications.length));
+      // Use setTimeout to let React render the new spec rows first
+      setTimeout(() => {
+        data.specifications.forEach((spec: any, i: number) => {
+          setField(`specTitle${i + 1}`, spec.title || '');
+          setField(`specDesc${i + 1}`, spec.description || '');
+        });
+      }, 100);
+    }
+
+    // Care instructions (controlled)
+    if (Array.isArray(data.careInstructions) && data.careInstructions.length > 0) {
+      setCareItems(data.careInstructions.map((c: any) => ({
+        id: generateUUID(),
+        title: c.title || '',
+        description: c.description || '',
+      })));
+    }
+
+    // Tags (checkboxes)
+    if (Array.isArray(data.tags)) {
+      const checkboxes = form.querySelectorAll<HTMLInputElement>('input[name="tags"]');
+      checkboxes.forEach(cb => {
+        cb.checked = data.tags.includes(cb.value);
+      });
+    }
+
+    // Variants
+    if (Array.isArray(data.variants) && data.variants.length > 0) {
+      setHasVariants(true);
+      setVariants(data.variants.map((v: any) => ({
+        id: generateUUID(),
+        color: v.color || '',
+        size: v.size || '',
+        productId: v.productId || '',
+        finish: v.finish || '',
+        material: v.material || '',
+        unit: v.unit || '',
+        price: v.price?.toString() || '',
+        cuttedPrice: v.cuttedPrice?.toString() || '',
+        stock: v.stock?.toString() || '',
+        images: [],
+        featuredImageIndex: 0,
+      })));
+    }
+
+    // Category matching by name
+    if (data.category && categories.length > 0) {
+      const matchedCat = categories.find((cat: any) =>
+        cat.name.toLowerCase() === data.category.toLowerCase()
+      );
+      if (matchedCat) {
+        setSelectedCategory(matchedCat._id);
+        if (data.brand || data.subcategory) {
+          const brandName = (data.brand || data.subcategory || '').toLowerCase();
+          const matchedBrand = matchedCat.children?.find((sub: any) =>
+            sub.name.toLowerCase() === brandName
+          );
+          if (matchedBrand) {
+            setSelectedSubcategory(matchedBrand._id);
+            if (data.subSubcategory) {
+              const matchedSub = matchedBrand.children?.find((s: any) =>
+                s.name.toLowerCase() === data.subSubcategory.toLowerCase()
+              );
+              if (matchedSub) setSelectedSubSubcategory(matchedSub._id);
+            }
+          }
+        }
+      }
+    }
+
+    setJsonInput('');
+    setSuccess('JSON imported successfully! Review the fields and upload images.');
+    setTimeout(() => setSuccess(''), 3000);
+  };
+
+  const handleJsonFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const text = event.target?.result as string;
+      setJsonInput(text);
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  };
+
+  const jsonFormatTemplate = `{
+  "name": "Product Name Here",
+  "description": "Full detailed product description",
+  "shortDescription": "One line short description",
+  "productId": "SKU-001",
+  "material": "Vitrified",
+  "finish": "Glossy",
+  "color": "white",
+  "size": "600x1200mm",
+  "unit": "Sq.ft",
+  "coverage": 15.5,
+  "tilesPerBox": 2,
+  "pricePerSqft": 145,
+  "price": 2247,
+  "cuttedPrice": 3410,
+  "stock": 100,
+  "category": "Tiles",
+  "brand": "Brand Name",
+  "subSubcategory": "Sub-category Name",
+  "highlights": [
+    "Highlight point 1",
+    "Highlight point 2",
+    "Highlight point 3"
+  ],
+  "specifications": [
+    { "title": "Material", "description": "Vitrified Porcelain" },
+    { "title": "Thickness", "description": "9mm" }
+  ],
+  "careInstructions": [
+    { "title": "Daily Cleaning", "description": "Sweep or vacuum regularly" },
+    { "title": "Stain Removal", "description": "Use mild soap and water" }
+  ],
+  "tags": ["premium", "new", "bathroom", "kitchen"],
+  "variants": [
+    {
+      "color": "white",
+      "size": "600x1200mm",
+      "productId": "SKU-001-WHT",
+      "finish": "Glossy",
+      "material": "Vitrified",
+      "price": "2247",
+      "cuttedPrice": "3410",
+      "stock": "50"
+    }
+  ]
+}`;
+
+  const handleCopyFormat = () => {
+    navigator.clipboard.writeText(jsonFormatTemplate);
+    setFormatCopied(true);
+    setTimeout(() => setFormatCopied(false), 2000);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50">
-      <form onSubmit={handleSubmit} className="max-w-5xl mx-auto px-6 py-12">
+      <form ref={formRef} onSubmit={handleSubmit} className="max-w-5xl mx-auto px-6 py-12">
         <div className="mb-12 text-center">
           <h1 className="text-4xl font-light text-slate-900 mb-3 tracking-tight">Create New Product</h1>
           <p className="text-slate-500 text-lg font-light">Add a premium tile to your collection</p>
@@ -642,6 +847,97 @@ export function SimpleProductForm() {
         {uploadProgress && (
           <div className="mb-8 p-4 bg-blue-50 border border-blue-100 rounded-2xl">
             <p className="text-blue-700 text-sm text-center">{uploadProgress}</p>
+          </div>
+        )}
+
+        {/* JSON Import Section */}
+        <div className="mb-8 bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
+          <div className="px-8 py-6 border-b border-slate-100 flex items-center gap-3">
+            <FiCopy className="w-5 h-5 text-slate-600" />
+            <div>
+              <h2 className="text-lg font-medium text-slate-900">Quick Import from JSON</h2>
+              <p className="text-xs text-slate-500 mt-0.5">Paste JSON from Gemini or upload a .json file to auto-fill the form</p>
+            </div>
+          </div>
+          <div className="px-8 py-6">
+            <textarea
+              value={jsonInput}
+              onChange={(e) => setJsonInput(e.target.value)}
+              rows={4}
+              placeholder='Paste your JSON here... e.g. {"name": "Premium Tiles", "price": 999, ...}'
+              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all resize-none font-mono text-sm"
+            />
+            <div className="flex items-center gap-3 mt-3">
+              <button
+                type="button"
+                onClick={handleJsonImport}
+                disabled={!jsonInput.trim()}
+                className="px-5 py-2.5 bg-slate-900 text-white rounded-xl hover:bg-slate-800 transition-all text-sm font-medium disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                Import JSON
+              </button>
+              <span className="text-xs text-slate-400">or</span>
+              <label className="px-5 py-2.5 bg-slate-100 text-slate-700 rounded-xl hover:bg-slate-200 transition-all text-sm font-medium cursor-pointer">
+                Upload .json file
+                <input type="file" accept=".json" onChange={handleJsonFileUpload} className="hidden" />
+              </label>
+              <button
+                type="button"
+                onClick={() => setShowJsonFormat(true)}
+                className="ml-auto px-4 py-2.5 bg-blue-50 text-blue-700 border border-blue-200 rounded-xl hover:bg-blue-100 transition-all text-sm font-medium flex items-center gap-2"
+              >
+                <FiInfo className="w-4 h-4" />
+                View JSON Format
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* JSON Format Modal */}
+        {showJsonFormat && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+            <div className="bg-white rounded-2xl shadow-xl max-w-2xl w-full mx-4 max-h-[85vh] flex flex-col">
+              <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200">
+                <div>
+                  <h3 className="text-lg font-semibold text-slate-900">JSON Format Template</h3>
+                  <p className="text-xs text-slate-500 mt-0.5">Copy this and share with Gemini to generate product data</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowJsonFormat(false)}
+                  className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
+                >
+                  <FiX className="w-5 h-5 text-slate-500" />
+                </button>
+              </div>
+              <div className="flex-1 overflow-y-auto px-6 py-4">
+                <pre className="bg-slate-900 text-slate-100 rounded-xl p-4 text-sm font-mono overflow-x-auto whitespace-pre">
+                  {jsonFormatTemplate}
+                </pre>
+                <p className="text-xs text-slate-500 mt-3 leading-relaxed">
+                  <strong>Note:</strong> All fields are optional. Only include the fields you have data for.
+                  The form will fill in whatever is present and leave the rest empty.
+                  For tags use: popular, trending, new, premium, exclusive, classic, bestseller, limited, kitchen, bathroom, living-room, bedroom, outdoor, commercial.
+                </p>
+              </div>
+              <div className="px-6 py-4 border-t border-slate-200 flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowJsonFormat(false)}
+                  className="px-5 py-2.5 bg-slate-100 text-slate-700 rounded-xl hover:bg-slate-200 transition-all text-sm font-medium"
+                >
+                  Close
+                </button>
+                <button
+                  type="button"
+                  onClick={handleCopyFormat}
+                  className="px-5 py-2.5 bg-slate-900 text-white rounded-xl hover:bg-slate-800 transition-all text-sm font-medium flex items-center gap-2"
+                >
+                  <FiCopy className="w-4 h-4" />
+                  {formatCopied ? 'Copied!' : 'Copy to Clipboard'}
+                </button>
+              </div>
+            </div>
           </div>
         )}
 
