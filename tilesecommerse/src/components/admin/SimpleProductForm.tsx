@@ -161,6 +161,7 @@ export function SimpleProductForm() {
     unit: 'inches',
     coverage: '',
     tilesPerBox: '',
+    pricePerSqft: '',
     price: '',
     cuttedPrice: '',
     stock: '100'
@@ -494,6 +495,7 @@ export function SimpleProductForm() {
       if (mainFormValues.unit) requestBody.unit = mainFormValues.unit;
       if (mainFormValues.coverage) requestBody.coverage = Number(mainFormValues.coverage);
       if (mainFormValues.tilesPerBox) requestBody.tilesPerBox = Number(mainFormValues.tilesPerBox);
+      if (mainFormValues.pricePerSqft) requestBody.pricePerSqft = Number(mainFormValues.pricePerSqft);
 
 
       requestBody.hasVariants = hasVariants;
@@ -580,6 +582,7 @@ export function SimpleProductForm() {
         unit: 'inches',
         coverage: '',
         tilesPerBox: '',
+        pricePerSqft: '',
         price: '',
         cuttedPrice: '',
         stock: '100'
@@ -879,6 +882,21 @@ export function SimpleProductForm() {
                         placeholder="e.g. 4"
                         value={mainFormValues.tilesPerBox}
                         onChange={(e) => setMainFormValues({ ...mainFormValues, tilesPerBox: e.target.value })}
+                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-2">
+                        Price per Sq.ft (₹)
+                        <span className="ml-1 text-xs text-slate-500">— Display price shown on cards</span>
+                      </label>
+                      <input
+                        name="pricePerSqft"
+                        type="number"
+                        step="0.01"
+                        placeholder="e.g. 145"
+                        value={mainFormValues.pricePerSqft}
+                        onChange={(e) => setMainFormValues({ ...mainFormValues, pricePerSqft: e.target.value })}
                         className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
                       />
                     </div>

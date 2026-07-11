@@ -54,6 +54,7 @@ async function getPopularProducts() {
                 unit: product.unit,
                 coverage: product.coverage,
                 tilesPerBox: product.tilesPerBox,
+                pricePerSqft: product.pricePerSqft,
                 hasVariants: product.variants && product.variants.length > 1,
                 variantId: product.variants?.[0]?.id || product.id,
                 stripeId: product.stripeId || product.variants?.[0]?.stripeId,

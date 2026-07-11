@@ -242,20 +242,40 @@ export const ProductInfo = ({ product, onVariantChange }: ProductInfoProps) => {
 
       {/* Price with MRP and Discount */}
       <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
-        <div className="flex items-baseline gap-3 mb-1">
+        <div className="flex items-baseline flex-wrap gap-3 mb-1">
           <span className="text-sm text-slate-600">Price:</span>
           {currentPrice > 0 ? (
             <>
-              <span className="text-3xl font-bold text-orange-500">₹{currentPrice.toFixed(0)}</span>
-              {currentMRP && currentMRP > currentPrice && (
+              {isSqftProduct && product.pricePerSqft && product.pricePerSqft > 0 ? (
                 <>
-                  <span className="text-lg text-slate-400 line-through">₹{currentMRP.toFixed(0)}</span>
-                  <span className="text-sm font-semibold text-green-600 bg-green-100 px-2 py-1 rounded">
-                    {Math.round(((currentMRP - currentPrice) / currentMRP) * 100)}% OFF
-                  </span>
+                  <span className="text-3xl font-bold text-orange-500">₹{product.pricePerSqft.toFixed(0)}</span>
+                  <span className="text-sm text-slate-600">/sq.ft</span>
+                  <span className="text-sm text-slate-400">or</span>
+                  <span className="text-xl font-semibold text-slate-600">₹{currentPrice.toFixed(0)}</span>
+                  <span className="text-sm text-slate-600">/box</span>
+                  {currentMRP && currentMRP > currentPrice && (
+                    <>
+                      <span className="text-lg text-slate-400 line-through">₹{currentMRP.toFixed(0)}</span>
+                      <span className="text-sm font-semibold text-green-600 bg-green-100 px-2 py-1 rounded">
+                        {Math.round(((currentMRP - currentPrice) / currentMRP) * 100)}% OFF
+                      </span>
+                    </>
+                  )}
+                </>
+              ) : (
+                <>
+                  <span className="text-3xl font-bold text-orange-500">₹{currentPrice.toFixed(0)}</span>
+                  {currentMRP && currentMRP > currentPrice && (
+                    <>
+                      <span className="text-lg text-slate-400 line-through">₹{currentMRP.toFixed(0)}</span>
+                      <span className="text-sm font-semibold text-green-600 bg-green-100 px-2 py-1 rounded">
+                        {Math.round(((currentMRP - currentPrice) / currentMRP) * 100)}% OFF
+                      </span>
+                    </>
+                  )}
+                  <span className="text-sm text-slate-600">/ {product.unit === 'Sq.ft' ? 'box' : 'unit'}</span>
                 </>
               )}
-              <span className="text-sm text-slate-600">/ {product.unit === 'Sq.ft' ? 'box' : 'unit'}</span>
             </>
           ) : (
             <>

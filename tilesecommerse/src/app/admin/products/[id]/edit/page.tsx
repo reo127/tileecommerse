@@ -511,6 +511,7 @@ export default function EditProductPage({ params }: EditProductPageProps) {
         unit: selectedUnit || undefined,
         coverage: formData.get('coverage') ? Number(formData.get('coverage')) : undefined,
         tilesPerBox: formData.get('tilesPerBox') ? Number(formData.get('tilesPerBox')) : undefined,
+        pricePerSqft: formData.get('pricePerSqft') ? Number(formData.get('pricePerSqft')) : undefined,
       };
 
       // Add tags if selected
@@ -926,6 +927,20 @@ export default function EditProductPage({ params }: EditProductPageProps) {
                         type="number"
                         placeholder="e.g. 4"
                         defaultValue={product.tilesPerBox || ''}
+                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-2">
+                        Price per Sq.ft (₹)
+                        <span className="ml-1 text-xs text-slate-500">— Display price shown on cards</span>
+                      </label>
+                      <input
+                        name="pricePerSqft"
+                        type="number"
+                        step="0.01"
+                        placeholder="e.g. 145"
+                        defaultValue={product.pricePerSqft || ''}
                         className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
                       />
                     </div>

@@ -38,6 +38,7 @@ export const ProductItem = ({ product }: ProductItemProps) => {
   const cuttedPrice = (product as any).cuttedPrice;
   const unit: string = (product as any).unit || '';
   const coverage: number = (product as any).coverage || 0;
+  const pricePerSqft: number = (product as any).pricePerSqft || 0;
   const isSqftProduct = unit === 'Sq.ft' && coverage > 0;
   const tags: string[] = (product as any).tags || [];
   const shortDescription = (product as any).shortDescription || (product as any).description || "";
@@ -107,15 +108,24 @@ export const ProductItem = ({ product }: ProductItemProps) => {
           <div>
             {price > 0 ? (
               <>
-                <div className="flex items-baseline gap-2">
-                  <p className="text-xl font-bold text-orange-500">₹{price.toFixed(0)}</p>
-                  {cuttedPrice > price && (
-                    <p className="text-sm text-gray-400 line-through">₹{cuttedPrice.toFixed(0)}</p>
-                  )}
-                </div>
-                <p className="text-xs text-gray-500">per {unit === 'Sq.ft' ? 'box' : (unit || 'unit')}</p>
-                {isSqftProduct && (
-                  <p className="text-xs text-orange-500 font-medium">{coverage} Sq.ft/box</p>
+                {isSqftProduct && pricePerSqft > 0 ? (
+                  <div className="flex items-baseline gap-2">
+                    <p className="text-xl font-bold text-orange-500">₹{pricePerSqft.toFixed(0)}</p>
+                    <p className="text-xs text-gray-500">/ sq.ft</p>
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex items-baseline gap-2">
+                      <p className="text-xl font-bold text-orange-500">₹{price.toFixed(0)}</p>
+                      {cuttedPrice > price && (
+                        <p className="text-sm text-gray-400 line-through">₹{cuttedPrice.toFixed(0)}</p>
+                      )}
+                    </div>
+                    <p className="text-xs text-gray-500">per {unit === 'Sq.ft' ? 'box' : (unit || 'unit')}</p>
+                    {isSqftProduct && (
+                      <p className="text-xs text-orange-500 font-medium">{coverage} Sq.ft/box</p>
+                    )}
+                  </>
                 )}
               </>
             ) : (

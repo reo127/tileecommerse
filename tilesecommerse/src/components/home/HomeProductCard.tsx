@@ -23,6 +23,7 @@ interface HomeProductCardProps {
         unit?: string;
         coverage?: number;
         tilesPerBox?: number;
+        pricePerSqft?: number;
     };
 }
 
@@ -145,13 +146,26 @@ export const HomeProductCard = ({ product }: HomeProductCardProps) => {
 
                     {/* Price */}
                     <div className="flex items-center gap-2 mb-4">
-                        <p className="text-2xl font-bold text-yellow-600">
-                            {product.price === 0 ? 'Get Price' : `₹${product.price.toLocaleString('en-IN')}`}
-                        </p>
-                        {product.price > 0 && product.cuttedPrice && product.cuttedPrice > product.price && (
-                            <p className="text-sm text-gray-400 line-through">
-                                ₹{product.cuttedPrice.toLocaleString('en-IN')}
-                            </p>
+                        {product.price === 0 ? (
+                            <p className="text-2xl font-bold text-yellow-600">Get Price</p>
+                        ) : product.unit === 'Sq.ft' && product.pricePerSqft && product.pricePerSqft > 0 ? (
+                            <>
+                                <p className="text-2xl font-bold text-yellow-600">
+                                    ₹{product.pricePerSqft.toLocaleString('en-IN')}
+                                </p>
+                                <p className="text-sm text-gray-500">/ sq.ft</p>
+                            </>
+                        ) : (
+                            <>
+                                <p className="text-2xl font-bold text-yellow-600">
+                                    ₹{product.price.toLocaleString('en-IN')}
+                                </p>
+                                {product.cuttedPrice && product.cuttedPrice > product.price && (
+                                    <p className="text-sm text-gray-400 line-through">
+                                        ₹{product.cuttedPrice.toLocaleString('en-IN')}
+                                    </p>
+                                )}
+                            </>
                         )}
                     </div>
 

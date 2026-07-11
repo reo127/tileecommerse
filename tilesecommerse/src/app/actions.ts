@@ -75,6 +75,7 @@ function transformProduct(backendProduct: any) {
     thickness: backendProduct.thickness,
     coverage: backendProduct.coverage,
     tilesPerBox: backendProduct.tilesPerBox,
+    pricePerSqft: backendProduct.pricePerSqft,
     weight: backendProduct.weight,
     waterAbsorption: backendProduct.waterAbsorption,
     slipResistance: backendProduct.slipResistance,
