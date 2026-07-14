@@ -1498,6 +1498,7 @@ export function SimpleProductForm() {
                                 <label className="block text-xs font-medium text-slate-600 mb-1">Price (₹)</label>
                                 <input
                                   type="number"
+                                  step="0.01"
                                   value={variant.price}
                                   onChange={(e) => updateVariant(variant.id, 'price', e.target.value)}
                                   placeholder="999"
@@ -1509,6 +1510,7 @@ export function SimpleProductForm() {
                                 <label className="block text-xs font-medium text-slate-600 mb-1">MRP (₹)</label>
                                 <input
                                   type="number"
+                                  step="0.01"
                                   value={variant.cuttedPrice}
                                   onChange={(e) => updateVariant(variant.id, 'cuttedPrice', e.target.value)}
                                   placeholder="1499"
