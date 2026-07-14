@@ -1204,6 +1204,7 @@ export function SimpleProductForm() {
                   <input
                     name="price"
                     type="number"
+                    step="0.01"
                     placeholder="999"
                     value={mainFormValues.price}
                     onChange={(e) => setMainFormValues({ ...mainFormValues, price: e.target.value })}
@@ -1216,6 +1217,7 @@ export function SimpleProductForm() {
                   <input
                     name="cuttedPrice"
                     type="number"
+                    step="0.01"
                     placeholder="1499"
                     value={mainFormValues.cuttedPrice}
                     onChange={(e) => setMainFormValues({ ...mainFormValues, cuttedPrice: e.target.value })}

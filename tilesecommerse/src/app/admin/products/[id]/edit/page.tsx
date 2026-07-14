@@ -1293,6 +1293,7 @@ export default function EditProductPage({ params }: EditProductPageProps) {
                   <input
                     name="price"
                     type="number"
+                    step="0.01"
                     defaultValue={product.price}
                     placeholder="999"
                     className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
@@ -1305,6 +1306,7 @@ export default function EditProductPage({ params }: EditProductPageProps) {
                   <input
                     name="cuttedPrice"
                     type="number"
+                    step="0.01"
                     defaultValue={product.cuttedPrice}
                     placeholder="1499"
                     className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
