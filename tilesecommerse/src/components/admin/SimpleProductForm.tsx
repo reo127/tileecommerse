@@ -621,12 +621,86 @@ export function SimpleProductForm() {
     }
   };
 
+  // Normalize nested JSON structures (e.g. from Gemini) into the flat format the form expects
+  const normalizeJsonInput = (raw: any): any => {
+    // If it already has flat keys like "name", "price", return as-is
+    if (raw.name || raw.price !== undefined || raw.productId) return raw;
+
+    const out: any = {};
+    const bi = raw.basic_information || raw.basicInformation || {};
+    if (bi.product_name || bi.productName) out.name = bi.product_name || bi.productName;
+    if (bi.description) out.description = bi.description;
+    if (bi.short_description || bi.shortDescription) out.shortDescription = bi.short_description || bi.shortDescription;
+    if (bi.category) out.category = bi.category;
+    if (bi.brand) out.brand = bi.brand;
+    if (bi.sub_category || bi.subCategory || bi.subcategory) out.subSubcategory = bi.sub_category || bi.subCategory || bi.subcategory;
+
+    const spec = raw.specifications || {};
+    if (spec.product_id || spec.productId) out.productId = spec.product_id || spec.productId;
+    if (spec.material) out.material = spec.material;
+    if (spec.finish) out.finish = spec.finish;
+    if (spec.color) out.color = spec.color;
+    if (spec.size) out.size = spec.size;
+    if (spec.unit) out.unit = spec.unit;
+    if (spec.coverage) out.coverage = spec.coverage;
+    if (spec.tiles_per_box || spec.tilesPerBox) out.tilesPerBox = spec.tiles_per_box || spec.tilesPerBox;
+    if (spec.price_per_sqft || spec.pricePerSqft) out.pricePerSqft = spec.price_per_sqft || spec.pricePerSqft;
+    const price = spec.price_inr ?? spec.price ?? spec.priceInr;
+    if (price !== undefined) out.price = price;
+    const mrp = spec.mrp_inr ?? spec.mrp ?? spec.cuttedPrice ?? spec.cutted_price ?? spec.mrpInr;
+    if (mrp !== undefined) out.cuttedPrice = mrp;
+    const stock = spec.stock;
+    if (stock !== undefined) out.stock = stock;
+
+    // Highlights
+    const hl = raw.highlights || {};
+    const highlights = hl.product_highlights || hl.productHighlights || (Array.isArray(hl) ? hl : null);
+    if (Array.isArray(highlights)) out.highlights = highlights;
+
+    // Technical specifications as specifications list
+    const techSpecs = hl.technical_specifications || hl.technicalSpecifications || raw.technical_specifications;
+    if (techSpecs && typeof techSpecs === 'object' && !Array.isArray(techSpecs)) {
+      out.specifications = Object.entries(techSpecs).map(([key, val]) => ({
+        title: key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
+        description: String(val),
+      }));
+    }
+    // If specifications is already an array, use it directly
+    if (Array.isArray(raw.specifications_list || raw.specificationsList)) {
+      out.specifications = raw.specifications_list || raw.specificationsList;
+    }
+
+    // Care instructions
+    const care = raw.care_instructions || raw.careInstructions;
+    if (Array.isArray(care)) out.careInstructions = care;
+
+    // Tags
+    const tags = raw.product_tags || raw.productTags || raw.tags;
+    if (Array.isArray(tags)) out.tags = tags;
+
+    // Applications as additional tags
+    if (Array.isArray(raw.applications)) {
+      out.tags = [...(out.tags || []), ...raw.applications];
+    }
+
+    // Variants
+    const pv = raw.product_variants || raw.productVariants || {};
+    if (pv.enabled && Array.isArray(pv.variants)) {
+      out.variants = pv.variants;
+    } else if (Array.isArray(raw.variants)) {
+      out.variants = raw.variants;
+    }
+
+    return out;
+  };
+
   // JSON import handler — fills form fields from pasted JSON
   const handleJsonImport = () => {
     if (!jsonInput.trim()) return;
     let data: any;
     try {
-      data = JSON.parse(jsonInput.trim());
+      const rawData = JSON.parse(jsonInput.trim());
+      data = normalizeJsonInput(rawData);
     } catch {
       setError('Invalid JSON format. Please check and try again.');
       return;
